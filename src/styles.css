@@ -14,6 +14,7 @@
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: hidden;
 }
 
 button,
@@ -681,6 +682,7 @@ button {
   .summary-band {
     align-items: stretch;
     display: grid;
+    gap: 24px;
   }
 
   .summary-metrics {
@@ -713,15 +715,52 @@ button {
   .registry-toolbar input {
     width: 100%;
   }
+
+  .cards-panel {
+    order: 2;
+  }
+
+  .detail-panel {
+    order: 1;
+  }
 }
 
 @media (max-width: 640px) {
   .summary-band {
-    min-height: 320px;
-    padding: 34px 18px;
+    min-height: auto;
+    padding: 30px 16px 24px;
   }
 
-  .summary-metrics,
+  .summary-copy h1 {
+    font-size: 2.35rem;
+    line-height: 1.04;
+  }
+
+  .summary-copy p,
+  .section-heading p {
+    font-size: 0.72rem;
+  }
+
+  .summary-metrics {
+    display: flex;
+    gap: 10px;
+    margin: 0 -16px;
+    overflow-x: auto;
+    padding: 2px 16px 8px;
+    scroll-snap-type: x proximity;
+  }
+
+  .summary-metrics .metric {
+    flex: 0 0 158px;
+    min-height: 104px;
+    padding: 13px;
+    scroll-snap-align: start;
+  }
+
+  .metric strong {
+    font-size: 1.08rem;
+  }
+
   .expense-form {
     grid-template-columns: 1fr;
   }
@@ -735,36 +774,111 @@ button {
   }
 
   .workspace {
-    padding: 20px 12px 42px;
+    gap: 16px;
+    padding: 18px 10px 38px;
   }
 
   .module-bar {
+    gap: 10px;
     justify-content: flex-start;
+    margin-top: 14px;
     overflow-x: auto;
-    padding: 0 12px;
+    padding: 0 12px 8px;
+    scrollbar-width: thin;
   }
 
   .module-group {
+    flex: 0 0 auto;
     flex-wrap: nowrap;
   }
 
   .module-group-tools {
-    border-left: 0;
-    border-top: 1px solid #cbd5e1;
-    padding-left: 0;
-    padding-top: 10px;
+    border-left: 1px solid #cbd5e1;
+    border-top: 0;
+    padding-left: 10px;
+    padding-top: 0;
+  }
+
+  .module-tab {
+    font-size: 0.9rem;
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .cards-panel,
+  .detail-panel {
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  }
+
+  .cards-panel {
+    padding: 14px;
+  }
+
+  .detail-panel {
+    padding: 16px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+  }
+
+  .section-heading h2 {
+    font-size: 1.55rem;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .section-heading svg {
+    flex: 0 0 auto;
+  }
+
+  .bank-tab,
+  .card-tab {
+    min-height: 64px;
+    padding: 12px;
+  }
+
+  .expense-form {
+    margin-bottom: 18px;
+  }
+
+  .expense-form button,
+  .inline-form button {
+    width: 100%;
+  }
+
+  .total-strip {
+    gap: 8px;
+    padding: 12px;
   }
 
   .table-header {
     display: none;
   }
 
+  .expense-table {
+    border: 0;
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+  }
+
   .table-row {
     align-items: start;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
     gap: 8px;
     grid-template-columns: 1fr auto;
     min-height: auto;
     padding: 14px;
+  }
+
+  .table-row strong {
+    font-size: 1rem;
   }
 
   .table-row span {
@@ -773,7 +887,47 @@ button {
 
   .table-row .icon-button {
     grid-column: 2;
-    grid-row: 1 / span 4;
+    grid-row: 1 / span 6;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span,
+  .fixed-expense-table .table-row span {
+    align-items: baseline;
+    color: #172033;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    max-width: 100%;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span::before,
+  .fixed-expense-table .table-row span::before {
+    color: #64748b;
+    content: "";
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(1)::before {
+    content: "Por mes";
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(2)::before {
+    content: "Ahorro";
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(3)::before {
+    content: "Neto";
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(4)::before {
+    content: "Cuotas";
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(5)::before {
+    content: "Pendiente";
   }
 
   .fixed-table-row {
@@ -784,6 +938,10 @@ button {
     grid-column: 1;
   }
 
+  .fixed-expense-table .table-row span::before {
+    content: "Monto";
+  }
+
   .total-strip {
     align-items: flex-start;
     display: grid;
@@ -791,5 +949,84 @@ button {
 
   .total-strip strong {
     text-align: left;
+  }
+
+  .balance-grid {
+    gap: 10px;
+  }
+
+  .registry-toolbar {
+    gap: 8px;
+  }
+
+  .registry-toolbar button {
+    width: 100%;
+  }
+
+  .registry-table-wrap {
+    margin: 0 -6px;
+    max-width: calc(100% + 12px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .registry-table {
+    min-width: 910px;
+  }
+
+  .registry-table th,
+  .registry-table td {
+    padding: 8px 6px;
+  }
+
+  .registry-table td,
+  .registry-table .month-heading {
+    min-width: 58px;
+    width: 58px;
+  }
+
+  .registry-table .service-heading {
+    min-width: 160px;
+    width: 160px;
+  }
+
+  .check-cell {
+    gap: 4px;
+  }
+
+  .check-cell strong {
+    font-size: 0.74rem;
+  }
+
+  .empty-state {
+    align-items: center;
+    min-height: 130px;
+    padding: 20px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .summary-copy h1 {
+    font-size: 2.05rem;
+  }
+
+  .summary-metrics .metric {
+    flex-basis: 146px;
+  }
+
+  .module-tab {
+    font-size: 0.84rem;
+  }
+
+  .module-tab svg {
+    height: 16px;
+    width: 16px;
+  }
+
+  .section-heading h2 {
+    font-size: 1.38rem;
+  }
+
+  .registry-table {
+    min-width: 850px;
   }
 }
