@@ -1,2 +1,1 @@
-# Dependencias Python para las funciones serverless de Vercel.
-# Por ahora no hace falta instalar nada.
+fastapi
