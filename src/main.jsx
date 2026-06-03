@@ -5,17 +5,20 @@ import {
   BarChart3,
   Building2,
   CalendarDays,
+  Check,
   CreditCard,
   Dumbbell,
   Home,
   Landmark,
   ListChecks,
+  Pencil,
   Plus,
   ReceiptText,
   Repeat,
   Settings,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 import "./styles.css";
 
@@ -93,6 +96,12 @@ const INITIAL_DATA = {
 const STORAGE_KEY = "finanzas-app-data";
 const OLD_EXPENSES_KEY = "finanzas-credit-card-expenses";
 const CARD_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c", "#0f766e"];
+const CARD_FIXED_CATEGORIES = {
+  department: "Departamento",
+  subscriptions: "Suscripciones",
+  activities: "Actividades",
+  extras: "Extras",
+};
 
 const currency = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -156,8 +165,13 @@ function App() {
     () => buildRegistryServices(data, banksWithTotals),
     [banksWithTotals, data],
   );
+  const cardFixedExpensesByCategory = useMemo(
+    () => buildCardFixedExpensesByCategory(banksWithTotals),
+    [banksWithTotals],
+  );
   const simpleModules = {
     department: {
+      cardExpenses: cardFixedExpensesByCategory.department,
       emptyMessage: "Todavia no cargaste gastos fijos del departamento.",
       expenses: data.departmentExpenses,
       icon: Home,
@@ -169,6 +183,7 @@ function App() {
       totalLabel: "Total mensual del departamento",
     },
     subscriptions: {
+      cardExpenses: cardFixedExpensesByCategory.subscriptions,
       emptyMessage: "Todavia no cargaste suscripciones.",
       expenses: data.subscriptionExpenses,
       icon: Repeat,
@@ -180,6 +195,7 @@ function App() {
       totalLabel: "Total mensual de suscripciones",
     },
     activities: {
+      cardExpenses: cardFixedExpensesByCategory.activities,
       emptyMessage: "Todavia no cargaste actividades.",
       expenses: data.activityExpenses,
       icon: Dumbbell,
@@ -191,6 +207,7 @@ function App() {
       totalLabel: "Total mensual de actividades",
     },
     extras: {
+      cardExpenses: cardFixedExpensesByCategory.extras,
       emptyMessage: "Todavia no cargaste extras.",
       expenses: data.extraExpenses,
       icon: Sparkles,
@@ -282,6 +299,22 @@ function App() {
     setData((current) => ({
       ...current,
       expenses: current.expenses.filter((expense) => expense.id !== expenseId),
+    }));
+  }
+
+  function updateExpenseSavings(expenseId, savings) {
+    setData((current) => ({
+      ...current,
+      expenses: current.expenses.map((expense) => {
+        if (expense.id !== expenseId) {
+          return expense;
+        }
+
+        return {
+          ...expense,
+          savings: Math.min(Math.max(savings, 0), expense.amount),
+        };
+      }),
     }));
   }
 
@@ -434,6 +467,7 @@ function App() {
           selectedCard={selectedCard}
           selectedCardId={selectedCardId}
           setSelectedCardId={setSelectedCardId}
+          updateExpenseSavings={updateExpenseSavings}
         />
       ) : activeModule === "settings" ? (
         <SettingsModule
@@ -497,6 +531,7 @@ function normalizeData(data) {
     banks: data.banks ?? INITIAL_DATA.banks,
     expenses: (data.expenses ?? INITIAL_DATA.expenses).map((expense) => ({
       ...expense,
+      fixedCategory: expense.fixedCategory ?? (expense.isFixed ? "subscriptions" : ""),
       savings: Number(expense.savings) || 0,
     })),
     departmentExpenses: data.departmentExpenses ?? INITIAL_DATA.departmentExpenses,
@@ -512,6 +547,36 @@ function getExpenseSavings(expense) {
 
 function getNetExpenseAmount(expense) {
   return Math.max((Number(expense.amount) || 0) - getExpenseSavings(expense), 0);
+}
+
+function isFixedCardExpense(expense) {
+  return Boolean(expense.isFixed);
+}
+
+function buildCardFixedExpensesByCategory(banks) {
+  const grouped = {
+    activities: [],
+    department: [],
+    extras: [],
+    subscriptions: [],
+  };
+
+  banks.forEach((bank) => {
+    bank.cards.forEach((card) => {
+      card.expenses.filter(isFixedCardExpense).forEach((expense) => {
+        const category = CARD_FIXED_CATEGORIES[expense.fixedCategory] ? expense.fixedCategory : "subscriptions";
+
+        grouped[category].push({
+          id: expense.id,
+          amount: getNetExpenseAmount(expense),
+          name: expense.origin,
+          source: `${card.name} - ${bank.name}`,
+        });
+      });
+    });
+  });
+
+  return grouped;
 }
 
 function buildRegistryServices(data, banks) {
@@ -604,7 +669,7 @@ function ProjectionModule({ banks }) {
         cardName: card.name,
         months: months.map((_, monthIndex) =>
           card.expenses.reduce((sum, expense) => {
-            if (expense.installments <= monthIndex) {
+            if (!isFixedCardExpense(expense) && expense.installments <= monthIndex) {
               return sum;
             }
 
@@ -907,6 +972,7 @@ function CardsModule({
   selectedCard,
   selectedCardId,
   setSelectedCardId,
+  updateExpenseSavings,
 }) {
   return (
     <section className="workspace">
@@ -983,7 +1049,7 @@ function CardsModule({
 
             <ExpenseForm key={selectedCard.id} onSubmit={addExpense} cardName={selectedCard.name} />
 
-            <ExpenseList card={selectedCard} onRemove={removeExpense} />
+            <ExpenseList card={selectedCard} onRemove={removeExpense} onUpdateSavings={updateExpenseSavings} />
           </>
         ) : (
           <div className="empty-state tall">
@@ -1019,8 +1085,12 @@ function SimpleExpenseModule({ module, onAdd, onRemove }) {
           <span>{module.totalLabel}</span>
           <strong>{currency.format(module.total)}</strong>
         </div>
+        {module.cardExpenses?.length ? (
+          <p className="total-note">Los gastos pagados con tarjeta se muestran abajo, pero ya estan incluidos en Tarjetas.</p>
+        ) : null}
 
         <FixedExpenseList
+          cardExpenses={module.cardExpenses}
           emptyMessage={module.emptyMessage}
           expenses={module.expenses}
           onRemove={(expenseId) => onRemove(module.storageKey, expenseId)}
@@ -1082,8 +1152,13 @@ function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
   );
 }
 
-function FixedExpenseList({ emptyMessage = "Todavia no cargaste gastos fijos del departamento.", expenses, onRemove }) {
-  if (!expenses.length) {
+function FixedExpenseList({
+  cardExpenses = [],
+  emptyMessage = "Todavia no cargaste gastos fijos del departamento.",
+  expenses,
+  onRemove,
+}) {
+  if (!expenses.length && !cardExpenses.length) {
     return (
       <div className="empty-state">
         <ReceiptText size={28} />
@@ -1115,6 +1190,17 @@ function FixedExpenseList({ emptyMessage = "Todavia no cargaste gastos fijos del
           </button>
         </div>
       ))}
+
+      {cardExpenses.map((expense) => (
+        <div className="table-row fixed-table-row card-paid-row" key={`card-${expense.id}`}>
+          <strong>
+            <span>{expense.name}</span>
+            <small>Pagado con tarjeta {expense.source}</small>
+          </strong>
+          <span>{currency.format(expense.amount)}</span>
+          <span className="card-paid-badge">Ya incluido en Tarjetas</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1124,14 +1210,23 @@ function ExpenseForm({ onSubmit, cardName }) {
   const [amount, setAmount] = useState("");
   const [savings, setSavings] = useState("");
   const [installments, setInstallments] = useState("");
+  const [expenseType, setExpenseType] = useState("installments");
+  const [fixedCategory, setFixedCategory] = useState("subscriptions");
 
   function handleSubmit(event) {
     event.preventDefault();
     const parsedAmount = Number(amount);
-    const parsedInstallments = Number(installments);
+    const parsedInstallments = expenseType === "single" ? 1 : Number(installments);
     const parsedSavings = Number(savings) || 0;
+    const isFixed = expenseType === "fixed";
 
-    if (!origin.trim() || parsedAmount <= 0 || parsedInstallments <= 0 || parsedSavings < 0 || parsedSavings > parsedAmount) {
+    if (
+      !origin.trim() ||
+      parsedAmount <= 0 ||
+      (!isFixed && parsedInstallments <= 0) ||
+      parsedSavings < 0 ||
+      parsedSavings > parsedAmount
+    ) {
       return;
     }
 
@@ -1139,17 +1234,21 @@ function ExpenseForm({ onSubmit, cardName }) {
       origin: origin.trim(),
       amount: parsedAmount,
       savings: parsedSavings,
-      installments: parsedInstallments,
+      fixedCategory: isFixed ? fixedCategory : "",
+      installments: isFixed ? 0 : parsedInstallments,
+      isFixed,
     });
 
     setOrigin("");
     setAmount("");
     setSavings("");
     setInstallments("");
+    setExpenseType("installments");
+    setFixedCategory("subscriptions");
   }
 
   return (
-    <form className="expense-form" onSubmit={handleSubmit}>
+    <form className="expense-form card-expense-form" onSubmit={handleSubmit}>
       <label>
         Origen
         <input
@@ -1174,15 +1273,56 @@ function ExpenseForm({ onSubmit, cardName }) {
       <label>
         Cuotas pendientes
         <input
+          disabled={expenseType !== "installments"}
           min="1"
-          placeholder="6"
+          placeholder={expenseType === "fixed" ? "Sin limite" : "6"}
           type="number"
-          value={installments}
+          value={expenseType === "installments" ? installments : expenseType === "single" ? "1" : ""}
           onChange={(event) => setInstallments(event.target.value)}
         />
       </label>
 
-      <label>
+      <div className="expense-kind-field" aria-label="Tipo de gasto">
+        <span>Tipo de gasto</span>
+        <div className="segmented-control">
+          <button
+            className={expenseType === "installments" ? "active" : ""}
+            onClick={() => setExpenseType("installments")}
+            type="button"
+          >
+            Cuotas
+          </button>
+          <button
+            className={expenseType === "single" ? "active" : ""}
+            onClick={() => setExpenseType("single")}
+            type="button"
+          >
+            Unica
+          </button>
+          <button
+            className={expenseType === "fixed" ? "active" : ""}
+            onClick={() => setExpenseType("fixed")}
+            type="button"
+          >
+            Fijo
+          </button>
+        </div>
+      </div>
+
+      {expenseType === "fixed" && (
+        <label className="fixed-category-field">
+          Seccion
+          <select value={fixedCategory} onChange={(event) => setFixedCategory(event.target.value)}>
+            {Object.entries(CARD_FIXED_CATEGORIES).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      <label className="savings-field">
         Ahorro
         <input
           min="0"
@@ -1202,7 +1342,10 @@ function ExpenseForm({ onSubmit, cardName }) {
   );
 }
 
-function ExpenseList({ card, onRemove }) {
+function ExpenseList({ card, onRemove, onUpdateSavings }) {
+  const [editingExpenseId, setEditingExpenseId] = useState("");
+  const [savingsDraft, setSavingsDraft] = useState("");
+
   if (!card?.expenses.length) {
     return (
       <div className="empty-state">
@@ -1210,6 +1353,27 @@ function ExpenseList({ card, onRemove }) {
         <p>Todavia no cargaste gastos para esta tarjeta.</p>
       </div>
     );
+  }
+
+  function startSavingsEdit(expense) {
+    setEditingExpenseId(expense.id);
+    setSavingsDraft(String(getExpenseSavings(expense)));
+  }
+
+  function cancelSavingsEdit() {
+    setEditingExpenseId("");
+    setSavingsDraft("");
+  }
+
+  function saveSavingsEdit(expense) {
+    const parsedSavings = Number(savingsDraft);
+
+    if (Number.isNaN(parsedSavings) || parsedSavings < 0 || parsedSavings > expense.amount) {
+      return;
+    }
+
+    onUpdateSavings(expense.id, parsedSavings);
+    cancelSavingsEdit();
   }
 
   return (
@@ -1227,25 +1391,82 @@ function ExpenseList({ card, onRemove }) {
       {card.expenses.map((expense) => {
         const savings = getExpenseSavings(expense);
         const netAmount = getNetExpenseAmount(expense);
-        const pendingValue = netAmount + expense.amount * Math.max(expense.installments - 1, 0);
+        const pendingValue = isFixedCardExpense(expense)
+          ? null
+          : netAmount + expense.amount * Math.max(expense.installments - 1, 0);
+        const isEditingSavings = editingExpenseId === expense.id;
+        const parsedDraft = Number(savingsDraft);
+        const canSaveSavings =
+          isEditingSavings && !Number.isNaN(parsedDraft) && parsedDraft >= 0 && parsedDraft <= expense.amount;
 
         return (
           <div className="table-row" key={expense.id}>
             <strong>{expense.origin}</strong>
             <span>{currency.format(expense.amount)}</span>
-            <span>{currency.format(savings)}</span>
+            <span>
+              {isEditingSavings ? (
+                <input
+                  aria-label={`Ahorro de ${expense.origin}`}
+                  className="savings-input"
+                  min="0"
+                  max={expense.amount}
+                  type="number"
+                  value={savingsDraft}
+                  onChange={(event) => setSavingsDraft(event.target.value)}
+                />
+              ) : (
+                currency.format(savings)
+              )}
+            </span>
             <span>{currency.format(netAmount)}</span>
-            <span>{expense.installments}</span>
-            <span>{currency.format(pendingValue)}</span>
-            <button
-              aria-label={`Eliminar ${expense.origin}`}
-              className="icon-button"
-              onClick={() => onRemove(expense.id)}
-              title="Eliminar gasto"
-              type="button"
-            >
-              <Trash2 size={17} />
-            </button>
+            <span>{isFixedCardExpense(expense) ? "Fijo" : expense.installments === 1 ? "Unica" : expense.installments}</span>
+            <span>{isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}</span>
+            <div className="row-actions">
+              {isEditingSavings ? (
+                <>
+                  <button
+                    aria-label={`Guardar ahorro de ${expense.origin}`}
+                    className="icon-button icon-button-success"
+                    disabled={!canSaveSavings}
+                    onClick={() => saveSavingsEdit(expense)}
+                    title="Guardar ahorro"
+                    type="button"
+                  >
+                    <Check size={17} />
+                  </button>
+                  <button
+                    aria-label={`Cancelar edicion de ahorro de ${expense.origin}`}
+                    className="icon-button icon-button-neutral"
+                    onClick={cancelSavingsEdit}
+                    title="Cancelar"
+                    type="button"
+                  >
+                    <X size={17} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    aria-label={`Editar ahorro de ${expense.origin}`}
+                    className="icon-button icon-button-neutral"
+                    onClick={() => startSavingsEdit(expense)}
+                    title="Editar ahorro"
+                    type="button"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    aria-label={`Eliminar ${expense.origin}`}
+                    className="icon-button"
+                    onClick={() => onRemove(expense.id)}
+                    title="Eliminar gasto"
+                    type="button"
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         );
       })}
