@@ -144,9 +144,9 @@ button {
 
 .module-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 14px;
+  justify-content: center;
   margin: 22px auto 0;
   max-width: 1180px;
   padding: 0 20px;
@@ -154,13 +154,13 @@ button {
 
 .module-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .module-group-tools {
   border-left: 1px solid #cbd5e1;
-  padding-left: 18px;
+  padding-left: 14px;
 }
 
 .module-tab {
@@ -171,9 +171,10 @@ button {
   color: #475569;
   display: inline-flex;
   font-weight: 800;
-  gap: 8px;
+  gap: 7px;
   min-height: 42px;
-  padding: 0 14px;
+  padding: 0 12px;
+  white-space: nowrap;
 }
 
 .module-tab.active {
@@ -738,6 +739,7 @@ button {
   }
 
   .module-bar {
+    justify-content: flex-start;
     overflow-x: auto;
     padding: 0 12px;
   }

@@ -335,7 +335,6 @@ function App() {
         <div className="summary-metrics" aria-label="Resumen de gastos">
           <Metric icon={<CalendarDays size={18} />} label="Total mensual" value={currency.format(generalMonthlyTotal)} />
           <Metric icon={<CreditCard size={18} />} label="Tarjetas" value={currency.format(monthlyTotal)} />
-          <Metric icon={<Banknote size={18} />} label="Ahorro cuotas" value={currency.format(cardSavingsTotal)} />
           <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
           <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
           <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
