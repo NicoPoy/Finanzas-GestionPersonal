@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Banknote,
+  BarChart3,
   Building2,
   CalendarDays,
   CreditCard,
@@ -45,6 +46,7 @@ const INITIAL_DATA = {
       cardId: "provincia-visa",
       origin: "Mesa",
       amount: 10000,
+      savings: 0,
       installments: 6,
     },
   ],
@@ -113,15 +115,17 @@ function App() {
       const cards = bank.cards.map((card) => {
         const cardExpenses = data.expenses.filter((expense) => expense.cardId === card.id);
         const totalDebt = cardExpenses.reduce(
-          (sum, expense) => sum + expense.amount * expense.installments,
+          (sum, expense) => sum + getNetExpenseAmount(expense) + expense.amount * Math.max(expense.installments - 1, 0),
           0,
         );
-        const monthlyTotal = cardExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const monthlyTotal = cardExpenses.reduce((sum, expense) => sum + getNetExpenseAmount(expense), 0);
+        const savingsTotal = cardExpenses.reduce((sum, expense) => sum + getExpenseSavings(expense), 0);
 
         return {
           ...card,
           expenses: cardExpenses,
           monthlyTotal,
+          savingsTotal,
           totalDebt,
         };
       });
@@ -131,6 +135,7 @@ function App() {
         cards,
         monthlyTotal: cards.reduce((sum, card) => sum + card.monthlyTotal, 0),
         totalDebt: cards.reduce((sum, card) => sum + card.totalDebt, 0),
+        savingsTotal: cards.reduce((sum, card) => sum + card.savingsTotal, 0),
       };
     });
   }, [data]);
@@ -140,6 +145,7 @@ function App() {
     selectedBank?.cards.find((card) => card.id === selectedCardId) ?? selectedBank?.cards[0];
   const monthlyTotal = banksWithTotals.reduce((sum, bank) => sum + bank.monthlyTotal, 0);
   const totalDebt = banksWithTotals.reduce((sum, bank) => sum + bank.totalDebt, 0);
+  const cardSavingsTotal = banksWithTotals.reduce((sum, bank) => sum + bank.savingsTotal, 0);
   const departmentTotal = data.departmentExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const subscriptionsTotal = data.subscriptionExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const activitiesTotal = data.activityExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -329,6 +335,7 @@ function App() {
         <div className="summary-metrics" aria-label="Resumen de gastos">
           <Metric icon={<CalendarDays size={18} />} label="Total mensual" value={currency.format(generalMonthlyTotal)} />
           <Metric icon={<CreditCard size={18} />} label="Tarjetas" value={currency.format(monthlyTotal)} />
+          <Metric icon={<Banknote size={18} />} label="Ahorro cuotas" value={currency.format(cardSavingsTotal)} />
           <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
           <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
           <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
@@ -389,6 +396,14 @@ function App() {
 
         <div className="module-group module-group-tools">
           <button
+            className={`module-tab tool-tab ${activeModule === "projection" ? "active" : ""}`}
+            onClick={() => setActiveModule("projection")}
+            type="button"
+          >
+            <BarChart3 size={18} />
+            Proyeccion
+          </button>
+          <button
             className={`module-tab tool-tab ${activeModule === "registry" ? "active" : ""}`}
             onClick={() => setActiveModule("registry")}
             type="button"
@@ -428,6 +443,8 @@ function App() {
           salary={data.salary}
           onSaveSalary={updateSalary}
         />
+      ) : activeModule === "projection" ? (
+        <ProjectionModule banks={banksWithTotals} />
       ) : activeModule === "registry" ? (
         <RegistryModule
           paymentRegistry={data.paymentRegistry}
@@ -479,12 +496,23 @@ function normalizeData(data) {
     salary: Number(data.salary) || 0,
     paymentRegistry: data.paymentRegistry ?? INITIAL_DATA.paymentRegistry,
     banks: data.banks ?? INITIAL_DATA.banks,
-    expenses: data.expenses ?? INITIAL_DATA.expenses,
+    expenses: (data.expenses ?? INITIAL_DATA.expenses).map((expense) => ({
+      ...expense,
+      savings: Number(expense.savings) || 0,
+    })),
     departmentExpenses: data.departmentExpenses ?? INITIAL_DATA.departmentExpenses,
     subscriptionExpenses: data.subscriptionExpenses ?? INITIAL_DATA.subscriptionExpenses,
     activityExpenses: data.activityExpenses ?? INITIAL_DATA.activityExpenses,
     extraExpenses: data.extraExpenses ?? INITIAL_DATA.extraExpenses,
   };
+}
+
+function getExpenseSavings(expense) {
+  return Math.min(Number(expense.savings) || 0, Number(expense.amount) || 0);
+}
+
+function getNetExpenseAmount(expense) {
+  return Math.max((Number(expense.amount) || 0) - getExpenseSavings(expense), 0);
 }
 
 function buildRegistryServices(data, banks) {
@@ -564,6 +592,114 @@ function SettingsModule({ expensesTotal, onSaveSalary, remainingTotal, salary })
       </section>
     </section>
   );
+}
+
+function ProjectionModule({ banks }) {
+  const months = getProjectionMonths(12);
+  const projectionRows = banks.flatMap((bank) =>
+    bank.cards
+      .filter((card) => card.expenses.length)
+      .map((card) => ({
+        id: `${bank.id}-${card.id}`,
+        bankName: bank.name,
+        cardName: card.name,
+        months: months.map((_, monthIndex) =>
+          card.expenses.reduce((sum, expense) => {
+            if (expense.installments <= monthIndex) {
+              return sum;
+            }
+
+            return sum + (monthIndex === 0 ? getNetExpenseAmount(expense) : expense.amount);
+          }, 0),
+        ),
+      })),
+  );
+
+  const monthlyTotals = months.map((_, monthIndex) =>
+    projectionRows.reduce((sum, row) => sum + row.months[monthIndex], 0),
+  );
+
+  return (
+    <section className="workspace single-column projection-workspace">
+      <section className="detail-panel">
+        <div className="section-heading">
+          <div>
+            <p>Cuotas pendientes</p>
+            <h2>Proyeccion</h2>
+          </div>
+          <BarChart3 size={34} strokeWidth={1.7} />
+        </div>
+
+        <div className="total-strip">
+          <span>Proximo mes en tarjetas</span>
+          <strong>{currency.format(monthlyTotals[0] ?? 0)}</strong>
+        </div>
+
+        {projectionRows.length ? (
+          <div className="registry-table-wrap">
+            <table className="registry-table projection-table">
+              <thead>
+                <tr>
+                  <th>Tarjeta</th>
+                  {months.map((month) => (
+                    <th className="month-heading" key={month.key}>
+                      <span>{month.label}</span>
+                      <small>{month.year}</small>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projectionRows.map((row) => (
+                  <tr key={row.id}>
+                    <th>
+                      <span>{row.cardName}</span>
+                      <small>{row.bankName}</small>
+                    </th>
+                    {row.months.map((amount, index) => (
+                      <td key={`${row.id}-${months[index].key}`}>
+                        <strong className={amount ? "projection-amount" : "projection-empty"}>
+                          {amount ? currency.format(amount) : "-"}
+                        </strong>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="projection-total-row">
+                  <th>Total</th>
+                  {monthlyTotals.map((amount, index) => (
+                    <td key={months[index].key}>
+                      <strong>{amount ? currency.format(amount) : "-"}</strong>
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <ReceiptText size={28} />
+            <p>Carga consumos con cuotas pendientes para ver la proyeccion.</p>
+          </div>
+        )}
+      </section>
+    </section>
+  );
+}
+
+function getProjectionMonths(amount) {
+  const now = new Date();
+
+  return Array.from({ length: amount }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() + index, 1);
+    const label = date.toLocaleDateString("es-AR", { month: "short" }).replace(".", "");
+
+    return {
+      key: `${date.getFullYear()}-${date.getMonth()}`,
+      label,
+      year: date.getFullYear(),
+    };
+  });
 }
 
 function RegistryModule({ onTogglePayment, paymentRegistry, services }) {
@@ -987,25 +1123,29 @@ function FixedExpenseList({ emptyMessage = "Todavia no cargaste gastos fijos del
 function ExpenseForm({ onSubmit, cardName }) {
   const [origin, setOrigin] = useState("");
   const [amount, setAmount] = useState("");
+  const [savings, setSavings] = useState("");
   const [installments, setInstallments] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
     const parsedAmount = Number(amount);
     const parsedInstallments = Number(installments);
+    const parsedSavings = Number(savings) || 0;
 
-    if (!origin.trim() || parsedAmount <= 0 || parsedInstallments <= 0) {
+    if (!origin.trim() || parsedAmount <= 0 || parsedInstallments <= 0 || parsedSavings < 0 || parsedSavings > parsedAmount) {
       return;
     }
 
     onSubmit({
       origin: origin.trim(),
       amount: parsedAmount,
+      savings: parsedSavings,
       installments: parsedInstallments,
     });
 
     setOrigin("");
     setAmount("");
+    setSavings("");
     setInstallments("");
   }
 
@@ -1043,6 +1183,18 @@ function ExpenseForm({ onSubmit, cardName }) {
         />
       </label>
 
+      <label>
+        Ahorro
+        <input
+          min="0"
+          max={amount || undefined}
+          placeholder="0"
+          type="number"
+          value={savings}
+          onChange={(event) => setSavings(event.target.value)}
+        />
+      </label>
+
       <button type="submit">
         <Plus size={18} />
         Agregar
@@ -1066,18 +1218,24 @@ function ExpenseList({ card, onRemove }) {
       <div className="table-header">
         <span>Origen</span>
         <span>Por mes</span>
+        <span>Ahorro</span>
+        <span>Neto</span>
         <span>Cuotas</span>
         <span>Pendiente</span>
         <span aria-label="Acciones" />
       </div>
 
       {card.expenses.map((expense) => {
-        const pendingValue = expense.amount * expense.installments;
+        const savings = getExpenseSavings(expense);
+        const netAmount = getNetExpenseAmount(expense);
+        const pendingValue = netAmount + expense.amount * Math.max(expense.installments - 1, 0);
 
         return (
           <div className="table-row" key={expense.id}>
             <strong>{expense.origin}</strong>
             <span>{currency.format(expense.amount)}</span>
+            <span>{currency.format(savings)}</span>
+            <span>{currency.format(netAmount)}</span>
             <span>{expense.installments}</span>
             <span>{currency.format(pendingValue)}</span>
             <button

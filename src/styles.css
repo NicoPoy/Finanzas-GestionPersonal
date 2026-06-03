@@ -345,7 +345,7 @@ button {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(180px, 1.3fr) minmax(130px, 0.9fr) minmax(130px, 0.8fr) auto;
+  grid-template-columns: minmax(180px, 1.3fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr) auto;
   margin-bottom: 24px;
 }
 
@@ -587,13 +587,36 @@ button {
   align-items: center;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(150px, 1.4fr) minmax(110px, 1fr) minmax(80px, 0.6fr) minmax(110px, 1fr) 40px;
+  grid-template-columns: minmax(130px, 1.3fr) repeat(4, minmax(86px, 0.75fr)) minmax(100px, 0.9fr) 40px;
   min-height: 54px;
   padding: 0 14px;
 }
 
 .fixed-table-row {
   grid-template-columns: minmax(150px, 1.4fr) minmax(110px, 1fr) 40px;
+}
+
+.projection-workspace {
+  max-width: 1280px;
+}
+
+.projection-table .month-heading small {
+  margin-top: 2px;
+}
+
+.projection-amount {
+  color: #172033;
+  font-size: 0.82rem;
+}
+
+.projection-empty {
+  color: #94a3b8;
+}
+
+.projection-total-row th,
+.projection-total-row td {
+  background: #f8fafc;
+  font-weight: 900;
 }
 
 .table-header {
