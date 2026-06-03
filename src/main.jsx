@@ -601,7 +601,7 @@ function RegistryModule({ onTogglePayment, paymentRegistry, services }) {
   }
 
   return (
-    <section className="workspace single-column">
+    <section className="workspace single-column registry-workspace">
       <section className="detail-panel">
         <div className="section-heading">
           <div>

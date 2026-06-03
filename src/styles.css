@@ -115,6 +115,10 @@ button {
   grid-template-columns: 1fr;
 }
 
+.registry-workspace {
+  max-width: 1280px;
+}
+
 .cards-panel,
 .detail-panel {
   background: #ffffff;
@@ -491,7 +495,7 @@ button {
 .registry-table {
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 1132px;
+  min-width: 1110px;
   table-layout: fixed;
   width: 100%;
 }
@@ -506,9 +510,9 @@ button {
 
 .registry-table td,
 .registry-table .month-heading {
-  min-width: 76px;
+  min-width: 72px;
   text-align: center;
-  width: 76px;
+  width: 72px;
 }
 
 .registry-table thead th {
@@ -521,10 +525,10 @@ button {
 
 .registry-table th:first-child {
   left: 0;
-  min-width: 220px;
+  min-width: 210px;
   position: sticky;
   text-align: left;
-  width: 220px;
+  width: 210px;
   z-index: 2;
 }
 
