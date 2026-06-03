@@ -31,6 +31,91 @@ button {
   min-height: 100vh;
 }
 
+.login-shell {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(31, 41, 55, 0.88)),
+    url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1600&q=80");
+  background-position: center;
+  background-size: cover;
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-panel {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+  margin: 0 auto;
+  max-width: 420px;
+  padding: 28px;
+  width: 100%;
+}
+
+.login-copy p {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.login-copy h1 {
+  color: #172033;
+  font-size: 2rem;
+  margin: 0 0 22px;
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+}
+
+.login-form label {
+  color: #475569;
+  display: grid;
+  font-size: 0.85rem;
+  font-weight: 800;
+  gap: 7px;
+}
+
+.login-form input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #172033;
+  height: 44px;
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.login-form input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  outline: none;
+}
+
+.login-form button {
+  background: #172033;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 850;
+  height: 44px;
+  margin-top: 4px;
+}
+
+.login-note {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 18px 0 0;
+}
+
 .summary-band {
   align-items: center;
   background:
