@@ -4,7 +4,7 @@ import FinanceApp from "./features/finance/FinanceApp.jsx";
 import "./styles.css";
 
 // App decide si mostrar el login visual o la aplicacion.
-// El token queda en localStorage hasta que sumemos refresh/logout y proteccion completa.
+// El token queda en localStorage y se elimina al cerrar sesion.
 export default function App() {
   const [accessToken, setAccessToken] = useState(() => localStorage.getItem("finanzas_access_token"));
   const [isCheckingSession, setIsCheckingSession] = useState(Boolean(accessToken));
@@ -57,6 +57,12 @@ export default function App() {
     setAccessToken(session.access_token);
   }
 
+  function handleLogout() {
+    localStorage.removeItem("finanzas_access_token");
+    setAccessToken("");
+    setIsCheckingSession(false);
+  }
+
   if (!accessToken) {
     return <LoginScreen onLogin={handleLogin} />;
   }
@@ -65,7 +71,7 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  return <FinanceApp accessToken={accessToken} />;
+  return <FinanceApp accessToken={accessToken} onLogout={handleLogout} />;
 }
 
 async function getApiErrorMessage(response) {

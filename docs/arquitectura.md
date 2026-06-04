@@ -62,6 +62,8 @@ Componente raiz de React. Decide si mostrar:
 
 Hoy la sesion se valida con un token guardado en `localStorage`. Si el token no existe o `/api/auth/me` lo rechaza, solo se muestra el login.
 
+El logout tambien se maneja en `App.jsx`: elimina `finanzas_access_token` de `localStorage`, limpia el estado `accessToken` y vuelve inmediatamente a `LoginScreen`. El boton visual vive en `FinanceApp` porque pertenece a la pantalla privada.
+
 La identidad visual usa `logo_app_finanzas.png` de `frontend/public/` como marca chica en el login y en el encabezado principal. Se referencia con ruta absoluta (`/logo_app_finanzas.png`) porque Vite sirve `public/` desde la raiz del sitio.
 
 ### `frontend/src/styles.css`

@@ -188,6 +188,7 @@ button {
   justify-content: space-between;
   min-height: 260px;
   padding: 48px clamp(20px, 5vw, 72px);
+  position: relative;
 }
 
 .summary-copy p,
@@ -227,6 +228,32 @@ button {
   gap: 12px;
   grid-template-columns: repeat(4, minmax(126px, 1fr));
   min-width: min(100%, 650px);
+}
+
+.summary-side {
+  align-items: flex-end;
+  display: grid;
+}
+
+.logout-button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: rgba(226, 232, 240, 0.78);
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: clamp(14px, 2vw, 28px);
+  top: 14px;
+  width: 32px;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
 }
 
 .metric {
@@ -1099,6 +1126,10 @@ button {
   .summary-metrics {
     grid-template-columns: repeat(2, 1fr);
     min-width: 0;
+  }
+
+  .summary-side {
+    align-items: stretch;
   }
 
   .expense-form {

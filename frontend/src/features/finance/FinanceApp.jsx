@@ -7,6 +7,7 @@ import {
   Dumbbell,
   Home,
   ListChecks,
+  LogOut,
   Repeat,
   Settings,
   Sparkles,
@@ -29,7 +30,7 @@ import SettingsModule from "../settings/SettingsModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
-export default function FinanceApp({ accessToken }) {
+export default function FinanceApp({ accessToken, onLogout }) {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState("cards");
   const [selectedBankId, setSelectedBankId] = useState("");
@@ -440,20 +441,26 @@ export default function FinanceApp({ accessToken }) {
           <h1>Administrador mensual</h1>
         </div>
 
-        <div className="summary-metrics" aria-label="Resumen de gastos">
-          <Metric icon={<CalendarDays size={18} />} label="Total mensual" value={currency.format(generalMonthlyTotal)} />
-          <Metric icon={<CreditCard size={18} />} label="Tarjetas" value={currency.format(monthlyTotal)} />
-          <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
-          <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
-          <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
-          <Metric icon={<Sparkles size={18} />} label="Extras" value={currency.format(extrasTotal)} />
-          <Metric icon={<Banknote size={18} />} label="Sueldo" value={currency.format(data.salary)} />
-          <Metric
-            icon={<CalendarDays size={18} />}
-            label="Restante"
-            tone={remainingTotal < 0 ? "danger" : "success"}
-            value={currency.format(remainingTotal)}
-          />
+        <div className="summary-side">
+          <button aria-label="Cerrar sesion" className="logout-button" onClick={onLogout} title="Cerrar sesion" type="button">
+            <LogOut size={17} />
+          </button>
+
+          <div className="summary-metrics" aria-label="Resumen de gastos">
+            <Metric
+              icon={<CalendarDays size={18} />}
+              label="Restante"
+              tone={remainingTotal < 0 ? "danger" : "success"}
+              value={currency.format(remainingTotal)}
+            />
+            <Metric icon={<Banknote size={18} />} label="Sueldo" value={currency.format(data.salary)} />
+            <Metric icon={<CalendarDays size={18} />} label="Total mensual" value={currency.format(generalMonthlyTotal)} />
+            <Metric icon={<CreditCard size={18} />} label="Tarjetas" value={currency.format(monthlyTotal)} />
+            <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
+            <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
+            <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
+            <Metric icon={<Sparkles size={18} />} label="Extras" value={currency.format(extrasTotal)} />
+          </div>
         </div>
       </section>
 
