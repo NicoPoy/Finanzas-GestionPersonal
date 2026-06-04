@@ -78,17 +78,6 @@ async def login(payload: LoginRequest):
     return LoginResponse(access_token=access_token)
 
 
-@router.get("/me", response_model=UserResponse)
-async def me(current_user: dict = Depends(get_current_user)):
-    """Devuelve el usuario autenticado segun el token enviado por Authorization."""
-
-    return UserResponse(
-        id=str(current_user["_id"]),
-        email=current_user["email"],
-        display_name=current_user.get("display_name", ""),
-    )
-
-
 async def get_current_user(authorization: str | None = Header(default=None)) -> dict:
     """Dependency reusable para proteger endpoints futuros."""
 
@@ -126,3 +115,14 @@ async def get_current_user(authorization: str | None = Header(default=None)) -> 
         )
 
     return user
+
+
+@router.get("/me", response_model=UserResponse)
+async def me(current_user: dict = Depends(get_current_user)):
+    """Devuelve el usuario autenticado segun el token enviado por Authorization."""
+
+    return UserResponse(
+        id=str(current_user["_id"]),
+        email=current_user["email"],
+        display_name=current_user.get("display_name", ""),
+    )

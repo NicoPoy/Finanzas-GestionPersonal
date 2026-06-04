@@ -475,6 +475,7 @@ Funciones:
   - Busca usuario activo en MongoDB.
   - Devuelve el documento de usuario.
   - Devuelve `401` si falta token, es invalido o el usuario no existe.
+  - Debe estar definida antes de cualquier endpoint que la use con `Depends(...)`, porque Python evalua esa referencia al importar el modulo.
 
 ### `api/app/routers/__init__.py`
 
