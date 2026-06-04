@@ -60,22 +60,26 @@ http://localhost:3000/api/db/ping
 ## Estructura principal
 
 ```text
-src/
-  App.jsx
-  main.jsx
-  styles.css
-  components/
-  data/
-  domain/
-  features/
-  utils/
+frontend/
+  index.html
+  src/
+    App.jsx
+    main.jsx
+    styles.css
+    components/
+    data/
+    domain/
+    features/
+    utils/
 api/
   index.py
   app/
 docs/
 ```
 
-`src/App.jsx` quedo chico a proposito: decide si mostrar el login visual o la app privada. La logica de finanzas vive en `src/features/finance/FinanceApp.jsx`, y cada pantalla grande esta separada en su propia carpeta dentro de `src/features`.
+`frontend/` contiene solamente la app React. `api/` queda en la raiz porque Vercel detecta desde ahi las funciones Python.
+
+`frontend/src/App.jsx` quedo chico a proposito: decide si mostrar el login visual o la app privada. La logica de finanzas vive en `frontend/src/features/finance/FinanceApp.jsx`, y cada pantalla grande esta separada en su propia carpeta dentro de `frontend/src/features`.
 
 La explicacion completa esta en [docs/arquitectura.md](docs/arquitectura.md).
 

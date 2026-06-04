@@ -4,6 +4,11 @@ Este documento es el mapa vivo del backend Python. Cada vez que se agregue, elim
 
 El backend esta dentro de la carpeta `api/` porque Vercel detecta funciones serverless desde esa ubicacion. La aplicacion usa FastAPI y se expone desde `api/index.py`.
 
+Nota de estructura general:
+
+- `api/`: backend Python/FastAPI y funciones serverless de Vercel.
+- `frontend/`: frontend React/Vite. No contiene codigo Python, pero se mantiene separado para que el backend no quede mezclado con pantallas, estilos y componentes.
+
 ## `api/`
 
 Carpeta raiz del backend Python.

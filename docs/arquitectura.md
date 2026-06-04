@@ -17,27 +17,35 @@ La app administra gastos mensuales. Hoy tiene estas secciones:
 
 ## Frontend
 
-El frontend esta en `src/`.
+El frontend esta dentro de `frontend/`. Esa carpeta contiene todo lo necesario para la app React: el `index.html` de Vite y el codigo fuente en `frontend/src/`.
 
 ```text
-src/
-  main.jsx
-  App.jsx
-  styles.css
-  components/
-  data/
-  domain/
-  features/
-  utils/
+frontend/
+  index.html
+  src/
+    main.jsx
+    App.jsx
+    styles.css
+    components/
+    data/
+    domain/
+    features/
+    utils/
 ```
 
-### `src/main.jsx`
+La raiz del repo sigue teniendo `package.json` y `vite.config.js` para que los comandos se ejecuten desde la carpeta principal, pero Vite tiene configurado `root: "frontend"`.
+
+### `frontend/index.html`
+
+HTML base de Vite. Define el `div#root` donde React monta la aplicacion y referencia `/src/main.jsx` desde la raiz interna de Vite, que ahora es `frontend/`.
+
+### `frontend/src/main.jsx`
 
 Punto de entrada de Vite. Solo monta React en el `div#root` definido por `index.html`.
 
 Debe mantenerse chico porque no representa reglas de negocio ni pantallas.
 
-### `src/App.jsx`
+### `frontend/src/App.jsx`
 
 Componente raiz de React. Decide si mostrar:
 
@@ -46,11 +54,11 @@ Componente raiz de React. Decide si mostrar:
 
 Hoy la sesion se valida con un token guardado en `localStorage`. Si el token no existe o `/api/auth/me` lo rechaza, solo se muestra el login.
 
-### `src/styles.css`
+### `frontend/src/styles.css`
 
 Estilos globales de la app. Se mantiene como un unico archivo porque el proyecto todavia es chico y no tiene design system. Si crece mucho mas, el siguiente paso razonable es separar estilos por feature o migrar a CSS Modules.
 
-### `src/components/`
+### `frontend/src/components/`
 
 Componentes reutilizables que no pertenecen a una pantalla especifica.
 
@@ -70,7 +78,7 @@ components/
 
 Se ubican aca porque pueden reutilizarse sin depender de una seccion concreta.
 
-### `src/data/`
+### `frontend/src/data/`
 
 Datos iniciales y constantes estaticas.
 
@@ -87,7 +95,7 @@ Contiene:
 
 La razon de aislar esto es que los datos base cambian por migraciones o defaults, no por cambios visuales.
 
-### `src/domain/`
+### `frontend/src/domain/`
 
 Reglas de negocio puras.
 
@@ -110,7 +118,7 @@ Estas funciones no renderizan UI. Eso permite probarlas o moverlas al backend ma
 
 `storage.js` normaliza el perfil recibido desde la API. Ya no lee ni escribe gastos en `localStorage`.
 
-### `src/utils/`
+### `frontend/src/utils/`
 
 Utilidades generales.
 
@@ -121,7 +129,7 @@ utils/
 
 `formatters.js` centraliza el formato de moneda ARS. Asi toda la app muestra importes de la misma manera.
 
-### `src/features/`
+### `frontend/src/features/`
 
 Pantallas o funcionalidades completas de negocio.
 
@@ -280,7 +288,7 @@ Conexion e indices para MongoDB.
 
 El endpoint `/api/db/ping` solo ejecuta un ping administrativo contra Atlas. No crea colecciones, no inserta documentos y mantiene la base vacia.
 
-MongoDB todavia no esta conectado desde el frontend. La estructura queda preparada para el proximo paso.
+MongoDB esta conectado al frontend a traves del backend. El navegador no habla directo con Atlas: carga con `GET /api/profile` y guarda con `PUT /api/profile`.
 
 ## Vercel
 
@@ -293,7 +301,7 @@ No debe reescribir todas las rutas del frontend durante desarrollo, porque Vite 
 /src/main.jsx
 ```
 
-Si esas rutas se mandan a `index.html`, React no carga y queda pantalla blanca.
+Esas rutas existen dentro de la raiz interna de Vite (`frontend/`). Si se mandan a `index.html` desde una rewrite global, React no carga y queda pantalla blanca.
 
 ## Desarrollo Local
 
