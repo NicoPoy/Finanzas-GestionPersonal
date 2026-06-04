@@ -40,7 +40,10 @@ API:
 ```text
 http://localhost:3000/api/health
 http://localhost:3000/api/docs
+http://localhost:3000/api/db/ping
 ```
+
+`/api/db/ping` solo prueba la conexion con Atlas. No guarda datos ni crea colecciones.
 
 ## Estructura principal
 

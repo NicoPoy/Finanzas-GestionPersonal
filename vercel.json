@@ -6,7 +6,7 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "destination": "/api/index.py"
     }
   ]

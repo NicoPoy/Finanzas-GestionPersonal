@@ -277,6 +277,8 @@ Conexion e indices para MongoDB.
 - `mongodb.py`: cliente de MongoDB via `motor`.
 - `indexes.py`: indices recomendados.
 
+El endpoint `/api/db/ping` solo ejecuta un ping administrativo contra Atlas. No crea colecciones, no inserta documentos y mantiene la base vacia.
+
 MongoDB todavia no esta conectado desde el frontend. La estructura queda preparada para el proximo paso.
 
 ## Vercel

@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.server_api import ServerApi
 
 from api.app.core.config import settings
 
@@ -15,7 +16,7 @@ def get_mongo_client() -> AsyncIOMotorClient:
     if not settings.mongodb_uri:
         raise RuntimeError("MONGODB_URI no esta configurada")
 
-    return AsyncIOMotorClient(settings.mongodb_uri)
+    return AsyncIOMotorClient(settings.mongodb_uri, server_api=ServerApi("1"))
 
 
 def get_database():
