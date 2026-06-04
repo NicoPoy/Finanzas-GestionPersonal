@@ -66,3 +66,19 @@ class FinanceProfileDocument(BaseModel):
     payment_registry: list[PaymentRegistryEntry] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class FrontendFinanceProfile(BaseModel):
+    """Estructura que consume el frontend actualmente.
+
+    Mantiene nombres camelCase para evitar transformaciones innecesarias en React.
+    """
+
+    salary: float = 0
+    paymentRegistry: dict[str, bool] = Field(default_factory=dict)
+    banks: list[Bank] = Field(default_factory=list)
+    expenses: list[dict] = Field(default_factory=list)
+    departmentExpenses: list[SimpleExpense] = Field(default_factory=list)
+    subscriptionExpenses: list[SimpleExpense] = Field(default_factory=list)
+    activityExpenses: list[SimpleExpense] = Field(default_factory=list)
+    extraExpenses: list[SimpleExpense] = Field(default_factory=list)

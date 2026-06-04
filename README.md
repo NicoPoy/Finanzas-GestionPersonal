@@ -4,9 +4,11 @@ Aplicacion React + API Python para administrar gastos mensuales personales.
 
 El frontend permite cargar tarjetas por banco, gastos fijos por seccion, sueldo, restante mensual, proyeccion de cuotas y registro anual de pagos. El backend esta preparado con FastAPI para crecer hacia usuarios, login real y persistencia en MongoDB.
 
+Desde la integracion con MongoDB, las categorias y datos financieros no vienen precargados en el frontend. Cada usuario carga y guarda su informacion en `finance_profiles`.
+
 ## Levantar el frontend
 
-Para trabajar solo el front:
+Para trabajar el frontend local usando la API de produccion:
 
 ```powershell
 cd C:\Users\prog32np\Desktop\Finanzas
@@ -18,6 +20,16 @@ Abrir:
 
 ```text
 http://localhost:5173
+```
+
+En local, `vite.config.js` redirige `/api` hacia `https://finanzas-gestion.vercel.app`. Asi el frontend corre en localhost y la API sale desde produccion.
+
+Si alguna vez queres levantar backend local:
+
+```powershell
+npx vercel env pull .env.local --environment=production
+python -m pip install -r requirements.txt
+python -m uvicorn api.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ## Levantar con Vercel dev
@@ -93,6 +105,13 @@ El token se guarda en `localStorage` con la clave `finanzas_access_token` y se v
 
 ```text
 GET /api/auth/me
+```
+
+Los datos financieros se leen y guardan con:
+
+```text
+GET /api/profile
+PUT /api/profile
 ```
 
 .

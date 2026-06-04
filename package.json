@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:front": "vite",
     "build": "node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview"
   },

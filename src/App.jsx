@@ -47,11 +47,13 @@ export default function App() {
     });
 
     if (!response.ok) {
-      throw new Error("Email o password incorrectos.");
+      const errorMessage = await getApiErrorMessage(response);
+      throw new Error(errorMessage);
     }
 
     const session = await response.json();
     localStorage.setItem("finanzas_access_token", session.access_token);
+    setIsCheckingSession(true);
     setAccessToken(session.access_token);
   }
 
@@ -63,5 +65,23 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  return <FinanceApp />;
+  return <FinanceApp accessToken={accessToken} />;
+}
+
+async function getApiErrorMessage(response) {
+  try {
+    const payload = await response.json();
+
+    if (payload.detail) {
+      return payload.detail;
+    }
+  } catch {
+    // Si la API no devuelve JSON, usamos un mensaje generico por status.
+  }
+
+  if (response.status === 401) {
+    return "Email o password incorrectos.";
+  }
+
+  return "No se pudo iniciar sesion. Revisa la configuracion del backend.";
 }

@@ -1,34 +1,6 @@
-import { INITIAL_DATA, OLD_EXPENSES_KEY, STORAGE_KEY } from "../data/initialData.js";
+import { INITIAL_DATA } from "../data/initialData.js";
 
-// Lee el estado local. Cuando exista backend, esta capa sera reemplazada por llamadas HTTP.
-export function loadInitialData() {
-  const storedData = localStorage.getItem(STORAGE_KEY);
-
-  if (storedData) {
-    try {
-      return normalizeData(JSON.parse(storedData));
-    } catch {
-      return INITIAL_DATA;
-    }
-  }
-
-  const oldExpenses = localStorage.getItem(OLD_EXPENSES_KEY);
-
-  if (!oldExpenses) {
-    return INITIAL_DATA;
-  }
-
-  try {
-    return {
-      ...INITIAL_DATA,
-      expenses: JSON.parse(oldExpenses),
-    };
-  } catch {
-    return INITIAL_DATA;
-  }
-}
-
-// Normaliza datos viejos para que nuevas propiedades no rompan usuarios con localStorage previo.
+// Normaliza el perfil recibido desde la API para que la UI siempre trabaje con arrays y numeros.
 export function normalizeData(data) {
   return {
     ...INITIAL_DATA,

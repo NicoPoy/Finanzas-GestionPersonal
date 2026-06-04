@@ -80,6 +80,7 @@ Routers incluidos:
 - `system.router`: endpoints de estado general.
 - `auth.router`: registro, login y usuario autenticado.
 - `database.router`: ping de conexion con MongoDB.
+- `profile.router`: lectura y guardado del perfil financiero por usuario.
 
 Funcion:
 
@@ -108,6 +109,14 @@ Imports:
 
 - `os`: lee variables del entorno.
 - `dataclass`: crea una clase simple e inmutable de configuracion.
+- `load_dotenv`: carga variables desde `.env.local` cuando el backend corre local con Uvicorn.
+
+Funciones llamadas al importar:
+
+- `load_dotenv(".env.local")`
+  - Carga variables locales antes de crear `settings`.
+  - Permite usar las mismas variables que Vercel durante desarrollo local.
+  - No afecta Vercel si las variables ya vienen inyectadas por el entorno.
 
 Clases:
 
@@ -129,6 +138,7 @@ Funcion:
 - Evitar leer `os.getenv(...)` en muchos archivos.
 - Centralizar nombres de variables de entorno.
 - Separar secretos del codigo fuente.
+- Permitir que `uvicorn` local lea `.env.local`.
 
 ### `api/app/core/security.py`
 
@@ -377,6 +387,20 @@ Clases:
     - `created_at`: fecha de creacion.
     - `updated_at`: fecha de ultima modificacion.
 
+- `FrontendFinanceProfile`
+  - Estructura que consume y guarda el frontend actualmente.
+  - Mantiene nombres camelCase para evitar transformaciones innecesarias en React.
+  - Campos:
+    - `salary`: sueldo mensual.
+    - `paymentRegistry`: mapa de pagos marcados por anio/mes/servicio.
+    - `banks`: bancos y tarjetas.
+    - `expenses`: consumos de tarjeta en formato del frontend.
+    - `departmentExpenses`: gastos de departamento.
+    - `subscriptionExpenses`: suscripciones.
+    - `activityExpenses`: actividades.
+    - `extraExpenses`: extras.
+  - Se usa en `api/app/routers/profile.py`.
+
 ### `api/app/models/__init__.py`
 
 Marca `models` como paquete Python.
@@ -429,6 +453,35 @@ Funciones:
   - Devuelve `500` si falta configuracion.
   - Devuelve `502` si Atlas no responde o rechaza conexion.
 
+### `api/app/routers/profile.py`
+
+Endpoints del perfil financiero autenticado.
+
+Variables:
+
+- `router`: `APIRouter` con prefijo `/api/profile` y tag `Perfil financiero`.
+
+Funciones:
+
+- `get_profile(current_user: dict = Depends(get_current_user))`
+  - Ruta:
+    - `GET /api/profile`
+  - Usa `get_current_user` para saber que usuario esta autenticado.
+  - Busca un documento en `finance_profiles` por `user_id`.
+  - Si existe, devuelve el campo `profile`.
+  - Si no existe, devuelve `FrontendFinanceProfile()` vacio sin escribir nada en Mongo.
+  - Sirve para que el frontend cargue toda la informacion desde la base.
+
+- `save_profile(profile: FrontendFinanceProfile, current_user: dict = Depends(get_current_user))`
+  - Ruta:
+    - `PUT /api/profile`
+  - Usa `get_current_user` para asociar datos al usuario autenticado.
+  - Guarda el perfil completo dentro del campo `profile`.
+  - Usa `update_one(..., upsert=True)` para crear el documento si no existe o actualizarlo si ya existe.
+  - Actualiza `updated_at`.
+  - Setea `created_at` y `user_id` solo en la primera insercion.
+  - Sirve para persistir bancos, tarjetas, gastos, sueldo y registro.
+
 ### `api/app/routers/auth.py`
 
 Endpoints y dependency de autenticacion.
@@ -459,6 +512,7 @@ Funciones:
   - Crea token con `create_access_token`.
   - Devuelve `LoginResponse`.
   - Devuelve `401` si credenciales no coinciden.
+  - Devuelve `500` con detalle claro si falta configuracion necesaria para firmar el token, por ejemplo `JWT_SECRET`.
 
 - `me(current_user: dict = Depends(get_current_user))`
   - Ruta:

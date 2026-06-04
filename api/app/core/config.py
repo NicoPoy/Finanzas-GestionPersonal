@@ -1,6 +1,13 @@
 import os
 from dataclasses import dataclass
 
+from dotenv import load_dotenv
+
+
+# En local, Uvicorn no inyecta variables de Vercel.
+# Cargamos .env.local para que el backend local use la misma configuracion.
+load_dotenv(".env.local")
+
 
 @dataclass(frozen=True)
 class Settings:

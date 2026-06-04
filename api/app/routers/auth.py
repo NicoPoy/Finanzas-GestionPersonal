@@ -68,12 +68,18 @@ async def login(payload: LoginRequest):
             detail="Email o password incorrectos.",
         )
 
-    access_token = create_access_token(
-        {
-            "sub": str(user["_id"]),
-            "email": user["email"],
-        },
-    )
+    try:
+        access_token = create_access_token(
+            {
+                "sub": str(user["_id"]),
+                "email": user["email"],
+            },
+        )
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(error),
+        ) from error
 
     return LoginResponse(access_token=access_token)
 

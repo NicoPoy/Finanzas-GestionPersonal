@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Metric from "../../components/common/Metric.jsx";
-import { CARD_COLORS, STORAGE_KEY } from "../../data/initialData.js";
+import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
   buildBanksWithTotals,
   buildCardFixedExpensesByCategory,
@@ -20,7 +20,7 @@ import {
   countCards,
   getPaymentKey,
 } from "../../domain/financeCalculations.js";
-import { loadInitialData } from "../../domain/storage.js";
+import { normalizeData } from "../../domain/storage.js";
 import { currency } from "../../utils/formatters.js";
 import CardsModule from "../cards/CardsModule.jsx";
 import ProjectionModule from "../projection/ProjectionModule.jsx";
@@ -29,15 +29,68 @@ import SettingsModule from "../settings/SettingsModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
-export default function FinanceApp() {
-  const [data, setData] = useState(loadInitialData);
+export default function FinanceApp({ accessToken }) {
+  const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState("cards");
-  const [selectedBankId, setSelectedBankId] = useState(data.banks[0]?.id ?? "");
-  const [selectedCardId, setSelectedCardId] = useState(data.banks[0]?.cards[0]?.id ?? "");
+  const [selectedBankId, setSelectedBankId] = useState("");
+  const [selectedCardId, setSelectedCardId] = useState("");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+    async function loadProfile() {
+      setIsLoadingProfile(true);
+      setProfileError("");
+
+      try {
+        const response = await fetch("/api/profile", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("No se pudo cargar el perfil financiero.");
+        }
+
+        const profile = normalizeData(await response.json());
+        setData(profile);
+        setSelectedBankId(profile.banks[0]?.id ?? "");
+        setSelectedCardId(profile.banks[0]?.cards[0]?.id ?? "");
+        setHasLoadedProfile(true);
+      } catch (error) {
+        setProfileError(error.message || "No se pudo cargar el perfil financiero.");
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    }
+
+    loadProfile();
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!hasLoadedProfile) {
+      return;
+    }
+
+    async function saveProfile() {
+      try {
+        await fetch("/api/profile", {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+      } catch {
+        setProfileError("No se pudo guardar el perfil financiero.");
+      }
+    }
+
+    saveProfile();
+  }, [accessToken, data, hasLoadedProfile]);
 
   const banksWithTotals = useMemo(() => buildBanksWithTotals(data), [data]);
 
@@ -247,6 +300,26 @@ export default function FinanceApp() {
         [key]: !current.paymentRegistry[key],
       },
     }));
+  }
+
+  if (isLoadingProfile) {
+    return (
+      <main className="app-shell">
+        <section className="loading-screen">
+          <strong>Cargando perfil...</strong>
+        </section>
+      </main>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <main className="app-shell">
+        <section className="loading-screen">
+          <strong>{profileError}</strong>
+        </section>
+      </main>
+    );
   }
 
   return (

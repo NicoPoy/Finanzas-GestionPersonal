@@ -81,8 +81,7 @@ data/
 
 Contiene:
 
-- `INITIAL_DATA`: estado inicial mientras no hay base de datos real.
-- claves de `localStorage`.
+- `INITIAL_DATA`: estructura vacia del perfil financiero. No contiene gastos, bancos ni categorias precargadas.
 - colores disponibles para tarjetas.
 - categorias permitidas para gastos fijos pagados con tarjeta.
 
@@ -109,7 +108,7 @@ domain/
 
 Estas funciones no renderizan UI. Eso permite probarlas o moverlas al backend mas adelante.
 
-`storage.js` encapsula el uso de `localStorage`. Cuando MongoDB quede conectado, esta capa es una de las primeras que se reemplaza por llamadas HTTP.
+`storage.js` normaliza el perfil recibido desde la API. Ya no lee ni escribe gastos en `localStorage`.
 
 ### `src/utils/`
 
@@ -143,7 +142,7 @@ Orquestador de la app privada.
 Responsabilidades:
 
 - mantener el estado principal.
-- persistir en `localStorage`.
+- cargar y guardar el perfil con `/api/profile`.
 - calcular totales derivados con helpers del dominio.
 - decidir que modulo mostrar segun la pestaña activa.
 - pasar callbacks a cada feature.
@@ -296,19 +295,20 @@ No debe reescribir todas las rutas del frontend durante desarrollo, porque Vite 
 
 Si esas rutas se mandan a `index.html`, React no carga y queda pantalla blanca.
 
+## Desarrollo Local
+
+Para desarrollo local normal se levanta solo Vite:
+
+- Vite para el frontend.
+- Las llamadas `/api` se redirigen al backend de produccion en Vercel.
+
+`vite.config.js` solo aplica al servidor de desarrollo de Vite y redirige `/api` a `https://finanzas-gestion.vercel.app`. Esto permite trabajar el frontend en localhost usando la API real ya configurada en Vercel.
+
+Si se necesita probar backend local, se puede levantar Uvicorn manualmente y cambiar temporalmente el target del proxy a `http://127.0.0.1:8000`.
+
 ## Persistencia actual
 
-Hoy el frontend guarda en `localStorage` bajo la clave:
-
-```text
-finanzas-app-data
-```
-
-Esto es temporal. Sirve para desarrollar la UI sin backend real. Cuando conectemos MongoDB:
-
-1. `storage.js` deberia reemplazarse por un cliente HTTP.
-2. `FinanceApp` deberia cargar datos desde `/api/...`.
-3. Los cambios deberian persistir en MongoDB por usuario.
+Hoy el frontend solo usa `localStorage` para guardar el token de sesion. La informacion financiera se carga desde MongoDB con `GET /api/profile` y se guarda con `PUT /api/profile`.
 
 ## Modelo MongoDB
 

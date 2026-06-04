@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from api.app.routers import auth, database, system
+from api.app.routers import auth, database, profile, system
 
 
 # Instancia ASGI que usa Vercel para ejecutar FastAPI.
@@ -17,3 +17,4 @@ app = FastAPI(
 app.include_router(system.router)
 app.include_router(auth.router)
 app.include_router(database.router)
+app.include_router(profile.router)
