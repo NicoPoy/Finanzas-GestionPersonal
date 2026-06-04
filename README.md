@@ -78,3 +78,5 @@ Este comando valida que React/Vite compile correctamente para produccion.
 ## Estado actual del login
 
 El login es visual. Todavia no autentica contra backend. Esta dejado como punto de entrada para conectar usuarios cuando definamos registro, sesiones y seguridad.
+
+.
