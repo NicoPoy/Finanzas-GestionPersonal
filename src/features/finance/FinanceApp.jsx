@@ -202,6 +202,27 @@ export default function FinanceApp({ accessToken }) {
     setSelectedCardId("");
   }
 
+  function updateBank(bankId, name) {
+    setData((current) => ({
+      ...current,
+      banks: current.banks.map((bank) => (bank.id === bankId ? { ...bank, name } : bank)),
+    }));
+  }
+
+  function removeBank(bankId) {
+    setData((current) => {
+      const removedCardIds = current.banks.find((bank) => bank.id === bankId)?.cards.map((card) => card.id) ?? [];
+
+      return {
+        ...current,
+        banks: current.banks.filter((bank) => bank.id !== bankId),
+        expenses: current.expenses.filter((expense) => !removedCardIds.includes(expense.cardId)),
+      };
+    });
+    setSelectedBankId("");
+    setSelectedCardId("");
+  }
+
   function addCard(name) {
     if (!selectedBankId) {
       return;
@@ -220,6 +241,28 @@ export default function FinanceApp({ accessToken }) {
       ),
     }));
     setSelectedCardId(newCard.id);
+  }
+
+  function updateCard(cardId, name) {
+    setData((current) => ({
+      ...current,
+      banks: current.banks.map((bank) => ({
+        ...bank,
+        cards: bank.cards.map((card) => (card.id === cardId ? { ...card, name } : card)),
+      })),
+    }));
+  }
+
+  function removeCard(cardId) {
+    setData((current) => ({
+      ...current,
+      banks: current.banks.map((bank) => ({
+        ...bank,
+        cards: bank.cards.filter((card) => card.id !== cardId),
+      })),
+      expenses: current.expenses.filter((expense) => expense.cardId !== cardId),
+    }));
+    setSelectedCardId("");
   }
 
   function addExpense(expense) {
@@ -244,6 +287,21 @@ export default function FinanceApp({ accessToken }) {
     setData((current) => ({
       ...current,
       expenses: current.expenses.filter((expense) => expense.id !== expenseId),
+    }));
+  }
+
+  function updateExpense(expenseId, updates) {
+    setData((current) => ({
+      ...current,
+      expenses: current.expenses.map((expense) =>
+        expense.id === expenseId
+          ? {
+              ...expense,
+              ...updates,
+              savings: Math.min(Math.max(Number(updates.savings) || 0, 0), Number(updates.amount) || 0),
+            }
+          : expense,
+      ),
     }));
   }
 
@@ -280,6 +338,15 @@ export default function FinanceApp({ accessToken }) {
     setData((current) => ({
       ...current,
       [storageKey]: current[storageKey].filter((expense) => expense.id !== expenseId),
+    }));
+  }
+
+  function updateSimpleExpense(storageKey, expenseId, updates) {
+    setData((current) => ({
+      ...current,
+      [storageKey]: current[storageKey].map((expense) =>
+        expense.id === expenseId ? { ...expense, ...updates } : expense,
+      ),
     }));
   }
 
@@ -425,6 +492,8 @@ export default function FinanceApp({ accessToken }) {
           addCard={addCard}
           addExpense={addExpense}
           banks={banksWithTotals}
+          removeBank={removeBank}
+          removeCard={removeCard}
           removeExpense={removeExpense}
           selectBank={selectBank}
           selectedBank={selectedBank}
@@ -432,6 +501,9 @@ export default function FinanceApp({ accessToken }) {
           selectedCard={selectedCard}
           selectedCardId={selectedCardId}
           setSelectedCardId={setSelectedCardId}
+          updateBank={updateBank}
+          updateCard={updateCard}
+          updateExpense={updateExpense}
           updateExpenseSavings={updateExpenseSavings}
         />
       ) : activeModule === "settings" ? (
@@ -454,6 +526,7 @@ export default function FinanceApp({ accessToken }) {
           module={simpleModules[activeModule]}
           onAdd={addSimpleExpense}
           onRemove={removeSimpleExpense}
+          onUpdate={updateSimpleExpense}
         />
       )}
     </main>

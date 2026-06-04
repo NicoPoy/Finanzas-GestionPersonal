@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Check, Pencil, ReceiptText, Trash2, X } from "lucide-react";
+import { CARD_FIXED_CATEGORIES } from "../../data/initialData.js";
 import { getExpenseSavings, getNetExpenseAmount, isFixedCardExpense } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
 // Tabla de consumos de una tarjeta, con edicion puntual del ahorro de cada cuota.
-export default function CardExpenseList({ card, onRemove, onUpdateSavings }) {
+export default function CardExpenseList({ card, onRemove, onUpdate, onUpdateSavings }) {
   const [editingExpenseId, setEditingExpenseId] = useState("");
-  const [savingsDraft, setSavingsDraft] = useState("");
+  const [draft, setDraft] = useState(null);
 
   if (!card?.expenses.length) {
     return (
@@ -19,23 +20,50 @@ export default function CardExpenseList({ card, onRemove, onUpdateSavings }) {
 
   function startSavingsEdit(expense) {
     setEditingExpenseId(expense.id);
-    setSavingsDraft(String(getExpenseSavings(expense)));
+    setDraft({
+      amount: String(expense.amount),
+      expenseType: isFixedCardExpense(expense) ? "fixed" : expense.installments === 1 ? "single" : "installments",
+      fixedCategory: expense.fixedCategory || "subscriptions",
+      installments: String(expense.installments || ""),
+      origin: expense.origin,
+      savings: String(getExpenseSavings(expense)),
+    });
   }
 
   function cancelSavingsEdit() {
     setEditingExpenseId("");
-    setSavingsDraft("");
+    setDraft(null);
   }
 
   function saveSavingsEdit(expense) {
-    const parsedSavings = Number(savingsDraft);
+    const parsedAmount = Number(draft.amount);
+    const parsedSavings = Number(draft.savings) || 0;
+    const isFixed = draft.expenseType === "fixed";
+    const parsedInstallments = draft.expenseType === "single" ? 1 : Number(draft.installments);
 
-    if (Number.isNaN(parsedSavings) || parsedSavings < 0 || parsedSavings > expense.amount) {
+    if (
+      !draft.origin.trim() ||
+      parsedAmount <= 0 ||
+      parsedSavings < 0 ||
+      parsedSavings > parsedAmount ||
+      (!isFixed && parsedInstallments <= 0)
+    ) {
       return;
     }
 
-    onUpdateSavings(expense.id, parsedSavings);
+    onUpdate(expense.id, {
+      amount: parsedAmount,
+      fixedCategory: isFixed ? draft.fixedCategory : "",
+      installments: isFixed ? 0 : parsedInstallments,
+      isFixed,
+      origin: draft.origin.trim(),
+      savings: parsedSavings,
+    });
     cancelSavingsEdit();
+  }
+
+  function updateDraft(field, value) {
+    setDraft((current) => ({ ...current, [field]: value }));
   }
 
   return (
@@ -57,31 +85,71 @@ export default function CardExpenseList({ card, onRemove, onUpdateSavings }) {
           ? null
           : netAmount + expense.amount * Math.max(expense.installments - 1, 0);
         const isEditingSavings = editingExpenseId === expense.id;
-        const parsedDraft = Number(savingsDraft);
+        const parsedDraft = Number(draft?.savings);
         const canSaveSavings =
-          isEditingSavings && !Number.isNaN(parsedDraft) && parsedDraft >= 0 && parsedDraft <= expense.amount;
+          isEditingSavings && !Number.isNaN(parsedDraft) && parsedDraft >= 0 && parsedDraft <= Number(draft?.amount);
 
         return (
           <div className="table-row" key={expense.id}>
-            <strong>{expense.origin}</strong>
-            <span>{currency.format(expense.amount)}</span>
+            <strong>
+              {isEditingSavings ? (
+                <input
+                  className="row-edit-input"
+                  value={draft.origin}
+                  onChange={(event) => updateDraft("origin", event.target.value)}
+                />
+              ) : (
+                expense.origin
+              )}
+            </strong>
+            <span>
+              {isEditingSavings ? (
+                <input
+                  className="row-edit-input"
+                  min="1"
+                  type="number"
+                  value={draft.amount}
+                  onChange={(event) => updateDraft("amount", event.target.value)}
+                />
+              ) : (
+                currency.format(expense.amount)
+              )}
+            </span>
             <span>
               {isEditingSavings ? (
                 <input
                   aria-label={`Ahorro de ${expense.origin}`}
                   className="savings-input"
                   min="0"
-                  max={expense.amount}
+                  max={draft.amount || undefined}
                   type="number"
-                  value={savingsDraft}
-                  onChange={(event) => setSavingsDraft(event.target.value)}
+                  value={draft.savings}
+                  onChange={(event) => updateDraft("savings", event.target.value)}
                 />
               ) : (
                 currency.format(savings)
               )}
             </span>
             <span>{currency.format(netAmount)}</span>
-            <span>{isFixedCardExpense(expense) ? "Fijo" : expense.installments === 1 ? "Unica" : expense.installments}</span>
+            <span>
+              {isEditingSavings ? (
+                <select
+                  className="row-edit-input"
+                  value={draft.expenseType}
+                  onChange={(event) => updateDraft("expenseType", event.target.value)}
+                >
+                  <option value="installments">Cuotas</option>
+                  <option value="single">Unica</option>
+                  <option value="fixed">Fijo</option>
+                </select>
+              ) : isFixedCardExpense(expense) ? (
+                "Fijo"
+              ) : expense.installments === 1 ? (
+                "Unica"
+              ) : (
+                expense.installments
+              )}
+            </span>
             <span>{isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}</span>
             <div className="row-actions">
               {isEditingSavings ? (
@@ -109,10 +177,10 @@ export default function CardExpenseList({ card, onRemove, onUpdateSavings }) {
               ) : (
                 <>
                   <button
-                    aria-label={`Editar ahorro de ${expense.origin}`}
+                    aria-label={`Editar ${expense.origin}`}
                     className="icon-button icon-button-neutral"
                     onClick={() => startSavingsEdit(expense)}
-                    title="Editar ahorro"
+                    title="Editar gasto"
                     type="button"
                   >
                     <Pencil size={16} />
@@ -129,6 +197,36 @@ export default function CardExpenseList({ card, onRemove, onUpdateSavings }) {
                 </>
               )}
             </div>
+            {isEditingSavings && draft.expenseType === "installments" ? (
+              <div className="row-edit-extra">
+                <label>
+                  Cuotas
+                  <input
+                    min="1"
+                    type="number"
+                    value={draft.installments}
+                    onChange={(event) => updateDraft("installments", event.target.value)}
+                  />
+                </label>
+              </div>
+            ) : null}
+            {isEditingSavings && draft.expenseType === "fixed" ? (
+              <div className="row-edit-extra">
+                <label>
+                  Seccion
+                  <select
+                    value={draft.fixedCategory}
+                    onChange={(event) => updateDraft("fixedCategory", event.target.value)}
+                  >
+                    {Object.entries(CARD_FIXED_CATEGORIES).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : null}
           </div>
         );
       })}

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Plus, ReceiptText, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, ReceiptText, Trash2, X } from "lucide-react";
 import { currency } from "../../utils/formatters.js";
 
 // Modulo generico para Departamento, Suscripciones, Actividades y Extras.
 // Recibe la configuracion de la seccion desde FinanceApp para evitar duplicar pantallas casi iguales.
-export default function SimpleExpenseModule({ module, onAdd, onRemove }) {
+export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate }) {
   const Icon = module.icon;
 
   return (
@@ -36,6 +36,7 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove }) {
           emptyMessage={module.emptyMessage}
           expenses={module.expenses}
           onRemove={(expenseId) => onRemove(module.storageKey, expenseId)}
+          onUpdate={(expenseId, updates) => onUpdate(module.storageKey, expenseId, updates)}
         />
       </section>
     </section>
@@ -101,7 +102,11 @@ function FixedExpenseList({
   emptyMessage = "Todavia no cargaste gastos fijos del departamento.",
   expenses,
   onRemove,
+  onUpdate,
 }) {
+  const [editingId, setEditingId] = useState("");
+  const [draft, setDraft] = useState({ amount: "", name: "" });
+
   if (!expenses.length && !cardExpenses.length) {
     return (
       <div className="empty-state">
@@ -120,19 +125,36 @@ function FixedExpenseList({
       </div>
 
       {expenses.map((expense) => (
-        <div className="table-row fixed-table-row" key={expense.id}>
-          <strong>{expense.name}</strong>
-          <span>{currency.format(expense.amount)}</span>
-          <button
-            aria-label={`Eliminar ${expense.name}`}
-            className="icon-button"
-            onClick={() => onRemove(expense.id)}
-            title="Eliminar gasto"
-            type="button"
-          >
-            <Trash2 size={17} />
-          </button>
-        </div>
+        <SimpleExpenseRow
+          draft={draft}
+          expense={expense}
+          isEditing={editingId === expense.id}
+          key={expense.id}
+          onCancel={() => {
+            setEditingId("");
+            setDraft({ amount: "", name: "" });
+          }}
+          onDelete={() => onRemove(expense.id)}
+          onDraftChange={setDraft}
+          onEdit={() => {
+            setEditingId(expense.id);
+            setDraft({ amount: String(expense.amount), name: expense.name });
+          }}
+          onSave={() => {
+            const parsedAmount = Number(draft.amount);
+
+            if (!draft.name.trim() || parsedAmount <= 0) {
+              return;
+            }
+
+            onUpdate(expense.id, {
+              amount: parsedAmount,
+              name: draft.name.trim(),
+            });
+            setEditingId("");
+            setDraft({ amount: "", name: "" });
+          }}
+        />
       ))}
 
       {cardExpenses.map((expense) => (
@@ -145,6 +167,64 @@ function FixedExpenseList({
           <span className="card-paid-badge">Ya incluido en Tarjetas</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+function SimpleExpenseRow({ draft, expense, isEditing, onCancel, onDelete, onDraftChange, onEdit, onSave }) {
+  return (
+    <div className="table-row fixed-table-row" key={expense.id}>
+      <strong>
+        {isEditing ? (
+          <input
+            className="row-edit-input"
+            value={draft.name}
+            onChange={(event) => onDraftChange((current) => ({ ...current, name: event.target.value }))}
+          />
+        ) : (
+          expense.name
+        )}
+      </strong>
+      <span>
+        {isEditing ? (
+          <input
+            className="row-edit-input"
+            min="1"
+            type="number"
+            value={draft.amount}
+            onChange={(event) => onDraftChange((current) => ({ ...current, amount: event.target.value }))}
+          />
+        ) : (
+          currency.format(expense.amount)
+        )}
+      </span>
+      <div className="row-actions">
+        {isEditing ? (
+          <>
+            <button className="icon-button icon-button-success" onClick={onSave} title="Guardar" type="button">
+              <Check size={17} />
+            </button>
+            <button className="icon-button icon-button-neutral" onClick={onCancel} title="Cancelar" type="button">
+              <X size={17} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="icon-button icon-button-neutral" onClick={onEdit} title="Editar gasto" type="button">
+              <Pencil size={16} />
+            </button>
+            <button
+              aria-label={`Eliminar ${expense.name}`}
+              className="icon-button"
+              onClick={onDelete}
+              title="Eliminar gasto"
+              type="button"
+            >
+              <Trash2 size={17} />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
