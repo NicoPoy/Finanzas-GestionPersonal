@@ -24,7 +24,10 @@ export default function LoginScreen({ onLogin }) {
     <main className="login-shell">
       <section className="login-panel" aria-label="Inicio de sesion">
         <div className="login-copy">
-          <p>Finanzas personales</p>
+          <div className="brand-lockup brand-lockup-login">
+            <img alt="" src="/logo_app_finanzas.png" />
+            <p>Finanzas personales</p>
+          </div>
           <h1>Ingresar</h1>
         </div>
 

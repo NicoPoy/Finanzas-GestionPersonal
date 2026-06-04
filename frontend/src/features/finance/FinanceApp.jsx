@@ -110,6 +110,11 @@ export default function FinanceApp({ accessToken }) {
     () => buildRegistryServices(data, banksWithTotals),
     [banksWithTotals, data],
   );
+  const today = new Date();
+  const currentCardPaymentKey = selectedCard
+    ? getPaymentKey(today.getFullYear(), today.getMonth(), `card:${selectedCard.id}`)
+    : "";
+  const isSelectedCardPaidThisMonth = Boolean(data.paymentRegistry[currentCardPaymentKey]);
   const cardFixedExpensesByCategory = useMemo(
     () => buildCardFixedExpensesByCategory(banksWithTotals),
     [banksWithTotals],
@@ -321,6 +326,41 @@ export default function FinanceApp({ accessToken }) {
     }));
   }
 
+  function registerCardPayment(cardId) {
+    const paymentDate = new Date();
+    const paymentKey = getPaymentKey(paymentDate.getFullYear(), paymentDate.getMonth(), `card:${cardId}`);
+
+    setData((current) => {
+      if (current.paymentRegistry[paymentKey]) {
+        return current;
+      }
+
+      const updatedExpenses = current.expenses
+        .map((expense) => {
+          if (expense.cardId !== cardId || expense.isFixed) {
+            return expense;
+          }
+
+          const remainingInstallments = Math.max((Number(expense.installments) || 1) - 1, 0);
+
+          return {
+            ...expense,
+            installments: remainingInstallments,
+          };
+        })
+        .filter((expense) => expense.cardId !== cardId || expense.isFixed || expense.installments > 0);
+
+      return {
+        ...current,
+        expenses: updatedExpenses,
+        paymentRegistry: {
+          ...current.paymentRegistry,
+          [paymentKey]: true,
+        },
+      };
+    });
+  }
+
   function addSimpleExpense(storageKey, expense) {
     setData((current) => ({
       ...current,
@@ -393,7 +433,10 @@ export default function FinanceApp({ accessToken }) {
     <main className="app-shell">
       <section className="summary-band">
         <div className="summary-copy">
-          <p>Finanzas personales</p>
+          <div className="brand-lockup brand-lockup-hero">
+            <img alt="" src="/logo_app_finanzas.png" />
+            <p>Finanzas personales</p>
+          </div>
           <h1>Administrador mensual</h1>
         </div>
 
@@ -501,6 +544,8 @@ export default function FinanceApp({ accessToken }) {
           selectedCard={selectedCard}
           selectedCardId={selectedCardId}
           setSelectedCardId={setSelectedCardId}
+          isSelectedCardPaidThisMonth={isSelectedCardPaidThisMonth}
+          onRegisterCardPayment={registerCardPayment}
           updateBank={updateBank}
           updateCard={updateCard}
           updateExpense={updateExpense}

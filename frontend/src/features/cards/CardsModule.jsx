@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Building2, Check, CreditCard, Landmark, Pencil, Trash2, X } from "lucide-react";
+import { Building2, Check, CreditCard, Landmark, Pencil, ReceiptText, Trash2, X } from "lucide-react";
 import AddInlineForm from "../../components/forms/AddInlineForm.jsx";
 import { currency } from "../../utils/formatters.js";
 import CardExpenseForm from "./CardExpenseForm.jsx";
@@ -20,6 +20,8 @@ export default function CardsModule({
   selectedCard,
   selectedCardId,
   setSelectedCardId,
+  isSelectedCardPaidThisMonth,
+  onRegisterCardPayment,
   updateBank,
   updateCard,
   updateExpense,
@@ -93,7 +95,18 @@ export default function CardsModule({
                 <p>{selectedBank.name}</p>
                 <h2>{selectedCard.name}</h2>
               </div>
-              <CreditCard size={34} strokeWidth={1.7} />
+              <div className="section-heading-actions">
+                <button
+                  className="payment-button"
+                  disabled={isSelectedCardPaidThisMonth}
+                  onClick={() => onRegisterCardPayment(selectedCard.id)}
+                  type="button"
+                >
+                  <ReceiptText size={18} />
+                  {isSelectedCardPaidThisMonth ? "Pago registrado" : "Registrar pago"}
+                </button>
+                <CreditCard size={34} strokeWidth={1.7} />
+              </div>
             </div>
 
             <CardExpenseForm key={selectedCard.id} onSubmit={addExpense} cardName={selectedCard.name} />

@@ -22,6 +22,8 @@ El frontend esta dentro de `frontend/`. Esa carpeta contiene todo lo necesario p
 ```text
 frontend/
   index.html
+  public/
+    logo_app_finanzas.png
   src/
     main.jsx
     App.jsx
@@ -37,7 +39,13 @@ La raiz del repo sigue teniendo `package.json` y `vite.config.js` para que los c
 
 ### `frontend/index.html`
 
-HTML base de Vite. Define el `div#root` donde React monta la aplicacion y referencia `/src/main.jsx` desde la raiz interna de Vite, que ahora es `frontend/`.
+HTML base de Vite. Define el `div#root` donde React monta la aplicacion, referencia `/src/main.jsx` desde la raiz interna de Vite y declara el favicon publico de la pagina.
+
+### `frontend/public/`
+
+Assets publicos que Vite copia sin procesar y sirve desde la raiz del sitio.
+
+- `logo_app_finanzas.png`: icono principal de la pagina. Se usa como favicon y como icono para accesos directos compatibles.
 
 ### `frontend/src/main.jsx`
 
@@ -53,6 +61,8 @@ Componente raiz de React. Decide si mostrar:
 - `FinanceApp`, cuando el usuario entra.
 
 Hoy la sesion se valida con un token guardado en `localStorage`. Si el token no existe o `/api/auth/me` lo rechaza, solo se muestra el login.
+
+La identidad visual usa `logo_app_finanzas.png` de `frontend/public/` como marca chica en el login y en el encabezado principal. Se referencia con ruta absoluta (`/logo_app_finanzas.png`) porque Vite sirve `public/` desde la raiz del sitio.
 
 ### `frontend/src/styles.css`
 
@@ -173,6 +183,8 @@ cards/
 - `CardExpenseList.jsx`: lista consumos, permite editar ahorro y eliminar.
 
 Esta separacion permite modificar el formulario sin tocar la tabla ni el layout.
+
+La accion `Registrar pago` vive visualmente en `CardsModule`, pero la actualizacion real se ejecuta en `FinanceApp`: marca el mes actual como pagado en Registro para esa tarjeta, descuenta una cuota de cada consumo no fijo y elimina los consumos que llegan a cero cuotas. Los gastos fijos de tarjeta no se descuentan porque son recurrentes hasta que el usuario los elimine.
 
 #### `features/simpleExpenses/`
 

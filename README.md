@@ -62,6 +62,8 @@ http://localhost:3000/api/db/ping
 ```text
 frontend/
   index.html
+  public/
+    logo_app_finanzas.png
   src/
     App.jsx
     main.jsx

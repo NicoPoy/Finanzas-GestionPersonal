@@ -79,6 +79,33 @@ button {
   text-transform: uppercase;
 }
 
+.brand-lockup {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+}
+
+.brand-lockup img {
+  border-radius: 12px;
+  display: block;
+  flex: 0 0 auto;
+  object-fit: cover;
+}
+
+.brand-lockup-login {
+  margin-bottom: 10px;
+}
+
+.brand-lockup-login img {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+  height: 42px;
+  width: 42px;
+}
+
+.brand-lockup-login p {
+  margin: 0;
+}
+
 .login-copy h1 {
   color: #172033;
   font-size: 2rem;
@@ -171,6 +198,21 @@ button {
   letter-spacing: 0;
   margin: 0 0 8px;
   text-transform: uppercase;
+}
+
+.brand-lockup-hero {
+  margin-bottom: 12px;
+}
+
+.brand-lockup-hero img {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 36px rgba(2, 6, 23, 0.32);
+  height: 52px;
+  width: 52px;
+}
+
+.brand-lockup-hero p {
+  margin: 0;
 }
 
 .summary-copy h1 {
@@ -459,6 +501,34 @@ button {
 .section-heading h2 {
   font-size: 2rem;
   margin: 0;
+}
+
+.section-heading-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+}
+
+.payment-button {
+  align-items: center;
+  background: #0f766e;
+  border: 1px solid #0f766e;
+  border-radius: 8px;
+  color: #ffffff;
+  display: inline-flex;
+  font-weight: 850;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.payment-button:disabled {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
 }
 
 .expense-form {
@@ -1178,6 +1248,11 @@ button {
     padding-bottom: 14px;
   }
 
+  .section-heading-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+  }
+
   .section-heading h2 {
     font-size: 1.55rem;
     line-height: 1.1;
@@ -1186,6 +1261,11 @@ button {
 
   .section-heading svg {
     flex: 0 0 auto;
+  }
+
+  .payment-button {
+    min-height: 40px;
+    padding: 0 12px;
   }
 
   .bank-tab,
