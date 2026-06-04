@@ -5,7 +5,6 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Settings:
     """Configuracion leida desde variables de entorno.
-
     Los secretos nunca se guardan en Git; Vercel y el entorno local los inyectan.
     """
 

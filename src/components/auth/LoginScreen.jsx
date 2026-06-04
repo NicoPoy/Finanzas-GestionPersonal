@@ -3,10 +3,21 @@ import React, { useState } from "react";
 export default function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    onLogin({ email, password });
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await onLogin({ email, password });
+    } catch (loginError) {
+      setError(loginError.message || "No se pudo iniciar sesion.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -40,10 +51,14 @@ export default function LoginScreen({ onLogin }) {
             />
           </label>
 
-          <button type="submit">Entrar</button>
+          {error ? <p className="form-error">{error}</p> : null}
+
+          <button disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Ingresando..." : "Entrar"}
+          </button>
         </form>
 
-        <p className="login-note">Login visual preparado. La autenticacion real se conecta cuando definamos usuarios y registro.</p>
+        <p className="login-note">Los usuarios se crean desde Swagger por ahora.</p>
       </section>
     </main>
   );

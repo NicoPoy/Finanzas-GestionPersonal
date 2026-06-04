@@ -44,7 +44,7 @@ Componente raiz de React. Decide si mostrar:
 - `LoginScreen`, cuando no hay sesion.
 - `FinanceApp`, cuando el usuario entra.
 
-Hoy la sesion es un `useState` local porque el login es visual. Cuando exista login real, este archivo deberia consultar una sesion/token y no manejar datos financieros.
+Hoy la sesion se valida con un token guardado en `localStorage`. Si el token no existe o `/api/auth/me` lo rechaza, solo se muestra el login.
 
 ### `src/styles.css`
 
@@ -64,7 +64,7 @@ components/
     AddInlineForm.jsx
 ```
 
-- `auth/LoginScreen.jsx`: pantalla de login visual. No autentica todavia.
+- `auth/LoginScreen.jsx`: pantalla de login. No incluye registro; los usuarios se crean desde Swagger.
 - `common/Metric.jsx`: tarjeta chica usada en el resumen superior.
 - `forms/AddInlineForm.jsx`: formulario compacto para agregar bancos y tarjetas.
 
@@ -260,7 +260,9 @@ Swagger queda en:
 Endpoints HTTP agrupados por tema.
 
 - `system.py`: health check y metadata basica.
-- `auth.py`: login placeholder. Devuelve 501 porque la autenticacion real todavia no esta implementada.
+- `auth.py`: registro desde Swagger, login y usuario autenticado.
+
+El registro no aparece en el frontend. Por ahora los usuarios se crean desde Swagger con `POST /api/auth/register` para mantener la pantalla publica solamente con login.
 
 ### `api/app/models/`
 

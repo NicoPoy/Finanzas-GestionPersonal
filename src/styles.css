@@ -108,6 +108,22 @@ button {
   margin-top: 4px;
 }
 
+.login-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.form-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin: 0;
+  padding: 10px 12px;
+}
+
 .login-note {
   color: #64748b;
   font-size: 0.82rem;

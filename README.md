@@ -75,8 +75,24 @@ npm run build
 
 Este comando valida que React/Vite compile correctamente para produccion.
 
-## Estado actual del login
+## Auth
 
-El login es visual. Todavia no autentica contra backend. Esta dejado como punto de entrada para conectar usuarios cuando definamos registro, sesiones y seguridad.
+La pantalla publica muestra solo login. Los usuarios se crean desde Swagger:
+
+```text
+POST /api/auth/register
+```
+
+Luego el frontend inicia sesion con:
+
+```text
+POST /api/auth/login
+```
+
+El token se guarda en `localStorage` con la clave `finanzas_access_token` y se valida contra:
+
+```text
+GET /api/auth/me
+```
 
 .
