@@ -93,6 +93,35 @@ npm run build
 
 Este comando valida que React/Vite compile correctamente para produccion.
 
+## Android
+
+El proyecto esta preparado con Capacitor para generar una app Android sin perder la web de Vercel.
+
+Primera vez:
+
+```powershell
+npm install
+npm run build
+npm run android:add
+npm run android:assets
+```
+
+Despues de cambios en React:
+
+```powershell
+npm run android:sync
+npm run android:open
+```
+
+La web sigue publicada normalmente en Vercel. La app Android usa el mismo frontend compilado, pero las llamadas a `/api` se envian a `https://finanzas-gestion.vercel.app` cuando corre dentro de Capacitor.
+
+Si cambia el logo de la app:
+
+```powershell
+npm run android:assets
+npm run android:sync
+```
+
 ## Auth
 
 La pantalla publica muestra solo login. Los usuarios se crean desde Swagger:

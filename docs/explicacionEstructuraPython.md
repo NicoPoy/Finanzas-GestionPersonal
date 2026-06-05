@@ -80,6 +80,13 @@ Configuracion de `app`:
 - `redoc_url="/api/redoc"`: URL alternativa de documentacion.
 - `openapi_url="/api/openapi.json"`: JSON OpenAPI usado por Swagger.
 
+Middlewares:
+
+- `CORSMiddleware`:
+  - Permite que la app Android generada con Capacitor pueda llamar a la API publicada en Vercel.
+  - Habilita origenes locales (`localhost`) para desarrollo.
+  - Mantiene origenes concretos en lugar de usar `*` porque las requests usan credenciales/cabeceras de autenticacion.
+
 Routers incluidos:
 
 - `system.router`: endpoints de estado general.

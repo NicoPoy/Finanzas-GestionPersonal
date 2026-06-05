@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.app.routers import auth, database, profile, system
 
@@ -12,6 +13,21 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_headers=["*"],
+    allow_methods=["*"],
+    allow_origins=[
+        "capacitor://localhost",
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://localhost",
+        "https://finanzas-gestion.vercel.app",
+    ],
 )
 
 app.include_router(system.router)

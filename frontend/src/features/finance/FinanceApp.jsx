@@ -22,6 +22,7 @@ import {
   getPaymentKey,
 } from "../../domain/financeCalculations.js";
 import { normalizeData } from "../../domain/storage.js";
+import { apiUrl } from "../../services/platform.js";
 import { currency } from "../../utils/formatters.js";
 import CardsModule from "../cards/CardsModule.jsx";
 import ProjectionModule from "../projection/ProjectionModule.jsx";
@@ -45,7 +46,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
       setProfileError("");
 
       try {
-        const response = await fetch("/api/profile", {
+        const response = await fetch(apiUrl("/api/profile"), {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -77,7 +78,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
 
     async function saveProfile() {
       try {
-        await fetch("/api/profile", {
+        await fetch(apiUrl("/api/profile"), {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${accessToken}`,

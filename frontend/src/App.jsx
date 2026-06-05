@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import LoginScreen from "./components/auth/LoginScreen.jsx";
 import FinanceApp from "./features/finance/FinanceApp.jsx";
+import { apiUrl } from "./services/platform.js";
 import "./styles.css";
 
 // App decide si mostrar el login visual o la aplicacion.
@@ -17,7 +18,7 @@ export default function App() {
 
     async function verifySession() {
       try {
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch(apiUrl("/api/auth/me"), {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -38,7 +39,7 @@ export default function App() {
   }, [accessToken]);
 
   async function handleLogin(credentials) {
-    const response = await fetch("/api/auth/login", {
+    const response = await fetch(apiUrl("/api/auth/login"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -37,6 +37,15 @@ frontend/
 
 La raiz del repo sigue teniendo `package.json` y `vite.config.js` para que los comandos se ejecuten desde la carpeta principal, pero Vite tiene configurado `root: "frontend"`.
 
+`capacitor.config.json` queda en la raiz porque Capacitor lo busca desde el proyecto principal. Usa `webDir: "dist"`, el mismo directorio que genera Vite para Vercel.
+
+La carpeta `android/` es el proyecto nativo que abre Android Studio. Se genera con Capacitor y se sincroniza con `npm run android:sync`.
+
+La carpeta `assets/` contiene fuentes para los iconos nativos:
+
+- `assets/icon.png`: base para el icono Android.
+- `assets/splash.png`: base para la pantalla de carga Android.
+
 ### `frontend/index.html`
 
 HTML base de Vite. Define el `div#root` donde React monta la aplicacion, referencia `/src/main.jsx` desde la raiz interna de Vite y declara el favicon publico de la pagina.
@@ -52,6 +61,8 @@ Assets publicos que Vite copia sin procesar y sirve desde la raiz del sitio.
 Punto de entrada de Vite. Solo monta React en el `div#root` definido por `index.html`.
 
 Debe mantenerse chico porque no representa reglas de negocio ni pantallas.
+
+Tambien llama a `applyPlatformClass()` para agregar la clase `native-app` cuando la app corre dentro de Capacitor. Esa clase permite hacer ajustes visuales exclusivos para Android sin alterar la web.
 
 ### `frontend/src/App.jsx`
 
@@ -140,6 +151,22 @@ utils/
 ```
 
 `formatters.js` centraliza el formato de moneda ARS. Asi toda la app muestra importes de la misma manera.
+
+### `frontend/src/services/`
+
+Servicios transversales que conectan la app con el entorno donde corre.
+
+```text
+services/
+  platform.js
+```
+
+`platform.js` contiene:
+
+- `PRODUCTION_API_BASE_URL`: URL publica de la API en Vercel.
+- `isNativeApp()`: detecta si la app corre dentro de Capacitor.
+- `apiUrl(path)`: en web devuelve la ruta relativa; en Android devuelve la URL absoluta contra Vercel.
+- `applyPlatformClass()`: agrega o quita la clase `native-app` en el documento para estilos especificos de app.
 
 ### `frontend/src/features/`
 
