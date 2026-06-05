@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   CreditCard,
+  Download,
   Dumbbell,
   Home,
   ListChecks,
@@ -443,9 +444,26 @@ export default function FinanceApp({ accessToken, onLogout }) {
         </div>
 
         <div className="summary-side">
-          <button aria-label="Cerrar sesion" className="logout-button" onClick={onLogout} title="Cerrar sesion" type="button">
-            <LogOut size={17} />
-          </button>
+          <div className="header-actions">
+            <a
+              aria-label="Descargar APK"
+              className="header-action-button"
+              download="finanzas-debug.apk"
+              href="/finanzas-debug.apk"
+              title="Descargar APK"
+            >
+              <Download size={16} />
+            </a>
+            <button
+              aria-label="Cerrar sesion"
+              className="header-action-button"
+              onClick={onLogout}
+              title="Cerrar sesion"
+              type="button"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
 
           <div className="summary-metrics" aria-label="Resumen de gastos">
             <Metric

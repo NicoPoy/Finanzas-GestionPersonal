@@ -122,6 +122,22 @@ npm run android:assets
 npm run android:sync
 ```
 
+Para actualizar el APK descargable desde la web:
+
+```powershell
+cd C:\Users\prog32np\Desktop\Finanzas
+cd android
+.\gradlew.bat assembleDebug
+cd ..
+npm run android:publish-apk
+```
+
+El boton de descarga del encabezado apunta a:
+
+```text
+/finanzas-debug.apk
+```
+
 ## Auth
 
 La pantalla publica muestra solo login. Los usuarios se crean desde Swagger:

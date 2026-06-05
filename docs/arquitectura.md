@@ -55,6 +55,7 @@ HTML base de Vite. Define el `div#root` donde React monta la aplicacion, referen
 Assets publicos que Vite copia sin procesar y sirve desde la raiz del sitio.
 
 - `logo_app_finanzas.png`: icono principal de la pagina. Se usa como favicon y como icono para accesos directos compatibles.
+- `finanzas-debug.apk`: APK debug descargable desde el encabezado de la app web. Debe actualizarse con `npm run android:publish-apk` despues de compilar Android.
 
 ### `frontend/src/main.jsx`
 

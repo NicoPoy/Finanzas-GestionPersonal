@@ -10,6 +10,7 @@
     "android:add": "cap add android",
     "android:assets": "capacitor-assets generate --android",
     "android:sync": "npm run build && cap sync android",
+    "android:publish-apk": "powershell -NoProfile -Command \"Copy-Item -LiteralPath 'android\\app\\build\\outputs\\apk\\debug\\app-debug.apk' -Destination 'frontend\\public\\finanzas-debug.apk' -Force\"",
     "android:open": "cap open android",
     "preview": "vite preview"
   },
