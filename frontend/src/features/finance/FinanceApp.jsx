@@ -6,7 +6,9 @@ import {
   CreditCard,
   Download,
   Dumbbell,
+  History,
   Home,
+  LayoutDashboard,
   ListChecks,
   LogOut,
   Repeat,
@@ -18,14 +20,19 @@ import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
   buildBanksWithTotals,
   buildCardFixedExpensesByCategory,
+  buildDueItems,
+  buildMonthlyDashboard,
   buildRegistryServices,
   countCards,
   getPaymentKey,
+  getPaymentPeriod,
 } from "../../domain/financeCalculations.js";
 import { normalizeData } from "../../domain/storage.js";
 import { apiUrl } from "../../services/platform.js";
 import { currency } from "../../utils/formatters.js";
 import CardsModule from "../cards/CardsModule.jsx";
+import DashboardModule from "../dashboard/DashboardModule.jsx";
+import HistoryModule from "../history/HistoryModule.jsx";
 import ProjectionModule from "../projection/ProjectionModule.jsx";
 import RegistryModule from "../registry/RegistryModule.jsx";
 import SettingsModule from "../settings/SettingsModule.jsx";
@@ -34,7 +41,7 @@ import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
 export default function FinanceApp({ accessToken, onLogout }) {
   const [data, setData] = useState(INITIAL_DATA);
-  const [activeModule, setActiveModule] = useState("cards");
+  const [activeModule, setActiveModule] = useState("dashboard");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -114,10 +121,35 @@ export default function FinanceApp({ accessToken, onLogout }) {
     [banksWithTotals, data],
   );
   const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonthIndex = today.getMonth();
   const currentCardPaymentKey = selectedCard
-    ? getPaymentKey(today.getFullYear(), today.getMonth(), `card:${selectedCard.id}`)
+    ? getPaymentKey(currentYear, currentMonthIndex, `card:${selectedCard.id}`)
     : "";
   const isSelectedCardPaidThisMonth = Boolean(data.paymentRegistry[currentCardPaymentKey]);
+  const currentMonthDashboard = useMemo(
+    () =>
+      buildMonthlyDashboard({
+        monthIndex: currentMonthIndex,
+        paymentDetails: data.paymentDetails,
+        paymentRegistry: data.paymentRegistry,
+        salary: data.salary,
+        services: registryServices,
+        year: currentYear,
+      }),
+    [currentMonthIndex, currentYear, data.paymentDetails, data.paymentRegistry, data.salary, registryServices],
+  );
+  const currentDueItems = useMemo(
+    () =>
+      buildDueItems({
+        monthIndex: currentMonthIndex,
+        paymentDetails: data.paymentDetails,
+        paymentRegistry: data.paymentRegistry,
+        services: registryServices,
+        year: currentYear,
+      }),
+    [currentMonthIndex, currentYear, data.paymentDetails, data.paymentRegistry, registryServices],
+  );
   const cardFixedExpensesByCategory = useMemo(
     () => buildCardFixedExpensesByCategory(banksWithTotals),
     [banksWithTotals],
@@ -240,6 +272,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
       id: crypto.randomUUID(),
       name,
       accent: CARD_COLORS[countCards(data.banks) % CARD_COLORS.length],
+      dueDay: 10,
     };
 
     setData((current) => ({
@@ -251,12 +284,19 @@ export default function FinanceApp({ accessToken, onLogout }) {
     setSelectedCardId(newCard.id);
   }
 
-  function updateCard(cardId, name) {
+  function updateCard(cardId, updates) {
     setData((current) => ({
       ...current,
       banks: current.banks.map((bank) => ({
         ...bank,
-        cards: bank.cards.map((card) => (card.id === cardId ? { ...card, name } : card)),
+        cards: bank.cards.map((card) =>
+          card.id === cardId
+            ? {
+                ...card,
+                ...(typeof updates === "string" ? { name: updates } : updates),
+              }
+            : card,
+        ),
       })),
     }));
   }
@@ -352,10 +392,54 @@ export default function FinanceApp({ accessToken, onLogout }) {
           };
         })
         .filter((expense) => expense.cardId !== cardId || expense.isFixed || expense.installments > 0);
+      const paidItems = current.expenses
+        .filter((expense) => expense.cardId === cardId)
+        .map((expense) => ({
+          amount: expense.amount,
+          expenseId: expense.id,
+          installmentPaid: expense.isFixed ? "fixed" : expense.installments,
+          origin: expense.origin,
+        }));
+      const paidAmount = current.expenses
+        .filter((expense) => expense.cardId === cardId)
+        .reduce((sum, expense) => sum + Math.max((Number(expense.amount) || 0) - (Number(expense.savings) || 0), 0), 0);
+      const cardName = banksWithTotals
+        .flatMap((bank) => bank.cards.map((card) => ({ bankName: bank.name, card })))
+        .find((item) => item.card.id === cardId);
+      const serviceName = cardName ? `${cardName.card.name} - ${cardName.bankName}` : "Tarjeta";
+      const paidAt = new Date().toISOString();
 
       return {
         ...current,
         expenses: updatedExpenses,
+        paymentDetails: {
+          ...current.paymentDetails,
+          [paymentKey]: {
+            expectedAmount: paidAmount,
+            method: "Tarjeta",
+            notes: "",
+            paid: true,
+            paidAmount,
+            paidAt,
+          },
+        },
+        paymentHistory: [
+          {
+            category: "Tarjetas",
+            expectedAmount: paidAmount,
+            id: crypto.randomUUID(),
+            items: paidItems,
+            method: "Tarjeta",
+            notes: "",
+            paidAmount,
+            paidAt,
+            period: getPaymentPeriod(paymentDate.getFullYear(), paymentDate.getMonth()),
+            serviceId: `card:${cardId}`,
+            serviceName,
+            type: "card_payment",
+          },
+          ...current.paymentHistory,
+        ],
         paymentRegistry: {
           ...current.paymentRegistry,
           [paymentKey]: true,
@@ -370,6 +454,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
       [storageKey]: [
         {
           id: crypto.randomUUID(),
+          dueDay: expense.dueDay ?? 10,
           ...expense,
         },
         ...current[storageKey],
@@ -402,14 +487,86 @@ export default function FinanceApp({ accessToken, onLogout }) {
 
   function togglePayment(year, monthIndex, serviceId) {
     const key = getPaymentKey(year, monthIndex, serviceId);
+    const service = registryServices.find((item) => item.id === serviceId);
 
-    setData((current) => ({
-      ...current,
-      paymentRegistry: {
-        ...current.paymentRegistry,
-        [key]: !current.paymentRegistry[key],
-      },
-    }));
+    setData((current) => {
+      const nextPaid = !current.paymentRegistry[key];
+      const nextDetails = { ...current.paymentDetails };
+      let nextHistory = current.paymentHistory;
+
+      if (nextPaid) {
+        const paidAt = new Date().toISOString();
+        nextDetails[key] = {
+          expectedAmount: service?.amount ?? 0,
+          method: "",
+          notes: "",
+          paid: true,
+          paidAmount: service?.amount ?? 0,
+          paidAt,
+        };
+        nextHistory = [
+          {
+            category: service?.category ?? "",
+            expectedAmount: service?.amount ?? 0,
+            id: crypto.randomUUID(),
+            items: [],
+            method: "",
+            notes: "",
+            paidAmount: service?.amount ?? 0,
+            paidAt,
+            period: getPaymentPeriod(year, monthIndex),
+            serviceId,
+            serviceName: service?.name ?? serviceId,
+            type: "manual_payment",
+          },
+          ...current.paymentHistory,
+        ];
+      } else {
+        delete nextDetails[key];
+        nextHistory = current.paymentHistory.filter(
+          (item) => !(item.serviceId === serviceId && item.period === getPaymentPeriod(year, monthIndex)),
+        );
+      }
+
+      return {
+        ...current,
+        paymentDetails: nextDetails,
+        paymentHistory: nextHistory,
+        paymentRegistry: {
+          ...current.paymentRegistry,
+          [key]: nextPaid,
+        },
+      };
+    });
+  }
+
+  function updatePaymentDetail(paymentKey, updates) {
+    setData((current) => {
+      const nextDetail = {
+        ...(current.paymentDetails[paymentKey] ?? {}),
+        ...updates,
+      };
+
+      return {
+        ...current,
+        paymentDetails: {
+          ...current.paymentDetails,
+          [paymentKey]: nextDetail,
+        },
+        paymentHistory: current.paymentHistory.map((item) =>
+          `${item.period}-${item.serviceId}` === paymentKey
+            ? {
+                ...item,
+                expectedAmount: Number(nextDetail.expectedAmount) || 0,
+                method: nextDetail.method ?? "",
+                notes: nextDetail.notes ?? "",
+                paidAmount: Number(nextDetail.paidAmount) || 0,
+                paidAt: nextDetail.paidAt ?? item.paidAt,
+              }
+            : item,
+        ),
+      };
+    });
   }
 
   if (isLoadingProfile) {
@@ -472,7 +629,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
               tone={remainingTotal < 0 ? "danger" : "success"}
               value={currency.format(remainingTotal)}
             />
-            <Metric icon={<Banknote size={18} />} label="Sueldo" value={currency.format(data.salary)} />
+            <Metric icon={<Banknote size={18} />} label="Sueldo" tone="warning" value={currency.format(data.salary)} />
             <Metric icon={<CalendarDays size={18} />} label="Total mensual" value={currency.format(generalMonthlyTotal)} />
             <Metric icon={<CreditCard size={18} />} label="Tarjetas" value={currency.format(monthlyTotal)} />
             <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
@@ -485,6 +642,25 @@ export default function FinanceApp({ accessToken, onLogout }) {
 
       <section className="module-bar" aria-label="Secciones de la aplicacion">
         <div className="module-group">
+          <button
+            className={`module-tab primary-tab ${activeModule === "dashboard" ? "active" : ""}`}
+            onClick={() => setActiveModule("dashboard")}
+            type="button"
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+          <button
+            className={`module-tab primary-tab ${activeModule === "registry" ? "active" : ""}`}
+            onClick={() => setActiveModule("registry")}
+            type="button"
+          >
+            <ListChecks size={18} />
+            Registro
+          </button>
+        </div>
+
+        <div className="module-group module-group-main">
           <button
             className={`module-tab ${activeModule === "cards" ? "active" : ""}`}
             onClick={() => setActiveModule("cards")}
@@ -537,12 +713,12 @@ export default function FinanceApp({ accessToken, onLogout }) {
             Proyeccion
           </button>
           <button
-            className={`module-tab tool-tab ${activeModule === "registry" ? "active" : ""}`}
-            onClick={() => setActiveModule("registry")}
+            className={`module-tab tool-tab ${activeModule === "history" ? "active" : ""}`}
+            onClick={() => setActiveModule("history")}
             type="button"
           >
-            <ListChecks size={18} />
-            Registro
+            <History size={18} />
+            Historial
           </button>
           <button
             className={`module-tab tool-tab ${activeModule === "settings" ? "active" : ""}`}
@@ -555,7 +731,13 @@ export default function FinanceApp({ accessToken, onLogout }) {
         </div>
       </section>
 
-      {activeModule === "cards" ? (
+      {activeModule === "dashboard" ? (
+        <DashboardModule
+          dashboard={{ ...currentMonthDashboard, salary: data.salary }}
+          dueItems={currentDueItems}
+          history={data.paymentHistory}
+        />
+      ) : activeModule === "cards" ? (
         <CardsModule
           addBank={addBank}
           addCard={addCard}
@@ -588,10 +770,14 @@ export default function FinanceApp({ accessToken, onLogout }) {
         <ProjectionModule banks={banksWithTotals} />
       ) : activeModule === "registry" ? (
         <RegistryModule
+          paymentDetails={data.paymentDetails}
           paymentRegistry={data.paymentRegistry}
           services={registryServices}
+          onUpdatePaymentDetail={updatePaymentDetail}
           onTogglePayment={togglePayment}
         />
+      ) : activeModule === "history" ? (
+        <HistoryModule history={data.paymentHistory} />
       ) : (
         <SimpleExpenseModule
           module={simpleModules[activeModule]}

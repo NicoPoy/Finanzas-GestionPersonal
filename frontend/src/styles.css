@@ -292,6 +292,10 @@ button {
   color: #bbf7d0;
 }
 
+.metric-warning strong {
+  color: #fde68a;
+}
+
 .metric-danger strong {
   color: #fecdd3;
 }
@@ -352,6 +356,7 @@ button {
   gap: 8px;
 }
 
+.module-group-main,
 .module-group-tools {
   border-left: 1px solid #cbd5e1;
   padding-left: 14px;
@@ -374,6 +379,18 @@ button {
 .module-tab.active {
   background: #172033;
   border-color: #172033;
+  color: #ffffff;
+}
+
+.primary-tab {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+
+.primary-tab.active {
+  background: #3730a3;
+  border-color: #3730a3;
   color: #ffffff;
 }
 
@@ -613,7 +630,7 @@ button {
 }
 
 .fixed-expense-form {
-  grid-template-columns: minmax(180px, 1.4fr) minmax(130px, 0.8fr) auto;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(130px, 0.7fr) minmax(110px, 0.5fr) auto;
 }
 
 .salary-form {
@@ -908,7 +925,7 @@ button {
 }
 
 .fixed-table-row {
-  grid-template-columns: minmax(170px, 1.4fr) minmax(110px, 0.7fr) minmax(150px, 0.9fr);
+  grid-template-columns: minmax(170px, 1.35fr) minmax(110px, 0.65fr) minmax(90px, 0.45fr) minmax(150px, 0.9fr);
 }
 
 .projection-workspace {
@@ -1117,6 +1134,276 @@ button {
   min-height: 330px;
 }
 
+.dashboard-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  margin-bottom: 18px;
+}
+
+.dashboard-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-height: 96px;
+  padding: 16px;
+}
+
+.dashboard-card span {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dashboard-card strong {
+  color: #172033;
+  font-size: 1.35rem;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-card-success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.dashboard-card-success strong {
+  color: #047857;
+}
+
+.dashboard-card-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.dashboard-card-danger strong {
+  color: #b91c1c;
+}
+
+.split-panels {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+}
+
+.inline-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.inline-panel-heading {
+  align-items: center;
+  color: #172033;
+  display: flex;
+  font-weight: 850;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.panel-empty {
+  color: #64748b;
+  margin: 0;
+}
+
+.due-list,
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.due-item,
+.history-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.due-item {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.due-item strong,
+.history-item strong {
+  color: #172033;
+}
+
+.due-item small,
+.history-item small,
+.history-item span {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.due-overdue {
+  border-color: #fecaca;
+}
+
+.due-soon {
+  border-color: #fed7aa;
+}
+
+.due-paid {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.status-pill {
+  border-radius: 999px;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 6px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-pill.paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pill.overdue {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pill.soon {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.status-pill.pending {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.compact-history .history-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.history-item.large {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.due-control {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: inline-grid;
+  gap: 7px;
+  margin-bottom: 16px;
+  max-width: 190px;
+  padding: 12px;
+}
+
+.due-control span {
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.due-control input,
+.payment-detail-panel input,
+.payment-detail-panel select,
+.payment-detail-panel textarea {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #172033;
+  min-width: 0;
+}
+
+.due-control input {
+  height: 38px;
+  padding: 0 10px;
+}
+
+.payment-detail-panel {
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px;
+}
+
+.payment-detail-panel h3 {
+  color: #172033;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.payment-detail-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+.payment-detail-grid label,
+.payment-notes-field {
+  color: #475569;
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 7px;
+}
+
+.payment-detail-panel input,
+.payment-detail-panel select {
+  height: 40px;
+  padding: 0 10px;
+}
+
+.payment-detail-panel textarea {
+  min-height: 78px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.payment-notes-field {
+  grid-column: 1 / -1;
+}
+
+.difference-box {
+  align-content: center;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.difference-box span {
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.difference-box strong {
+  font-size: 0.98rem;
+}
+
+.difference-box.neutral {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.difference-box.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.difference-box.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 @media (max-width: 900px) {
   .summary-band,
   .workspace {
@@ -1162,6 +1449,12 @@ button {
   }
 
   .balance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid,
+  .split-panels,
+  .payment-detail-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1251,6 +1544,7 @@ button {
     flex-wrap: nowrap;
   }
 
+  .module-group-main,
   .module-group-tools {
     border-left: 1px solid #cbd5e1;
     border-top: 0;
@@ -1418,8 +1712,16 @@ button {
     grid-column: 1;
   }
 
-  .fixed-expense-table .table-row span::before {
+  .fixed-expense-table .table-row span:nth-of-type(1)::before {
     content: "Monto";
+  }
+
+  .fixed-expense-table .table-row span:nth-of-type(2)::before {
+    content: "Vence";
+  }
+
+  .fixed-expense-table .table-row span:nth-of-type(3)::before {
+    content: "Origen";
   }
 
   .total-strip {
@@ -1433,6 +1735,12 @@ button {
 
   .balance-grid {
     gap: 10px;
+  }
+
+  .due-item,
+  .history-item.large,
+  .compact-history .history-item {
+    grid-template-columns: 1fr;
   }
 
   .registry-toolbar {

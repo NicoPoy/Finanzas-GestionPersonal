@@ -360,6 +360,7 @@ Clases:
     - `id`: id interno.
     - `name`: nombre visible.
     - `accent`: color visual.
+    - `dueDay`: dia de vencimiento mensual de la tarjeta. Por defecto `10`.
 
 - `Bank`
   - Banco con tarjetas.
@@ -374,6 +375,35 @@ Clases:
     - `id`: id interno.
     - `name`: nombre visible.
     - `amount`: monto mensual.
+    - `dueDay`: dia de vencimiento mensual del gasto. Por defecto `10`.
+
+- `PaymentDetail`
+  - Detalle editable de un pago mensual puntual.
+  - Se guarda por clave estable `YYYY-MM-serviceId` dentro de `FrontendFinanceProfile.paymentDetails`.
+  - Campos:
+    - `paid`: indica si el pago esta marcado como abonado.
+    - `paidAt`: fecha real de pago en formato texto compatible con input date.
+    - `expectedAmount`: monto esperado.
+    - `paidAmount`: monto efectivamente pagado.
+    - `method`: medio de pago, por ejemplo efectivo, debito o transferencia.
+    - `notes`: observacion libre.
+
+- `PaymentHistoryItem`
+  - Evento historico de pago.
+  - Sirve para conservar trazabilidad aunque una cuota deje de aparecer como deuda pendiente.
+  - Campos:
+    - `id`: id interno del evento.
+    - `type`: tipo de evento, por ejemplo `card_payment` o `manual_payment`.
+    - `period`: periodo mensual con formato `YYYY-MM`.
+    - `serviceId`: id estable del servicio pagado.
+    - `serviceName`: nombre visible del servicio.
+    - `category`: seccion a la que pertenece.
+    - `expectedAmount`: monto esperado al momento del pago.
+    - `paidAmount`: monto real abonado.
+    - `paidAt`: fecha de pago.
+    - `method`: medio de pago.
+    - `notes`: observacion libre.
+    - `items`: detalle opcional de consumos incluidos en el pago, usado principalmente para tarjetas.
 
 - `PaymentRegistryEntry`
   - Marca de pago mensual.
@@ -404,6 +434,8 @@ Clases:
   - Mantiene nombres camelCase para evitar transformaciones innecesarias en React.
   - Campos:
     - `salary`: sueldo mensual.
+    - `paymentDetails`: mapa de detalles editables de pagos mensuales.
+    - `paymentHistory`: historial de eventos de pago.
     - `paymentRegistry`: mapa de pagos marcados por anio/mes/servicio.
     - `banks`: bancos y tarjetas.
     - `expenses`: consumos de tarjeta en formato del frontend.

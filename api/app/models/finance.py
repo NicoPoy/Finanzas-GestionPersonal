@@ -27,6 +27,7 @@ class Card(BaseModel):
     id: str
     name: str
     accent: str
+    dueDay: int = 10
 
 
 class Bank(BaseModel):
@@ -39,6 +40,31 @@ class SimpleExpense(BaseModel):
     id: str
     name: str
     amount: float
+    dueDay: int = 10
+
+
+class PaymentDetail(BaseModel):
+    paid: bool = False
+    paidAt: str | None = None
+    expectedAmount: float = 0
+    paidAmount: float = 0
+    method: str = ""
+    notes: str = ""
+
+
+class PaymentHistoryItem(BaseModel):
+    id: str
+    type: str
+    period: str
+    serviceId: str
+    serviceName: str
+    category: str
+    expectedAmount: float = 0
+    paidAmount: float = 0
+    paidAt: str
+    method: str = ""
+    notes: str = ""
+    items: list[dict] = Field(default_factory=list)
 
 
 class PaymentRegistryEntry(BaseModel):
@@ -75,6 +101,8 @@ class FrontendFinanceProfile(BaseModel):
     """
 
     salary: float = 0
+    paymentDetails: dict[str, PaymentDetail] = Field(default_factory=dict)
+    paymentHistory: list[PaymentHistoryItem] = Field(default_factory=list)
     paymentRegistry: dict[str, bool] = Field(default_factory=dict)
     banks: list[Bank] = Field(default_factory=list)
     expenses: list[dict] = Field(default_factory=list)

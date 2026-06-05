@@ -1,6 +1,8 @@
 // Perfil vacio. Los datos reales se cargan desde MongoDB por usuario.
 export const INITIAL_DATA = {
   salary: 0,
+  paymentDetails: {},
+  paymentHistory: [],
   paymentRegistry: {},
   banks: [],
   expenses: [],

@@ -6,6 +6,7 @@ Este documento explica que es cada parte del proyecto y por que esta ubicada ahi
 
 La app administra gastos mensuales. Hoy tiene estas secciones:
 
+- Dashboard: resumen mensual, vencimientos ordenados e historial reciente.
 - Tarjetas: bancos, tarjetas y consumos.
 - Departamento: gastos fijos del hogar.
 - Suscripciones: gastos recurrentes.
@@ -13,6 +14,7 @@ La app administra gastos mensuales. Hoy tiene estas secciones:
 - Extras: gastos variables.
 - Proyeccion: cuanto se pagara en tarjetas los proximos meses.
 - Registro: matriz anual de pagos, con meses como columnas y cosas a pagar como filas.
+- Historial: pagos registrados con monto, fecha y observaciones.
 - Configuracion: sueldo y restante.
 
 ## Frontend
@@ -137,10 +139,13 @@ domain/
 - totales por banco y tarjeta.
 - servicios que aparecen en el registro anual.
 - claves de pago por anio/mes/servicio.
+- periodo mensual estable para historial.
+- dashboard mensual.
+- vencimientos ordenados por urgencia.
 
 Estas funciones no renderizan UI. Eso permite probarlas o moverlas al backend mas adelante.
 
-`storage.js` normaliza el perfil recibido desde la API. Ya no lee ni escribe gastos en `localStorage`.
+`storage.js` normaliza el perfil recibido desde la API. Ya no lee ni escribe gastos en `localStorage`. Tambien completa defaults nuevos, como `dueDay`, `paymentDetails` y `paymentHistory`, para que perfiles viejos no rompan al abrir la app.
 
 ### `frontend/src/utils/`
 
@@ -175,8 +180,10 @@ Pantallas o funcionalidades completas de negocio.
 
 ```text
 features/
+  dashboard/
   finance/
   cards/
+  history/
   projection/
   registry/
   settings/
@@ -214,7 +221,7 @@ cards/
 
 Esta separacion permite modificar el formulario sin tocar la tabla ni el layout.
 
-La accion `Registrar pago` vive visualmente en `CardsModule`, pero la actualizacion real se ejecuta en `FinanceApp`: marca el mes actual como pagado en Registro para esa tarjeta, descuenta una cuota de cada consumo no fijo y elimina los consumos que llegan a cero cuotas. Los gastos fijos de tarjeta no se descuentan porque son recurrentes hasta que el usuario los elimine.
+La accion `Registrar pago` vive visualmente en `CardsModule`, pero la actualizacion real se ejecuta en `FinanceApp`: marca el mes actual como pagado en Registro para esa tarjeta, guarda un detalle de pago, agrega un evento al historial, descuenta una cuota de cada consumo no fijo y elimina los consumos que llegan a cero cuotas. Los gastos fijos de tarjeta no se descuentan porque son recurrentes hasta que el usuario los elimine.
 
 #### `features/simpleExpenses/`
 
@@ -225,7 +232,7 @@ simpleExpenses/
   SimpleExpenseModule.jsx
 ```
 
-Se usa un modulo generico porque esas secciones comparten la misma estructura: nombre, monto, lista y total.
+Se usa un modulo generico porque esas secciones comparten la misma estructura: nombre, monto, dia de vencimiento, lista y total.
 
 Tambien muestra gastos fijos pagados con tarjeta, pero aclarando que ya estan incluidos en Tarjetas para no duplicar el total.
 
@@ -244,6 +251,24 @@ La proyeccion distingue:
 - cuotas: aparece hasta agotar cuotas pendientes.
 - fijo: aparece todos los meses.
 
+#### `features/dashboard/`
+
+```text
+dashboard/
+  DashboardModule.jsx
+```
+
+Muestra el resumen del mes actual:
+
+- sueldo.
+- gastos esperados.
+- gastos pagados.
+- pendiente por pagar.
+- restante real.
+- porcentaje usado del sueldo.
+
+Tambien lista vencimientos ordenados por urgencia: vencido, vence pronto, pendiente y pagado. Usa datos calculados en `domain/financeCalculations.js` para no mezclar formulas con UI.
+
 #### `features/registry/`
 
 ```text
@@ -260,6 +285,28 @@ anio-mes-serviceId
 ```
 
 Esto permite cambiar de anio sin perder marcas de meses anteriores.
+
+El registro tambien permite editar el detalle del pago marcado:
+
+- fecha de pago.
+- monto esperado.
+- monto pagado.
+- medio de pago.
+- observacion.
+- diferencia entre monto esperado y real.
+
+Ese detalle se guarda en `paymentDetails` y alimenta el dashboard mensual.
+
+#### `features/history/`
+
+```text
+history/
+  HistoryModule.jsx
+```
+
+Muestra los eventos de pago guardados en `paymentHistory`.
+
+El historial existe para que una deuda pueda desaparecer de la tabla de tarjeta cuando se termina de pagar, pero el evento quede trazado. Ejemplo: "Junio 2026, Visa Banco Provincia, pagado $80.000".
 
 #### `features/settings/`
 

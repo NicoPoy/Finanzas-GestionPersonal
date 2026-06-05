@@ -47,6 +47,7 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
 function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
+  const [dueDay, setDueDay] = useState("10");
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -59,10 +60,12 @@ function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
     onSubmit({
       name: name.trim(),
       amount: parsedAmount,
+      dueDay: Math.min(Math.max(Number(dueDay) || 10, 1), 31),
     });
 
     setName("");
     setAmount("");
+    setDueDay("10");
   }
 
   return (
@@ -88,6 +91,18 @@ function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
         />
       </label>
 
+      <label>
+        Vence dia
+        <input
+          min="1"
+          max="31"
+          placeholder="10"
+          type="number"
+          value={dueDay}
+          onChange={(event) => setDueDay(event.target.value)}
+        />
+      </label>
+
       <button type="submit">
         <Plus size={18} />
         Agregar
@@ -105,7 +120,7 @@ function FixedExpenseList({
   onUpdate,
 }) {
   const [editingId, setEditingId] = useState("");
-  const [draft, setDraft] = useState({ amount: "", name: "" });
+  const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "" });
 
   if (!expenses.length && !cardExpenses.length) {
     return (
@@ -121,6 +136,7 @@ function FixedExpenseList({
       <div className="table-header fixed-table-row">
         <span>Nombre</span>
         <span>Monto</span>
+        <span>Vence</span>
         <span aria-label="Acciones" />
       </div>
 
@@ -132,13 +148,13 @@ function FixedExpenseList({
           key={expense.id}
           onCancel={() => {
             setEditingId("");
-            setDraft({ amount: "", name: "" });
+            setDraft({ amount: "", dueDay: "", name: "" });
           }}
           onDelete={() => onRemove(expense.id)}
           onDraftChange={setDraft}
           onEdit={() => {
             setEditingId(expense.id);
-            setDraft({ amount: String(expense.amount), name: expense.name });
+            setDraft({ amount: String(expense.amount), dueDay: String(expense.dueDay ?? 10), name: expense.name });
           }}
           onSave={() => {
             const parsedAmount = Number(draft.amount);
@@ -149,10 +165,11 @@ function FixedExpenseList({
 
             onUpdate(expense.id, {
               amount: parsedAmount,
+              dueDay: Math.min(Math.max(Number(draft.dueDay) || 10, 1), 31),
               name: draft.name.trim(),
             });
             setEditingId("");
-            setDraft({ amount: "", name: "" });
+            setDraft({ amount: "", dueDay: "", name: "" });
           }}
         />
       ))}
@@ -164,6 +181,7 @@ function FixedExpenseList({
             <small>Pagado con tarjeta {expense.source}</small>
           </strong>
           <span>{currency.format(expense.amount)}</span>
+          <span>Dia {expense.dueDay ?? 10}</span>
           <span className="card-paid-badge">Ya incluido en Tarjetas</span>
         </div>
       ))}
@@ -196,6 +214,20 @@ function SimpleExpenseRow({ draft, expense, isEditing, onCancel, onDelete, onDra
           />
         ) : (
           currency.format(expense.amount)
+        )}
+      </span>
+      <span>
+        {isEditing ? (
+          <input
+            className="row-edit-input"
+            max="31"
+            min="1"
+            type="number"
+            value={draft.dueDay}
+            onChange={(event) => onDraftChange((current) => ({ ...current, dueDay: event.target.value }))}
+          />
+        ) : (
+          `Dia ${expense.dueDay ?? 10}`
         )}
       </span>
       <div className="row-actions">

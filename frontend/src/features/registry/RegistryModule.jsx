@@ -4,9 +4,16 @@ import { getPaymentKey } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
 // Matriz anual: filas son cosas a pagar y columnas son meses.
-export default function RegistryModule({ onTogglePayment, paymentRegistry, services }) {
+export default function RegistryModule({
+  onTogglePayment,
+  onUpdatePaymentDetail,
+  paymentDetails,
+  paymentRegistry,
+  services,
+}) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedPaymentKey, setSelectedPaymentKey] = useState("");
   const months = [
     { label: "Enero", short: "Ene" },
     { label: "Febrero", short: "Feb" },
@@ -93,7 +100,7 @@ export default function RegistryModule({ onTogglePayment, paymentRegistry, servi
                     </th>
                     {months.map((month, monthIndex) => {
                       const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
-                      const checked = Boolean(paymentRegistry[paymentKey]);
+                      const checked = Boolean(paymentRegistry[paymentKey] || paymentDetails[paymentKey]?.paid);
 
                       return (
                         <td key={month.label}>
@@ -101,10 +108,24 @@ export default function RegistryModule({ onTogglePayment, paymentRegistry, servi
                             <input
                               checked={checked}
                               aria-label={`${service.name} ${month.label} ${selectedYear}`}
-                              onChange={() => onTogglePayment(selectedYear, monthIndex, service.id)}
+                              onChange={() => {
+                                onTogglePayment(selectedYear, monthIndex, service.id);
+                                setSelectedPaymentKey(paymentKey);
+                              }}
                               type="checkbox"
                             />
-                            <span>{checked ? "Pago" : "No"}</span>
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setSelectedPaymentKey(paymentKey)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  setSelectedPaymentKey(paymentKey);
+                                }
+                              }}
+                            >
+                              {checked ? "Pago" : "No"}
+                            </span>
                           </label>
                         </td>
                       );
@@ -120,7 +141,84 @@ export default function RegistryModule({ onTogglePayment, paymentRegistry, servi
             <p>Carga algun servicio o gasto para empezar a usar el registro.</p>
           </div>
         )}
+
+        {selectedPaymentKey && paymentDetails[selectedPaymentKey] ? (
+          <PaymentDetailPanel
+            detail={paymentDetails[selectedPaymentKey]}
+            onChange={(updates) => onUpdatePaymentDetail(selectedPaymentKey, updates)}
+            paymentKey={selectedPaymentKey}
+            service={services.find((service) => selectedPaymentKey.endsWith(service.id))}
+          />
+        ) : null}
       </section>
+    </section>
+  );
+}
+
+function PaymentDetailPanel({ detail, onChange, paymentKey, service }) {
+  const expectedAmount = Number(detail.expectedAmount) || service?.amount || 0;
+  const paidAmount = Number(detail.paidAmount) || 0;
+  const difference = paidAmount - expectedAmount;
+
+  return (
+    <section className="payment-detail-panel">
+      <div>
+        <p>Detalle del pago</p>
+        <h3>{service?.name ?? paymentKey}</h3>
+      </div>
+
+      <div className="payment-detail-grid">
+        <label>
+          Fecha de pago
+          <input
+            type="date"
+            value={(detail.paidAt ?? "").slice(0, 10)}
+            onChange={(event) =>
+              onChange({
+                paidAt: event.target.value ? new Date(`${event.target.value}T12:00:00`).toISOString() : "",
+              })
+            }
+          />
+        </label>
+        <label>
+          Monto esperado
+          <input
+            min="0"
+            type="number"
+            value={expectedAmount}
+            onChange={(event) => onChange({ expectedAmount: Number(event.target.value) || 0 })}
+          />
+        </label>
+        <label>
+          Monto pagado
+          <input
+            min="0"
+            type="number"
+            value={paidAmount}
+            onChange={(event) => onChange({ paidAmount: Number(event.target.value) || 0 })}
+          />
+        </label>
+        <label>
+          Medio de pago
+          <input
+            placeholder="Transferencia, debito, efectivo..."
+            value={detail.method ?? ""}
+            onChange={(event) => onChange({ method: event.target.value })}
+          />
+        </label>
+        <label className="payment-notes-field">
+          Observacion
+          <input
+            placeholder="Detalle opcional"
+            value={detail.notes ?? ""}
+            onChange={(event) => onChange({ notes: event.target.value })}
+          />
+        </label>
+        <div className={`difference-box ${difference < 0 ? "negative" : difference > 0 ? "warning" : "positive"}`}>
+          <span>Diferencia</span>
+          <strong>{currency.format(difference)}</strong>
+        </div>
+      </div>
     </section>
   );
 }

@@ -111,6 +111,23 @@ export default function CardsModule({
 
             <CardExpenseForm key={selectedCard.id} onSubmit={addExpense} cardName={selectedCard.name} />
 
+            <div className="due-control">
+              <label>
+                Vencimiento de la tarjeta
+                <input
+                  min="1"
+                  max="31"
+                  type="number"
+                  value={selectedCard.dueDay ?? 10}
+                  onChange={(event) =>
+                    updateCard(selectedCard.id, {
+                      dueDay: Math.min(Math.max(Number(event.target.value) || 10, 1), 31),
+                    })
+                  }
+                />
+              </label>
+            </div>
+
             <CardExpenseList
               card={selectedCard}
               onRemove={removeExpense}

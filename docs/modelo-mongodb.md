@@ -37,7 +37,8 @@ Guarda el estado financiero de un usuario:
         {
           "id": "uuid",
           "name": "Visa",
-          "accent": "#2563eb"
+          "accent": "#2563eb",
+          "dueDay": 10
         }
       ]
     }
@@ -54,7 +55,14 @@ Guarda el estado financiero de un usuario:
       "fixed_category": "subscriptions"
     }
   ],
-  "subscription_expenses": [],
+  "subscription_expenses": [
+    {
+      "id": "uuid",
+      "name": "Internet",
+      "amount": 25000,
+      "dueDay": 12
+    }
+  ],
   "activity_expenses": [],
   "department_expenses": [],
   "extra_expenses": [],
@@ -66,12 +74,44 @@ Guarda el estado financiero de un usuario:
       "paid": true
     }
   ],
+  "payment_details": {
+    "2026-06-card:uuid": {
+      "paid": true,
+      "paidAt": "2026-06-05",
+      "expectedAmount": 80000,
+      "paidAmount": 79000,
+      "method": "home banking",
+      "notes": "Resumen pagado antes del vencimiento"
+    }
+  },
+  "payment_history": [
+    {
+      "id": "uuid",
+      "type": "card_payment",
+      "period": "2026-06",
+      "serviceId": "card:uuid",
+      "serviceName": "Visa - Banco Provincia",
+      "category": "Tarjetas",
+      "expectedAmount": 80000,
+      "paidAmount": 79000,
+      "paidAt": "2026-06-05",
+      "method": "home banking",
+      "notes": "Resumen pagado antes del vencimiento",
+      "items": []
+    }
+  ],
   "created_at": "2026-06-03T00:00:00Z",
   "updated_at": "2026-06-03T00:00:00Z"
 }
 ```
 
 Motivo: MongoDB funciona bien con documentos que representan un estado agregado. Este documento evita hacer muchas consultas para reconstruir la pantalla principal.
+
+`dueDay` vive junto a cada tarjeta o gasto porque el vencimiento pertenece al servicio que se paga. Asi el dashboard puede calcular "vence pronto" o "vencido" sin crear otra coleccion.
+
+`payment_details` guarda el estado editable de un pago puntual por periodo y servicio. La clave tiene formato `YYYY-MM-serviceId`, por ejemplo `2026-06-card:abc`.
+
+`payment_history` guarda eventos historicos. Esto es importante porque una cuota puede desaparecer de la deuda pendiente al pagarse, pero el pago realizado debe seguir existiendo para reportes y trazabilidad.
 
 ## Por que no guardar todo en `users`
 

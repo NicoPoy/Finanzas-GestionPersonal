@@ -49,6 +49,7 @@ export function buildRegistryServices(data, banks) {
       id: `card:${card.id}`,
       amount: card.monthlyTotal,
       category: "Tarjetas",
+      dueDay: card.dueDay ?? 10,
       name: `${card.name} - ${bank.name}`,
     })),
   );
@@ -67,6 +68,7 @@ function mapSimpleServices(expenses, category, prefix) {
     id: `${prefix}:${expense.id}`,
     amount: expense.amount,
     category,
+    dueDay: expense.dueDay ?? 10,
     name: expense.name,
   }));
 }
@@ -110,4 +112,66 @@ export function buildBanksWithTotals(data) {
       savingsTotal: cards.reduce((sum, card) => sum + card.savingsTotal, 0),
     };
   });
+}
+
+export function getPaymentPeriod(year, monthIndex) {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+export function buildMonthlyDashboard({ monthIndex, paymentDetails, paymentRegistry, salary, services, year }) {
+  const expectedTotal = services.reduce((sum, service) => sum + service.amount, 0);
+  const paidTotal = services.reduce((sum, service) => {
+    const key = getPaymentKey(year, monthIndex, service.id);
+    const detail = paymentDetails[key];
+
+    if (!paymentRegistry[key] && !detail?.paid) {
+      return sum;
+    }
+
+    return sum + (Number(detail?.paidAmount) || service.amount);
+  }, 0);
+  const pendingTotal = Math.max(expectedTotal - paidTotal, 0);
+  const usedPercentage = salary > 0 ? Math.min((expectedTotal / salary) * 100, 999) : 0;
+
+  return {
+    expectedTotal,
+    paidTotal,
+    pendingTotal,
+    realRemaining: salary - paidTotal,
+    projectedRemaining: salary - expectedTotal,
+    usedPercentage,
+  };
+}
+
+export function buildDueItems({ monthIndex, paymentDetails, paymentRegistry, services, year }) {
+  const today = new Date();
+
+  return services
+    .map((service) => {
+      const dueDate = new Date(year, monthIndex, Math.min(service.dueDay ?? 10, daysInMonth(year, monthIndex)));
+      const key = getPaymentKey(year, monthIndex, service.id);
+      const isPaid = Boolean(paymentRegistry[key] || paymentDetails[key]?.paid);
+      const diffInDays = Math.ceil((dueDate - startOfDay(today)) / 86400000);
+      const status = isPaid ? "paid" : diffInDays < 0 ? "overdue" : diffInDays <= 3 ? "soon" : "pending";
+
+      return {
+        ...service,
+        diffInDays,
+        dueDate,
+        paymentKey: key,
+        status,
+      };
+    })
+    .sort((a, b) => {
+      const statusWeight = { overdue: 0, soon: 1, pending: 2, paid: 3 };
+      return statusWeight[a.status] - statusWeight[b.status] || a.dueDate - b.dueDate;
+    });
+}
+
+function daysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
