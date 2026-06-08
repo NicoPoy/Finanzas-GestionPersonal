@@ -305,7 +305,7 @@ button {
   gap: 28px;
   grid-template-columns: minmax(230px, 320px) 1fr;
   margin: 0 auto;
-  max-width: 1340px;
+  max-width: 1480px;
   padding: 32px 20px 56px;
 }
 
@@ -346,7 +346,7 @@ button {
   gap: 14px;
   justify-content: center;
   margin: 22px auto 0;
-  max-width: 1340px;
+  max-width: 1480px;
   padding: 0 20px;
 }
 
@@ -919,7 +919,7 @@ button {
   align-items: center;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(130px, 1.3fr) repeat(4, minmax(86px, 0.75fr)) minmax(100px, 0.9fr) 82px;
+  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(82px, 0.7fr)) minmax(112px, 0.85fr) 82px;
   min-height: 54px;
   padding: 0 14px;
 }
