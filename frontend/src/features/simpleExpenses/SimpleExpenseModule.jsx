@@ -19,6 +19,7 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
         </div>
 
         <FixedExpenseForm
+          debitCards={module.debitCards}
           namePlaceholder={module.namePlaceholder}
           onSubmit={(expense) => onAdd(module.storageKey, expense)}
         />
@@ -33,6 +34,7 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
 
         <FixedExpenseList
           cardExpenses={module.cardExpenses}
+          debitCards={module.debitCards}
           emptyMessage={module.emptyMessage}
           expenses={module.expenses}
           onRemove={(expenseId) => onRemove(module.storageKey, expenseId)}
@@ -44,10 +46,11 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
 }
 
 // Formulario simple de nombre + monto para gastos fijos no asociados a tarjeta.
-function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
+function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubmit }) {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDay, setDueDay] = useState("10");
+  const [paymentCard, setPaymentCard] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -61,11 +64,13 @@ function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
       name: name.trim(),
       amount: parsedAmount,
       dueDay: Math.min(Math.max(Number(dueDay) || 10, 1), 31),
+      paymentCard,
     });
 
     setName("");
     setAmount("");
     setDueDay("10");
+    setPaymentCard("");
   }
 
   return (
@@ -103,6 +108,18 @@ function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
         />
       </label>
 
+      <label>
+        Debita de
+        <select value={paymentCard} onChange={(event) => setPaymentCard(event.target.value)}>
+          <option value="">Sin asociar</option>
+          {debitCards.map((card) => (
+            <option key={card} value={card}>
+              {card}
+            </option>
+          ))}
+        </select>
+      </label>
+
       <button type="submit">
         <Plus size={18} />
         Agregar
@@ -114,13 +131,14 @@ function FixedExpenseForm({ namePlaceholder = "Ej: luz", onSubmit }) {
 // Lista gastos propios de la seccion y gastos fijos pagados con tarjeta como referencia no sumable.
 function FixedExpenseList({
   cardExpenses = [],
+  debitCards = [],
   emptyMessage = "Todavia no cargaste gastos fijos del departamento.",
   expenses,
   onRemove,
   onUpdate,
 }) {
   const [editingId, setEditingId] = useState("");
-  const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "" });
+  const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "", paymentCard: "" });
 
   if (!expenses.length && !cardExpenses.length) {
     return (
@@ -137,24 +155,31 @@ function FixedExpenseList({
         <span>Nombre</span>
         <span>Monto</span>
         <span>Vence</span>
+        <span>Debita de</span>
         <span aria-label="Acciones" />
       </div>
 
       {expenses.map((expense) => (
         <SimpleExpenseRow
           draft={draft}
+          debitCards={debitCards}
           expense={expense}
           isEditing={editingId === expense.id}
           key={expense.id}
           onCancel={() => {
             setEditingId("");
-            setDraft({ amount: "", dueDay: "", name: "" });
+            setDraft({ amount: "", dueDay: "", name: "", paymentCard: "" });
           }}
           onDelete={() => onRemove(expense.id)}
           onDraftChange={setDraft}
           onEdit={() => {
             setEditingId(expense.id);
-            setDraft({ amount: String(expense.amount), dueDay: String(expense.dueDay ?? 10), name: expense.name });
+            setDraft({
+              amount: String(expense.amount),
+              dueDay: String(expense.dueDay ?? 10),
+              name: expense.name,
+              paymentCard: expense.paymentCard ?? "",
+            });
           }}
           onSave={() => {
             const parsedAmount = Number(draft.amount);
@@ -167,9 +192,10 @@ function FixedExpenseList({
               amount: parsedAmount,
               dueDay: Math.min(Math.max(Number(draft.dueDay) || 10, 1), 31),
               name: draft.name.trim(),
+              paymentCard: draft.paymentCard,
             });
             setEditingId("");
-            setDraft({ amount: "", dueDay: "", name: "" });
+            setDraft({ amount: "", dueDay: "", name: "", paymentCard: "" });
           }}
         />
       ))}
@@ -177,11 +203,12 @@ function FixedExpenseList({
       {cardExpenses.map((expense) => (
         <div className="table-row fixed-table-row card-paid-row" key={`card-${expense.id}`}>
           <strong>
-            <span>{expense.name}</span>
+            {expense.name}
             <small>Pagado con tarjeta {expense.source}</small>
           </strong>
-          <span>{currency.format(expense.amount)}</span>
+          <span className="amount-emphasis">{currency.format(expense.amount)}</span>
           <span>Dia {expense.dueDay ?? 10}</span>
+          <span>{expense.paymentCard || "Sin asociar"}</span>
           <span className="card-paid-badge">Ya incluido en Tarjetas</span>
         </div>
       ))}
@@ -189,7 +216,7 @@ function FixedExpenseList({
   );
 }
 
-function SimpleExpenseRow({ draft, expense, isEditing, onCancel, onDelete, onDraftChange, onEdit, onSave }) {
+function SimpleExpenseRow({ debitCards, draft, expense, isEditing, onCancel, onDelete, onDraftChange, onEdit, onSave }) {
   return (
     <div className="table-row fixed-table-row" key={expense.id}>
       <strong>
@@ -213,7 +240,7 @@ function SimpleExpenseRow({ draft, expense, isEditing, onCancel, onDelete, onDra
             onChange={(event) => onDraftChange((current) => ({ ...current, amount: event.target.value }))}
           />
         ) : (
-          currency.format(expense.amount)
+          <strong className="amount-emphasis">{currency.format(expense.amount)}</strong>
         )}
       </span>
       <span>
@@ -228,6 +255,24 @@ function SimpleExpenseRow({ draft, expense, isEditing, onCancel, onDelete, onDra
           />
         ) : (
           `Dia ${expense.dueDay ?? 10}`
+        )}
+      </span>
+      <span>
+        {isEditing ? (
+          <select
+            className="row-edit-input"
+            value={draft.paymentCard ?? ""}
+            onChange={(event) => onDraftChange((current) => ({ ...current, paymentCard: event.target.value }))}
+          >
+            <option value="">Sin asociar</option>
+            {debitCards.map((card) => (
+              <option key={card} value={card}>
+                {card}
+              </option>
+            ))}
+          </select>
+        ) : (
+          expense.paymentCard || "Sin asociar"
         )}
       </span>
       <div className="row-actions">

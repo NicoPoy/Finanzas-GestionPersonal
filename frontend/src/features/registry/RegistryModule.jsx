@@ -95,7 +95,7 @@ export default function RegistryModule({
                     <th>
                       <span>{service.name}</span>
                       <small>
-                        {service.category} · {currency.format(service.amount)}
+                        {service.category} · <b className="amount-emphasis">{currency.format(service.amount)}</b>
                       </small>
                     </th>
                     {months.map((month, monthIndex) => {

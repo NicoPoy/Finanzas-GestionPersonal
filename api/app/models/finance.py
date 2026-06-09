@@ -21,6 +21,7 @@ class CardExpense(BaseModel):
     installments: int = 0
     is_fixed: bool = False
     fixed_category: ExpenseCategory | None = None
+    is_paid_by_other: bool = False
 
 
 class Card(BaseModel):
@@ -41,6 +42,7 @@ class SimpleExpense(BaseModel):
     name: str
     amount: float
     dueDay: int = 10
+    paymentCard: str = ""
 
 
 class PaymentDetail(BaseModel):
@@ -101,6 +103,7 @@ class FrontendFinanceProfile(BaseModel):
     """
 
     salary: float = 0
+    debitCards: list[str] = Field(default_factory=list)
     paymentDetails: dict[str, PaymentDetail] = Field(default_factory=dict)
     paymentHistory: list[PaymentHistoryItem] = Field(default_factory=list)
     paymentRegistry: dict[str, bool] = Field(default_factory=dict)

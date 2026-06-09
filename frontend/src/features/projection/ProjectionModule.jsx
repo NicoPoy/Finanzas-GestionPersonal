@@ -1,6 +1,6 @@
 import React from "react";
 import { BarChart3, ReceiptText } from "lucide-react";
-import { getNetExpenseAmount, isFixedCardExpense } from "../../domain/financeCalculations.js";
+import { getOwnExpenseAmount, isFixedCardExpense, isPaidByOther } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
 // Pantalla de proyeccion: calcula cuanto se pagara en tarjetas durante los proximos meses.
@@ -19,7 +19,11 @@ export default function ProjectionModule({ banks }) {
               return sum;
             }
 
-            return sum + (monthIndex === 0 ? getNetExpenseAmount(expense) : expense.amount);
+            if (isPaidByOther(expense)) {
+              return sum;
+            }
+
+            return sum + (monthIndex === 0 ? getOwnExpenseAmount(expense) : expense.amount);
           }, 0),
         ),
       })),

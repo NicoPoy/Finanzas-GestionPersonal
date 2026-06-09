@@ -10,6 +10,26 @@ export function getNetExpenseAmount(expense) {
   return Math.max((Number(expense.amount) || 0) - getExpenseSavings(expense), 0);
 }
 
+export function isPaidByOther(expense) {
+  return Boolean(expense.isPaidByOther);
+}
+
+export function getOwnExpenseAmount(expense) {
+  return isPaidByOther(expense) ? 0 : getNetExpenseAmount(expense);
+}
+
+export function getNextMonthCardExpenseAmount(expense) {
+  if (isPaidByOther(expense)) {
+    return 0;
+  }
+
+  if (isFixedCardExpense(expense)) {
+    return getNetExpenseAmount(expense);
+  }
+
+  return Number(expense.installments) > 1 ? getNetExpenseAmount(expense) : 0;
+}
+
 // Los gastos fijos de tarjeta se repiten todos los meses hasta que el usuario los elimine.
 export function isFixedCardExpense(expense) {
   return Boolean(expense.isFixed);
@@ -31,7 +51,8 @@ export function buildCardFixedExpensesByCategory(banks) {
 
         grouped[category].push({
           id: expense.id,
-          amount: getNetExpenseAmount(expense),
+          amount: getOwnExpenseAmount(expense),
+          dueDay: card.dueDay ?? 10,
           name: expense.origin,
           source: `${card.name} - ${bank.name}`,
         });
@@ -69,6 +90,7 @@ function mapSimpleServices(expenses, category, prefix) {
     amount: expense.amount,
     category,
     dueDay: expense.dueDay ?? 10,
+    paymentCard: expense.paymentCard ?? "",
     name: expense.name,
   }));
 }
@@ -89,11 +111,15 @@ export function buildBanksWithTotals(data) {
     const cards = bank.cards.map((card) => {
       const cardExpenses = data.expenses.filter((expense) => expense.cardId === card.id);
       const totalDebt = cardExpenses.reduce(
-        (sum, expense) => sum + getNetExpenseAmount(expense) + expense.amount * Math.max(expense.installments - 1, 0),
+        (sum, expense) =>
+          sum + getOwnExpenseAmount(expense) + (isPaidByOther(expense) ? 0 : expense.amount * Math.max(expense.installments - 1, 0)),
         0,
       );
-      const monthlyTotal = cardExpenses.reduce((sum, expense) => sum + getNetExpenseAmount(expense), 0);
-      const savingsTotal = cardExpenses.reduce((sum, expense) => sum + getExpenseSavings(expense), 0);
+      const monthlyTotal = cardExpenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
+      const savingsTotal = cardExpenses.reduce(
+        (sum, expense) => sum + (isPaidByOther(expense) ? 0 : getExpenseSavings(expense)),
+        0,
+      );
 
       return {
         ...card,

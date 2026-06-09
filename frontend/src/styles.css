@@ -300,13 +300,17 @@ button {
   color: #fecdd3;
 }
 
+.metric-expense strong {
+  color: #bae6fd;
+}
+
 .workspace {
   display: grid;
-  gap: 28px;
-  grid-template-columns: minmax(230px, 320px) 1fr;
+  gap: 22px;
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
   margin: 0 auto;
-  max-width: 1480px;
-  padding: 32px 20px 56px;
+  max-width: 1600px;
+  padding: 32px 18px 56px;
 }
 
 .workspace.single-column {
@@ -328,7 +332,9 @@ button {
 
 .cards-panel {
   align-self: start;
-  padding: 18px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
 }
 
 .panel-title {
@@ -338,6 +344,36 @@ button {
   font-weight: 800;
   gap: 10px;
   margin-bottom: 16px;
+}
+
+.selector-section {
+  display: grid;
+  gap: 12px;
+}
+
+.selector-section-card {
+  border-top: 1px solid #dbe3ee;
+  padding-top: 16px;
+}
+
+.selector-title {
+  margin-bottom: 0;
+}
+
+.selector-title > span {
+  display: grid;
+  gap: 2px;
+}
+
+.selector-title small {
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.selector-title strong {
+  color: #172033;
 }
 
 .module-bar {
@@ -411,24 +447,10 @@ button {
   opacity: 0.55;
 }
 
-.nested-title {
-  border-top: 1px solid #e2e8f0;
-  margin-top: 20px;
-  padding-top: 18px;
-}
-
 .bank-list,
 .card-tabs {
   display: grid;
-  gap: 10px;
-}
-
-.bank-list {
-  margin-top: 12px;
-}
-
-.card-tabs {
-  margin-top: 12px;
+  gap: 8px;
 }
 
 .bank-tab,
@@ -440,9 +462,9 @@ button {
   border-radius: 8px;
   color: #1e293b;
   display: flex;
-  gap: 12px;
-  min-height: 76px;
-  padding: 14px;
+  gap: 10px;
+  min-height: 70px;
+  padding: 12px;
   text-align: left;
   transition:
     background 160ms ease,
@@ -455,9 +477,10 @@ button {
 }
 
 .bank-tab.active {
-  background: #ffffff;
-  border-color: #cbd5e1;
+  background: #f8fafc;
+  border-color: #172033;
   border-left-color: #172033;
+  box-shadow: inset 0 0 0 1px rgba(23, 32, 51, 0.08);
 }
 
 .bank-tab svg {
@@ -467,8 +490,9 @@ button {
 
 .card-tab.active {
   background: #ffffff;
-  border-color: #cbd5e1;
+  border-color: var(--accent);
   border-left-color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
   transform: translateX(2px);
 }
 
@@ -557,7 +581,7 @@ button {
   align-items: center;
   display: flex;
   flex: 0 0 auto;
-  gap: 12px;
+  gap: 10px;
 }
 
 .payment-button {
@@ -589,9 +613,21 @@ button {
   margin-bottom: 24px;
 }
 
+.expense-entry-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+
+.expense-entry-panel .expense-form {
+  margin-bottom: 0;
+}
+
 .card-expense-form {
   align-items: end;
-  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(130px, 0.7fr) minmax(130px, 0.7fr) auto;
+  grid-template-columns: minmax(260px, 1.55fr) minmax(150px, 0.72fr) minmax(120px, 0.58fr) minmax(170px, 0.8fr) auto;
 }
 
 .card-expense-form > label:nth-child(1) {
@@ -624,13 +660,86 @@ button {
   grid-row: 1;
 }
 
+.card-expense-form .paid-by-other-field {
+  align-self: center;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  display: flex;
+  gap: 9px;
+  grid-column: 5 / 6;
+  grid-row: 2;
+  min-height: 44px;
+  padding: 7px 10px;
+  position: relative;
+}
+
+.card-expense-form .paid-by-other-field.active {
+  background: #fff7ed;
+  border-color: #fb923c;
+  color: #9a3412;
+}
+
+.card-expense-form .paid-by-other-field input {
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+}
+
+.paid-by-other-check {
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.paid-by-other-field.active .paid-by-other-check {
+  background: #f97316;
+  border-color: #f97316;
+  color: #ffffff;
+}
+
+.paid-by-other-field > span:last-child {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.paid-by-other-field strong {
+  color: inherit;
+  font-size: 0.8rem;
+  line-height: 1.05;
+}
+
+.paid-by-other-field small {
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.paid-by-other-field.active small {
+  color: #9a3412;
+}
+
 .card-expense-form > button {
   grid-column: 5 / 6;
   grid-row: 1;
 }
 
 .fixed-expense-form {
-  grid-template-columns: minmax(180px, 1.2fr) minmax(130px, 0.7fr) minmax(110px, 0.5fr) auto;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(130px, 0.7fr) minmax(110px, 0.5fr) minmax(150px, 0.7fr) auto;
 }
 
 .salary-form {
@@ -667,6 +776,27 @@ button {
   background: #f1f5f9;
   color: #64748b;
   cursor: not-allowed;
+}
+
+.checkbox-field {
+  align-items: center;
+  color: #475569;
+  display: inline-flex;
+  font-size: 0.85rem;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.expense-form .checkbox-field {
+  display: inline-flex;
+}
+
+.checkbox-field input {
+  accent-color: #0f766e;
+  height: 17px;
+  margin: 0;
+  width: 17px;
 }
 
 .expense-kind-field {
@@ -918,14 +1048,14 @@ button {
 .table-row {
   align-items: center;
   display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(82px, 0.7fr)) minmax(112px, 0.85fr) 82px;
+  gap: 10px;
+  grid-template-columns: minmax(300px, 2.7fr) minmax(84px, 0.58fr) minmax(74px, 0.5fr) minmax(78px, 0.52fr) minmax(70px, 0.42fr) minmax(100px, 0.66fr) 76px;
   min-height: 54px;
-  padding: 0 14px;
+  padding: 0 12px;
 }
 
 .fixed-table-row {
-  grid-template-columns: minmax(170px, 1.35fr) minmax(110px, 0.65fr) minmax(90px, 0.45fr) minmax(150px, 0.9fr);
+  grid-template-columns: minmax(170px, 1.25fr) minmax(110px, 0.55fr) minmax(90px, 0.4fr) minmax(130px, 0.55fr) minmax(150px, 0.75fr);
 }
 
 .projection-workspace {
@@ -977,6 +1107,11 @@ button {
   font-weight: 750;
 }
 
+.amount-emphasis {
+  color: #172033;
+  font-weight: 950;
+}
+
 .icon-button {
   align-items: center;
   background: #fff1f2;
@@ -1021,6 +1156,16 @@ button {
   background: #f8fafc;
 }
 
+.paid-by-other-row {
+  background: #fff7ed;
+  border-top-color: #fed7aa;
+  box-shadow: inset 4px 0 0 #f97316;
+}
+
+.paid-by-other-row strong small {
+  color: #9a3412;
+}
+
 .card-paid-badge {
   background: #e0f2fe;
   border: 1px solid #bae6fd;
@@ -1032,6 +1177,30 @@ button {
   justify-self: end;
   padding: 6px 10px;
   text-align: center;
+}
+
+.next-month-card-summary {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  min-height: 62px;
+  padding: 0 16px;
+}
+
+.next-month-card-summary span {
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.next-month-card-summary strong {
+  color: #172033;
+  font-size: 1.25rem;
 }
 
 .savings-input {
@@ -1110,6 +1279,22 @@ button {
   color: #172033;
   min-height: 38px;
   padding: 0 10px;
+}
+
+.inline-checkbox-field {
+  justify-content: flex-start;
+  max-width: none;
+}
+
+.row-edit-extra .inline-checkbox-field {
+  display: inline-flex;
+}
+
+.row-edit-extra .inline-checkbox-field input {
+  height: 17px;
+  min-height: 0;
+  padding: 0;
+  width: 17px;
 }
 
 .empty-state {
@@ -1293,19 +1478,22 @@ button {
 }
 
 .due-control {
-  border: 1px solid #e2e8f0;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  display: inline-grid;
-  gap: 7px;
-  margin-bottom: 16px;
-  max-width: 190px;
-  padding: 12px;
+  color: #334155;
+  display: inline-flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 8px 6px 12px;
 }
 
 .due-control span {
   color: #475569;
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .due-control input,
@@ -1320,8 +1508,9 @@ button {
 }
 
 .due-control input {
-  height: 38px;
-  padding: 0 10px;
+  height: 30px;
+  padding: 0 8px;
+  width: 58px;
 }
 
 .payment-detail-panel {
@@ -1435,6 +1624,7 @@ button {
   .card-expense-form .expense-kind-field,
   .card-expense-form .fixed-category-field,
   .card-expense-form .savings-field,
+  .card-expense-form .paid-by-other-field,
   .card-expense-form > button {
     grid-column: auto;
     grid-row: auto;
@@ -1721,7 +1911,11 @@ button {
   }
 
   .fixed-expense-table .table-row span:nth-of-type(3)::before {
-    content: "Origen";
+    content: "Debita de";
+  }
+
+  .fixed-expense-table .table-row span:nth-of-type(4)::before {
+    content: "";
   }
 
   .total-strip {

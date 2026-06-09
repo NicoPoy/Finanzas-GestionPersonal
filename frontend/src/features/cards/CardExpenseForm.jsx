@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus } from "lucide-react";
+import { Check, Plus, UserRound } from "lucide-react";
 import { CARD_FIXED_CATEGORIES } from "../../data/initialData.js";
 
 // Formulario de consumos de tarjeta. Soporta cuotas, compra unica y gasto fijo recurrente.
@@ -10,6 +10,7 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
   const [installments, setInstallments] = useState("");
   const [expenseType, setExpenseType] = useState("installments");
   const [fixedCategory, setFixedCategory] = useState("subscriptions");
+  const [isPaidByOther, setIsPaidByOther] = useState(false);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -35,6 +36,7 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
       fixedCategory: isFixed ? fixedCategory : "",
       installments: isFixed ? 0 : parsedInstallments,
       isFixed,
+      isPaidByOther,
     });
 
     setOrigin("");
@@ -43,6 +45,7 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
     setInstallments("");
     setExpenseType("installments");
     setFixedCategory("subscriptions");
+    setIsPaidByOther(false);
   }
 
   return (
@@ -130,6 +133,21 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
           value={savings}
           onChange={(event) => setSavings(event.target.value)}
         />
+      </label>
+
+      <label className={`paid-by-other-field ${isPaidByOther ? "active" : ""}`}>
+        <input
+          checked={isPaidByOther}
+          type="checkbox"
+          onChange={(event) => setIsPaidByOther(event.target.checked)}
+        />
+        <span className="paid-by-other-check">
+          {isPaidByOther ? <Check size={14} /> : <UserRound size={15} />}
+        </span>
+        <span>
+          <strong>Otra persona</strong>
+          <small>No lo pago yo</small>
+        </span>
       </label>
 
       <button type="submit">

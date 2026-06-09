@@ -30,34 +30,42 @@ export default function CardsModule({
   return (
     <section className="workspace">
       <aside className="cards-panel" aria-label="Bancos y tarjetas">
-        <div className="panel-title">
-          <Landmark size={20} />
-          <span>Bancos</span>
-        </div>
+        <section className="selector-section">
+          <div className="panel-title selector-title">
+            <Landmark size={20} />
+            <span>
+              <small>1. Elegi banco</small>
+              <strong>Bancos</strong>
+            </span>
+          </div>
 
-        <AddInlineForm buttonLabel="Banco" inputLabel="Nombre del banco" onSubmit={addBank} placeholder="Ej: Galicia" />
+          <AddInlineForm buttonLabel="Banco" inputLabel="Nombre del banco" onSubmit={addBank} placeholder="Ej: Galicia" />
 
-        <div className="bank-list" role="tablist" aria-label="Bancos disponibles">
-          {banks.map((bank) => (
-            <EditableTab
-              countLabel={`${bank.cards.length} tarjetas`}
-              icon={<Building2 size={19} />}
-              isActive={bank.id === selectedBankId}
-              className={`bank-tab ${bank.id === selectedBankId ? "active" : ""}`}
-              key={bank.id}
-              name={bank.name}
-              onDelete={() => removeBank(bank.id)}
-              onSave={(name) => updateBank(bank.id, name)}
-              onSelect={() => selectBank(bank.id)}
-            />
-          ))}
-        </div>
+          <div className="bank-list" role="tablist" aria-label="Bancos disponibles">
+            {banks.map((bank) => (
+              <EditableTab
+                countLabel={`${bank.cards.length} tarjetas`}
+                icon={<Building2 size={19} />}
+                isActive={bank.id === selectedBankId}
+                className={`bank-tab ${bank.id === selectedBankId ? "active" : ""}`}
+                key={bank.id}
+                name={bank.name}
+                onDelete={() => removeBank(bank.id)}
+                onSave={(name) => updateBank(bank.id, name)}
+                onSelect={() => selectBank(bank.id)}
+              />
+            ))}
+          </div>
+        </section>
 
         {selectedBank && (
-          <>
-            <div className="panel-title nested-title">
+          <section className="selector-section selector-section-card">
+            <div className="panel-title selector-title">
               <CreditCard size={20} />
-              <span>Tarjetas</span>
+              <span>
+                <small>2. Elegi tarjeta</small>
+                <strong>{selectedBank.name}</strong>
+              </span>
             </div>
 
             <AddInlineForm
@@ -83,7 +91,7 @@ export default function CardsModule({
                 />
               ))}
             </div>
-          </>
+          </section>
         )}
       </aside>
 
@@ -96,6 +104,20 @@ export default function CardsModule({
                 <h2>{selectedCard.name}</h2>
               </div>
               <div className="section-heading-actions">
+                <label className="due-control">
+                  <span>Vence dia</span>
+                  <input
+                    min="1"
+                    max="31"
+                    type="number"
+                    value={selectedCard.dueDay ?? 10}
+                    onChange={(event) =>
+                      updateCard(selectedCard.id, {
+                        dueDay: Math.min(Math.max(Number(event.target.value) || 10, 1), 31),
+                      })
+                    }
+                  />
+                </label>
                 <button
                   className="payment-button"
                   disabled={isSelectedCardPaidThisMonth}
@@ -109,23 +131,8 @@ export default function CardsModule({
               </div>
             </div>
 
-            <CardExpenseForm key={selectedCard.id} onSubmit={addExpense} cardName={selectedCard.name} />
-
-            <div className="due-control">
-              <label>
-                Vencimiento de la tarjeta
-                <input
-                  min="1"
-                  max="31"
-                  type="number"
-                  value={selectedCard.dueDay ?? 10}
-                  onChange={(event) =>
-                    updateCard(selectedCard.id, {
-                      dueDay: Math.min(Math.max(Number(event.target.value) || 10, 1), 31),
-                    })
-                  }
-                />
-              </label>
+            <div className="expense-entry-panel">
+              <CardExpenseForm key={selectedCard.id} onSubmit={addExpense} cardName={selectedCard.name} />
             </div>
 
             <CardExpenseList

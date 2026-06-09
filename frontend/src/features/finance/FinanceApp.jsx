@@ -114,6 +114,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
   const subscriptionsTotal = data.subscriptionExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const activitiesTotal = data.activityExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const extrasTotal = data.extraExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const fixedExpensesTotal = departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal;
   const generalMonthlyTotal = monthlyTotal + departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal;
   const remainingTotal = data.salary - generalMonthlyTotal;
   const registryServices = useMemo(
@@ -157,6 +158,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
   const simpleModules = {
     department: {
       cardExpenses: cardFixedExpensesByCategory.department,
+      debitCards: data.debitCards,
       emptyMessage: "Todavia no cargaste gastos fijos del departamento.",
       expenses: data.departmentExpenses,
       icon: Home,
@@ -169,6 +171,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
     },
     subscriptions: {
       cardExpenses: cardFixedExpensesByCategory.subscriptions,
+      debitCards: data.debitCards,
       emptyMessage: "Todavia no cargaste suscripciones.",
       expenses: data.subscriptionExpenses,
       icon: Repeat,
@@ -181,6 +184,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
     },
     activities: {
       cardExpenses: cardFixedExpensesByCategory.activities,
+      debitCards: data.debitCards,
       emptyMessage: "Todavia no cargaste actividades.",
       expenses: data.activityExpenses,
       icon: Dumbbell,
@@ -193,6 +197,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
     },
     extras: {
       cardExpenses: cardFixedExpensesByCategory.extras,
+      debitCards: data.debitCards,
       emptyMessage: "Todavia no cargaste extras.",
       expenses: data.extraExpenses,
       icon: Sparkles,
@@ -393,7 +398,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
         })
         .filter((expense) => expense.cardId !== cardId || expense.isFixed || expense.installments > 0);
       const paidItems = current.expenses
-        .filter((expense) => expense.cardId === cardId)
+        .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
         .map((expense) => ({
           amount: expense.amount,
           expenseId: expense.id,
@@ -401,7 +406,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
           origin: expense.origin,
         }));
       const paidAmount = current.expenses
-        .filter((expense) => expense.cardId === cardId)
+        .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
         .reduce((sum, expense) => sum + Math.max((Number(expense.amount) || 0) - (Number(expense.savings) || 0), 0), 0);
       const cardName = banksWithTotals
         .flatMap((bank) => bank.cards.map((card) => ({ bankName: bank.name, card })))
@@ -498,7 +503,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
         const paidAt = new Date().toISOString();
         nextDetails[key] = {
           expectedAmount: service?.amount ?? 0,
-          method: "",
+          method: service?.paymentCard ?? "",
           notes: "",
           paid: true,
           paidAmount: service?.amount ?? 0,
@@ -510,7 +515,7 @@ export default function FinanceApp({ accessToken, onLogout }) {
             expectedAmount: service?.amount ?? 0,
             id: crypto.randomUUID(),
             items: [],
-            method: "",
+            method: service?.paymentCard ?? "",
             notes: "",
             paidAmount: service?.amount ?? 0,
             paidAt,
@@ -630,8 +635,8 @@ export default function FinanceApp({ accessToken, onLogout }) {
               value={currency.format(remainingTotal)}
             />
             <Metric icon={<Banknote size={18} />} label="Sueldo" tone="warning" value={currency.format(data.salary)} />
-            <Metric icon={<CalendarDays size={18} />} label="Total mensual" value={currency.format(generalMonthlyTotal)} />
-            <Metric icon={<CreditCard size={18} />} label="Tarjetas" value={currency.format(monthlyTotal)} />
+            <Metric icon={<CalendarDays size={18} />} label="Gastos fijos" tone="expense" value={currency.format(fixedExpensesTotal)} />
+            <Metric icon={<CreditCard size={18} />} label="Tarjetas" tone="expense" value={currency.format(monthlyTotal)} />
             <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
             <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
             <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
