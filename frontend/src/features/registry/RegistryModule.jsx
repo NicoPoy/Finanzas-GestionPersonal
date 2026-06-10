@@ -124,7 +124,7 @@ export default function RegistryModule({
                                 }
                               }}
                             >
-                              {checked ? "Pago" : "No"}
+                              {checked ? (paymentDetails[paymentKey]?.transferred ? "Transferido" : "Pago") : "No"}
                             </span>
                           </label>
                         </td>
@@ -159,6 +159,8 @@ function PaymentDetailPanel({ detail, onChange, paymentKey, service }) {
   const expectedAmount = Number(detail.expectedAmount) || service?.amount || 0;
   const paidAmount = Number(detail.paidAmount) || 0;
   const difference = paidAmount - expectedAmount;
+  const isTransferred = detail.transferred || false;
+  const hasPaymentCard = service?.paymentCard;
 
   return (
     <section className="payment-detail-panel">
@@ -206,6 +208,16 @@ function PaymentDetailPanel({ detail, onChange, paymentKey, service }) {
             onChange={(event) => onChange({ method: event.target.value })}
           />
         </label>
+        {hasPaymentCard && (
+          <label className="checkbox-field">
+            <input
+              checked={isTransferred}
+              onChange={(event) => onChange({ transferred: event.target.checked })}
+              type="checkbox"
+            />
+            <span>Transferido</span>
+          </label>
+        )}
         <label className="payment-notes-field">
           Observacion
           <input

@@ -505,7 +505,7 @@ button {
 }
 
 .registry-workspace {
-  max-width: 1280px;
+  max-width: 1600px;
 }
 
 .cards-panel,
@@ -1144,7 +1144,7 @@ button {
 .registry-table {
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 1110px;
+  min-width: 1400px;
   table-layout: fixed;
   width: 100%;
 }
