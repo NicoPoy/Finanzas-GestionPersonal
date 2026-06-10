@@ -38,14 +38,15 @@ def verify_password(password: str, stored_hash: str) -> bool:
     return hmac.compare_digest(password_hash, expected_hash)
 
 
-def create_access_token(payload: dict, expires_minutes: int = 60 * 24 * 7) -> str:
+def create_access_token(payload: dict, expires_minutes: int | None = None) -> str:
     """Crea un token JWT simple firmado con JWT_SECRET."""
 
     if not settings.jwt_secret:
         raise RuntimeError("JWT_SECRET no esta configurada")
 
+    token_ttl_minutes = settings.jwt_expires_minutes if expires_minutes is None else expires_minutes
     header = {"alg": settings.jwt_algorithm, "typ": "JWT"}
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=token_ttl_minutes)
     body = {
         **payload,
         "exp": int(expires_at.timestamp()),

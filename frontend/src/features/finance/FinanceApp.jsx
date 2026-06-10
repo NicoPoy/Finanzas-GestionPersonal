@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  ArrowLeft,
   Banknote,
   BarChart3,
   CalendarDays,
@@ -39,7 +40,7 @@ import SettingsModule from "../settings/SettingsModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
-export default function FinanceApp({ accessToken, onLogout }) {
+export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState("dashboard");
   const [selectedBankId, setSelectedBankId] = useState("");
@@ -607,6 +608,15 @@ export default function FinanceApp({ accessToken, onLogout }) {
 
         <div className="summary-side">
           <div className="header-actions">
+            <button
+              aria-label="Volver al inicio"
+              className="header-action-button"
+              onClick={onBackToHome}
+              title="Volver al inicio"
+              type="button"
+            >
+              <ArrowLeft size={16} />
+            </button>
             <a
               aria-label="Descargar APK"
               className="header-action-button"

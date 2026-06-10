@@ -1,18 +1,40 @@
 import React, { useEffect, useState } from "react";
 import LoginScreen from "./components/auth/LoginScreen.jsx";
 import FinanceApp from "./features/finance/FinanceApp.jsx";
+import HomeScreen from "./features/home/HomeScreen.jsx";
+import NotesModule from "./features/notes/NotesModule.jsx";
 import { apiUrl } from "./services/platform.js";
+import {
+  clearStoredAccessToken,
+  getStoredAccessToken,
+  getTokenExpirationMs,
+  isTokenExpired,
+  storeAccessToken,
+} from "./services/session.js";
 import "./styles.css";
 
-// App decide si mostrar el login visual o la aplicacion.
-// El token queda en localStorage y se elimina al cerrar sesion.
+// App decide si mostrar login, home o cada modulo autenticado.
+// El token queda en localStorage y expira a las 24 horas.
 export default function App() {
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem("finanzas_access_token"));
+  const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
   const [isCheckingSession, setIsCheckingSession] = useState(Boolean(accessToken));
+  const [activeSection, setActiveSection] = useState("home");
+
+  function closeSession() {
+    clearStoredAccessToken();
+    setAccessToken("");
+    setIsCheckingSession(false);
+    setActiveSection("home");
+  }
 
   useEffect(() => {
     if (!accessToken) {
       setIsCheckingSession(false);
+      return;
+    }
+
+    if (isTokenExpired(accessToken)) {
+      closeSession();
       return;
     }
 
@@ -28,14 +50,39 @@ export default function App() {
           throw new Error("Sesion invalida");
         }
       } catch {
-        localStorage.removeItem("finanzas_access_token");
-        setAccessToken("");
+        closeSession();
       } finally {
         setIsCheckingSession(false);
       }
     }
 
     verifySession();
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+
+    const expirationMs = getTokenExpirationMs(accessToken);
+
+    if (!expirationMs) {
+      closeSession();
+      return;
+    }
+
+    const remainingMs = expirationMs - Date.now();
+
+    if (remainingMs <= 0) {
+      closeSession();
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      closeSession();
+    }, remainingMs);
+
+    return () => window.clearTimeout(timeoutId);
   }, [accessToken]);
 
   async function handleLogin(credentials) {
@@ -53,15 +100,13 @@ export default function App() {
     }
 
     const session = await response.json();
-    localStorage.setItem("finanzas_access_token", session.access_token);
-    setIsCheckingSession(true);
+    storeAccessToken(session.access_token);
+    setActiveSection("home");
     setAccessToken(session.access_token);
   }
 
   function handleLogout() {
-    localStorage.removeItem("finanzas_access_token");
-    setAccessToken("");
-    setIsCheckingSession(false);
+    closeSession();
   }
 
   if (!accessToken) {
@@ -69,10 +114,36 @@ export default function App() {
   }
 
   if (isCheckingSession) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+      <main className="app-shell">
+        <section className="loading-screen">
+          <strong>Verificando sesion...</strong>
+        </section>
+      </main>
+    );
   }
 
-  return <FinanceApp accessToken={accessToken} onLogout={handleLogout} />;
+  if (activeSection === "finanzas") {
+    return (
+      <FinanceApp
+        accessToken={accessToken}
+        onBackToHome={() => setActiveSection("home")}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (activeSection === "notas") {
+    return <NotesModule onBackToHome={() => setActiveSection("home")} />;
+  }
+
+  return (
+    <HomeScreen
+      onLogout={handleLogout}
+      onOpenFinanzas={() => setActiveSection("finanzas")}
+      onOpenNotas={() => setActiveSection("notas")}
+    />
+  );
 }
 
 async function getApiErrorMessage(response) {

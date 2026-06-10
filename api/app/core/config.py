@@ -16,9 +16,10 @@ class Settings:
     """
 
     mongodb_uri: str = os.getenv("MONGODB_URI", "")
-    mongodb_db_name: str = os.getenv("MONGODB_DB_NAME", "finanzas")
+    mongodb_db_name: str = os.getenv("MONGODB_DB_NAME", "")
     jwt_secret: str = os.getenv("JWT_SECRET", "")
     jwt_algorithm: str = "HS256"
+    jwt_expires_minutes: int = int(os.getenv("JWT_EXPIRES_MINUTES", str(60 * 24)))
 
 
 settings = Settings()

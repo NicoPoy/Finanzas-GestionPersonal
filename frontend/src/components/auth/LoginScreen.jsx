@@ -6,13 +6,22 @@ export default function LoginScreen({ onLogin }) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const trimmedEmail = email.trim();
+  const canSubmit = trimmedEmail.length > 0 && password.length > 0;
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+
+    if (!canSubmit) {
+      setError("Completa email y contrasena para ingresar.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await onLogin({ email, password });
+      await onLogin({ email: trimmedEmail, password });
     } catch (loginError) {
       setError(loginError.message || "No se pudo iniciar sesion.");
     } finally {
@@ -56,7 +65,7 @@ export default function LoginScreen({ onLogin }) {
 
           {error ? <p className="form-error">{error}</p> : null}
 
-          <button disabled={isSubmitting} type="submit">
+          <button disabled={isSubmitting || !canSubmit} type="submit">
             {isSubmitting ? "Ingresando..." : "Entrar"}
           </button>
         </form>
