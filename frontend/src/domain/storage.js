@@ -27,7 +27,18 @@ export function normalizeData(data) {
     subscriptionExpenses: normalizeSimpleExpenses(data.subscriptionExpenses ?? INITIAL_DATA.subscriptionExpenses),
     activityExpenses: normalizeSimpleExpenses(data.activityExpenses ?? INITIAL_DATA.activityExpenses),
     extraExpenses: normalizeSimpleExpenses(data.extraExpenses ?? INITIAL_DATA.extraExpenses),
+    extraordinaryExpenses: normalizeExtraordinaryExpenses(
+      data.extraordinaryExpenses ?? INITIAL_DATA.extraordinaryExpenses,
+    ),
   };
+}
+
+function normalizeExtraordinaryExpenses(expenses) {
+  return expenses.map((expense) => ({
+    ...expense,
+    amount: Number(expense.amount) || 0,
+    name: String(expense.name ?? "").trim(),
+  }));
 }
 
 function normalizeDebitCards(cards) {

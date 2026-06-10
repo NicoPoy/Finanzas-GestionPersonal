@@ -63,12 +63,105 @@ export function buildCardFixedExpensesByCategory(banks) {
   return grouped;
 }
 
+export function getCalendarMonth(offset = 0) {
+  const anchor = new Date();
+  const date = new Date(anchor.getFullYear(), anchor.getMonth() + offset, 1);
+  const monthLabel = date.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+
+  return {
+    monthIndex: date.getMonth(),
+    title: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+    year: date.getFullYear(),
+  };
+}
+
+export function getPaymentMonthOffsetFromDate(year, monthIndex) {
+  const now = new Date();
+
+  return year * 12 + monthIndex - (now.getFullYear() * 12 + now.getMonth());
+}
+
+// El resumen que arma Tarjetas cierra este mes y se paga con el sueldo del mes siguiente.
+export function getStatementOffsetForPaymentMonth(paymentMonthOffset = 0) {
+  return paymentMonthOffset - 1;
+}
+
+export function getExpenseAmountForStatementOffset(expense, statementOffset = 0) {
+  if (isPaidByOther(expense)) {
+    return 0;
+  }
+
+  if (isFixedCardExpense(expense)) {
+    return getNetExpenseAmount(expense);
+  }
+
+  const installments = Number(expense.installments) || 0;
+
+  if (statementOffset < 0) {
+    const installmentsAtStatement = installments + -statementOffset;
+
+    if (installmentsAtStatement <= 0) {
+      return 0;
+    }
+
+    return Number(expense.amount) || 0;
+  }
+
+  if (statementOffset === 0) {
+    return getOwnExpenseAmount(expense);
+  }
+
+  if (installments <= statementOffset) {
+    return 0;
+  }
+
+  return Number(expense.amount) || 0;
+}
+
+export function buildProjectedCardMonthlyTotal(banks, statementOffset = 0) {
+  return banks.reduce(
+    (bankSum, bank) =>
+      bankSum +
+      bank.cards.reduce(
+        (cardSum, card) =>
+          cardSum +
+          card.expenses.reduce(
+            (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+            0,
+          ),
+        0,
+      ),
+    0,
+  );
+}
+
+export function buildCardMonthlyTotalForPaymentMonth(banks, paymentMonthOffset = 0) {
+  return buildProjectedCardMonthlyTotal(banks, getStatementOffsetForPaymentMonth(paymentMonthOffset));
+}
+
+export function buildUpcomingCardStatementTotal(banks) {
+  return buildProjectedCardMonthlyTotal(banks, 0);
+}
+
+function getCardMonthlyAmountForPayment(card, paymentMonthOffset = 0) {
+  const statementOffset = getStatementOffsetForPaymentMonth(paymentMonthOffset);
+
+  if (statementOffset === 0 && card.monthlyTotal != null) {
+    return card.monthlyTotal;
+  }
+
+  return card.expenses.reduce(
+    (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+    0,
+  );
+}
+
 // Construye las filas del registro anual: tarjetas + gastos simples cargados en cada seccion.
-export function buildRegistryServices(data, banks) {
+export function buildRegistryServices(data, banks, paymentMonthOffset = 0) {
   const cardServices = banks.flatMap((bank) =>
     bank.cards.map((card) => ({
       id: `card:${card.id}`,
-      amount: card.monthlyTotal,
+      amount: getCardMonthlyAmountForPayment(card, paymentMonthOffset),
       category: "Tarjetas",
       dueDay: card.dueDay ?? 10,
       name: `${card.name} - ${bank.name}`,
@@ -82,6 +175,66 @@ export function buildRegistryServices(data, banks) {
     ...mapSimpleServices(data.activityExpenses, "Actividades", "activities"),
     ...mapSimpleServices(data.extraExpenses, "Extras", "extras"),
   ];
+}
+
+export function buildExtraordinaryExpensesTotal(data, paymentMonthOffset = 0) {
+  if (paymentMonthOffset !== 1) {
+    return 0;
+  }
+
+  return (data.extraordinaryExpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+}
+
+export function buildDashboardSummary({
+  banks,
+  data,
+  fixedExpensesTotal,
+  paymentDetails,
+  paymentMonthOffset = 0,
+  paymentRegistry,
+  salary,
+}) {
+  const { monthIndex, title, year } = getCalendarMonth(paymentMonthOffset);
+  
+  let cardExpenses = 0;
+  banks.forEach((bank) => {
+    bank.cards.forEach((card) => {
+      const key = getPaymentKey(year, monthIndex, `card:${card.id}`);
+      const detail = paymentDetails?.[key];
+      const isPaid = Boolean(paymentRegistry?.[key] || detail?.paid);
+
+      if (isPaid && paymentMonthOffset <= 0) {
+        cardExpenses += Number(detail?.paidAmount) || 0;
+      } else {
+        cardExpenses += getCardMonthlyAmountForPayment(card, paymentMonthOffset);
+      }
+    });
+  });
+
+  const extraordinaryExpenses = buildExtraordinaryExpensesTotal(data, paymentMonthOffset);
+  const totalExpenses = cardExpenses + fixedExpensesTotal + extraordinaryExpenses;
+  const services = buildRegistryServices(data, banks, paymentMonthOffset);
+  const monthStats = buildMonthlyDashboard({
+    monthIndex,
+    paymentDetails,
+    paymentRegistry,
+    salary,
+    services,
+    year,
+  });
+  const statementMonth = getCalendarMonth(paymentMonthOffset - 1);
+
+  return {
+    cardExpenses,
+    extraordinaryExpenses,
+    fixedExpenses: fixedExpensesTotal,
+    monthTitle: title,
+    pendingTotal: monthStats.pendingTotal + extraordinaryExpenses,
+    remaining: salary - totalExpenses,
+    salary,
+    statementMonthTitle: statementMonth.title,
+    totalExpenses,
+  };
 }
 
 function mapSimpleServices(expenses, category, prefix) {

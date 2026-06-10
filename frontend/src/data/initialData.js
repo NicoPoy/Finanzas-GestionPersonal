@@ -11,6 +11,7 @@ export const INITIAL_DATA = {
   subscriptionExpenses: [],
   activityExpenses: [],
   extraExpenses: [],
+  extraordinaryExpenses: [],
 };
 
 // Paleta para tarjetas nuevas. El indice se calcula segun la cantidad total de tarjetas.

@@ -15,15 +15,18 @@ import {
   Repeat,
   Settings,
   Sparkles,
+  Star,
 } from "lucide-react";
 import Metric from "../../components/common/Metric.jsx";
 import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
   buildBanksWithTotals,
   buildCardFixedExpensesByCategory,
+  buildCardMonthlyTotalForPaymentMonth,
+  buildDashboardSummary,
   buildDueItems,
-  buildMonthlyDashboard,
   buildRegistryServices,
+  getCalendarMonth,
   countCards,
   getPaymentKey,
   getPaymentPeriod,
@@ -37,6 +40,7 @@ import HistoryModule from "../history/HistoryModule.jsx";
 import ProjectionModule from "../projection/ProjectionModule.jsx";
 import RegistryModule from "../registry/RegistryModule.jsx";
 import SettingsModule from "../settings/SettingsModule.jsx";
+import ExtraordinariosModule from "../extraordinary/ExtraordinariosModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
@@ -108,7 +112,10 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   const selectedBank = banksWithTotals.find((bank) => bank.id === selectedBankId) ?? banksWithTotals[0];
   const selectedCard =
     selectedBank?.cards.find((card) => card.id === selectedCardId) ?? selectedBank?.cards[0];
-  const monthlyTotal = banksWithTotals.reduce((sum, bank) => sum + bank.monthlyTotal, 0);
+  const currentPaymentCardTotal = useMemo(
+    () => buildCardMonthlyTotalForPaymentMonth(banksWithTotals, 0),
+    [banksWithTotals],
+  );
   const totalDebt = banksWithTotals.reduce((sum, bank) => sum + bank.totalDebt, 0);
   const cardSavingsTotal = banksWithTotals.reduce((sum, bank) => sum + bank.savingsTotal, 0);
   const departmentTotal = data.departmentExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -116,41 +123,55 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   const activitiesTotal = data.activityExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const extrasTotal = data.extraExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const fixedExpensesTotal = departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal;
-  const generalMonthlyTotal = monthlyTotal + departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal;
-  const remainingTotal = data.salary - generalMonthlyTotal;
+  const currentPaymentMonthTotal = currentPaymentCardTotal + fixedExpensesTotal;
+  const remainingTotal = data.salary - currentPaymentMonthTotal;
+  const currentPaymentMonth = getCalendarMonth(0);
+  const upcomingCardPaymentMonth = getCalendarMonth(1);
+  const currentStatementMonth = getCalendarMonth(0);
   const registryServices = useMemo(
-    () => buildRegistryServices(data, banksWithTotals),
+    () => buildRegistryServices(data, banksWithTotals, 0),
     [banksWithTotals, data],
   );
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonthIndex = today.getMonth();
   const currentCardPaymentKey = selectedCard
-    ? getPaymentKey(currentYear, currentMonthIndex, `card:${selectedCard.id}`)
+    ? getPaymentKey(upcomingCardPaymentMonth.year, upcomingCardPaymentMonth.monthIndex, `card:${selectedCard.id}`)
     : "";
-  const isSelectedCardPaidThisMonth = Boolean(data.paymentRegistry[currentCardPaymentKey]);
-  const currentMonthDashboard = useMemo(
+  const isSelectedCardPaidForPaymentMonth = Boolean(data.paymentRegistry[currentCardPaymentKey]);
+  const nextMonthSummary = useMemo(
     () =>
-      buildMonthlyDashboard({
-        monthIndex: currentMonthIndex,
+      buildDashboardSummary({
+        banks: banksWithTotals,
+        data,
+        fixedExpensesTotal,
         paymentDetails: data.paymentDetails,
+        paymentMonthOffset: 1,
         paymentRegistry: data.paymentRegistry,
         salary: data.salary,
-        services: registryServices,
-        year: currentYear,
       }),
-    [currentMonthIndex, currentYear, data.paymentDetails, data.paymentRegistry, data.salary, registryServices],
+    [banksWithTotals, data, fixedExpensesTotal],
+  );
+  const currentMonthSummary = useMemo(
+    () =>
+      buildDashboardSummary({
+        banks: banksWithTotals,
+        data,
+        fixedExpensesTotal,
+        paymentDetails: data.paymentDetails,
+        paymentMonthOffset: 0,
+        paymentRegistry: data.paymentRegistry,
+        salary: data.salary,
+      }),
+    [banksWithTotals, data, fixedExpensesTotal],
   );
   const currentDueItems = useMemo(
     () =>
       buildDueItems({
-        monthIndex: currentMonthIndex,
+        monthIndex: currentPaymentMonth.monthIndex,
         paymentDetails: data.paymentDetails,
         paymentRegistry: data.paymentRegistry,
         services: registryServices,
-        year: currentYear,
+        year: currentPaymentMonth.year,
       }),
-    [currentMonthIndex, currentYear, data.paymentDetails, data.paymentRegistry, registryServices],
+    [currentPaymentMonth, data.paymentDetails, data.paymentRegistry, registryServices],
   );
   const cardFixedExpensesByCategory = useMemo(
     () => buildCardFixedExpensesByCategory(banksWithTotals),
@@ -376,8 +397,8 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   }
 
   function registerCardPayment(cardId) {
-    const paymentDate = new Date();
-    const paymentKey = getPaymentKey(paymentDate.getFullYear(), paymentDate.getMonth(), `card:${cardId}`);
+    const paymentMonth = getCalendarMonth(1);
+    const paymentKey = getPaymentKey(paymentMonth.year, paymentMonth.monthIndex, `card:${cardId}`);
 
     setData((current) => {
       if (current.paymentRegistry[paymentKey]) {
@@ -439,7 +460,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
             notes: "",
             paidAmount,
             paidAt,
-            period: getPaymentPeriod(paymentDate.getFullYear(), paymentDate.getMonth()),
+            period: getPaymentPeriod(paymentMonth.year, paymentMonth.monthIndex),
             serviceId: `card:${cardId}`,
             serviceName,
             type: "card_payment",
@@ -481,6 +502,26 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
       [storageKey]: current[storageKey].map((expense) =>
         expense.id === expenseId ? { ...expense, ...updates } : expense,
       ),
+    }));
+  }
+
+  function addExtraordinaryExpense(expense) {
+    setData((current) => ({
+      ...current,
+      extraordinaryExpenses: [
+        {
+          id: crypto.randomUUID(),
+          ...expense,
+        },
+        ...current.extraordinaryExpenses,
+      ],
+    }));
+  }
+
+  function markExtraordinaryExpensePaid(expenseId) {
+    setData((current) => ({
+      ...current,
+      extraordinaryExpenses: current.extraordinaryExpenses.filter((expense) => expense.id !== expenseId),
     }));
   }
 
@@ -604,6 +645,9 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
             <p>Finanzas personales</p>
           </div>
           <h1>Administrador mensual</h1>
+          <p className="summary-month-note">
+            Sueldo de {upcomingCardPaymentMonth.title} · tarjetas del resumen de {currentPaymentMonth.title}
+          </p>
         </div>
 
         <div className="summary-side">
@@ -641,12 +685,17 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
             <Metric
               icon={<CalendarDays size={18} />}
               label="Restante"
-              tone={remainingTotal < 0 ? "danger" : "success"}
-              value={currency.format(remainingTotal)}
+              tone={nextMonthSummary.remaining < 0 ? "danger" : "success"}
+              value={currency.format(nextMonthSummary.remaining)}
             />
             <Metric icon={<Banknote size={18} />} label="Sueldo" tone="warning" value={currency.format(data.salary)} />
             <Metric icon={<CalendarDays size={18} />} label="Gastos fijos" tone="expense" value={currency.format(fixedExpensesTotal)} />
-            <Metric icon={<CreditCard size={18} />} label="Tarjetas" tone="expense" value={currency.format(monthlyTotal)} />
+            <Metric
+              icon={<CreditCard size={18} />}
+              label="Tarjetas"
+              tone="expense"
+              value={currency.format(nextMonthSummary.cardExpenses)}
+            />
             <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
             <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
             <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
@@ -716,6 +765,14 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
             <Sparkles size={18} />
             Extras
           </button>
+          <button
+            className={`module-tab ${activeModule === "extraordinary" ? "active" : ""}`}
+            onClick={() => setActiveModule("extraordinary")}
+            type="button"
+          >
+            <Star size={18} />
+            Extraordinarios
+          </button>
         </div>
 
         <div className="module-group module-group-tools">
@@ -748,9 +805,10 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
 
       {activeModule === "dashboard" ? (
         <DashboardModule
-          dashboard={{ ...currentMonthDashboard, salary: data.salary }}
+          currentMonthSummary={currentMonthSummary}
           dueItems={currentDueItems}
           history={data.paymentHistory}
+          nextMonthSummary={nextMonthSummary}
         />
       ) : activeModule === "cards" ? (
         <CardsModule
@@ -767,8 +825,10 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
           selectedCard={selectedCard}
           selectedCardId={selectedCardId}
           setSelectedCardId={setSelectedCardId}
-          isSelectedCardPaidThisMonth={isSelectedCardPaidThisMonth}
+          isSelectedCardPaidForPaymentMonth={isSelectedCardPaidForPaymentMonth}
           onRegisterCardPayment={registerCardPayment}
+          paymentMonthTitle={upcomingCardPaymentMonth.title}
+          statementMonthTitle={currentStatementMonth.title}
           updateBank={updateBank}
           updateCard={updateCard}
           updateExpense={updateExpense}
@@ -776,8 +836,8 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
         />
       ) : activeModule === "settings" ? (
         <SettingsModule
-          expensesTotal={generalMonthlyTotal}
-          remainingTotal={remainingTotal}
+          expensesTotal={nextMonthSummary.totalExpenses}
+          remainingTotal={nextMonthSummary.remaining}
           salary={data.salary}
           onSaveSalary={updateSalary}
         />
@@ -793,6 +853,12 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
         />
       ) : activeModule === "history" ? (
         <HistoryModule history={data.paymentHistory} />
+      ) : activeModule === "extraordinary" ? (
+        <ExtraordinariosModule
+          expenses={data.extraordinaryExpenses}
+          onAdd={addExtraordinaryExpense}
+          onMarkPaid={markExtraordinaryExpensePaid}
+        />
       ) : (
         <SimpleExpenseModule
           module={simpleModules[activeModule]}

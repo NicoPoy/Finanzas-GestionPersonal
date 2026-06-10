@@ -113,3 +113,4 @@ class FrontendFinanceProfile(BaseModel):
     subscriptionExpenses: list[SimpleExpense] = Field(default_factory=list)
     activityExpenses: list[SimpleExpense] = Field(default_factory=list)
     extraExpenses: list[SimpleExpense] = Field(default_factory=list)
+    extraordinaryExpenses: list[SimpleExpense] = Field(default_factory=list)

@@ -1,9 +1,14 @@
 import React from "react";
 import { BarChart3, ReceiptText } from "lucide-react";
-import { getOwnExpenseAmount, isFixedCardExpense, isPaidByOther } from "../../domain/financeCalculations.js";
+import {
+  buildCardMonthlyTotalForPaymentMonth,
+  getCalendarMonth,
+  getExpenseAmountForStatementOffset,
+  getStatementOffsetForPaymentMonth,
+} from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
-// Pantalla de proyeccion: calcula cuanto se pagara en tarjetas durante los proximos meses.
+// Pantalla de proyeccion: calcula cuanto se pagara en tarjetas por mes de sueldo.
 export default function ProjectionModule({ banks }) {
   const months = getProjectionMonths(12);
   const projectionRows = banks.flatMap((bank) =>
@@ -13,25 +18,18 @@ export default function ProjectionModule({ banks }) {
         id: `${bank.id}-${card.id}`,
         bankName: bank.name,
         cardName: card.name,
-        months: months.map((_, monthIndex) =>
-          card.expenses.reduce((sum, expense) => {
-            if (!isFixedCardExpense(expense) && expense.installments <= monthIndex) {
-              return sum;
-            }
+        months: months.map((month) => {
+          const statementOffset = getStatementOffsetForPaymentMonth(month.paymentMonthOffset);
 
-            if (isPaidByOther(expense)) {
-              return sum;
-            }
-
-            return sum + (monthIndex === 0 ? getOwnExpenseAmount(expense) : expense.amount);
-          }, 0),
-        ),
+          return card.expenses.reduce(
+            (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+            0,
+          );
+        }),
       })),
   );
 
-  const monthlyTotals = months.map((_, monthIndex) =>
-    projectionRows.reduce((sum, row) => sum + row.months[monthIndex], 0),
-  );
+  const monthlyTotals = months.map((month) => buildCardMonthlyTotalForPaymentMonth(banks, month.paymentMonthOffset));
 
   return (
     <section className="workspace single-column projection-workspace">
@@ -44,9 +42,13 @@ export default function ProjectionModule({ banks }) {
           <BarChart3 size={34} strokeWidth={1.7} />
         </div>
 
+        <p className="projection-note">
+          Cada columna es el mes de sueldo con el que pagas el resumen que cerro el mes anterior.
+        </p>
+
         <div className="total-strip">
-          <span>Proximo mes en tarjetas</span>
-          <strong>{currency.format(monthlyTotals[0] ?? 0)}</strong>
+          <span>Proximo mes de sueldo en tarjetas</span>
+          <strong>{currency.format(monthlyTotals[1] ?? 0)}</strong>
         </div>
 
         {projectionRows.length ? (
@@ -58,7 +60,7 @@ export default function ProjectionModule({ banks }) {
                   {months.map((month) => (
                     <th className="month-heading" key={month.key}>
                       <span>{month.label}</span>
-                      <small>{month.year}</small>
+                      <small>Sueldo {month.year}</small>
                     </th>
                   ))}
                 </tr>
@@ -101,18 +103,18 @@ export default function ProjectionModule({ banks }) {
   );
 }
 
-// Genera meses desde el mes actual para columnas de proyeccion.
 function getProjectionMonths(amount) {
-  const now = new Date();
-
   return Array.from({ length: amount }, (_, index) => {
-    const date = new Date(now.getFullYear(), now.getMonth() + index, 1);
-    const label = date.toLocaleDateString("es-AR", { month: "short" }).replace(".", "");
+    const paymentMonth = getCalendarMonth(index);
+    const label = new Date(paymentMonth.year, paymentMonth.monthIndex, 1)
+      .toLocaleDateString("es-AR", { month: "short" })
+      .replace(".", "");
 
     return {
-      key: `${date.getFullYear()}-${date.getMonth()}`,
+      key: `${paymentMonth.year}-${paymentMonth.monthIndex}`,
       label,
-      year: date.getFullYear(),
+      paymentMonthOffset: index,
+      year: paymentMonth.year,
     };
   });
 }

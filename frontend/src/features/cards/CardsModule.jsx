@@ -20,8 +20,10 @@ export default function CardsModule({
   selectedCard,
   selectedCardId,
   setSelectedCardId,
-  isSelectedCardPaidThisMonth,
+  isSelectedCardPaidForPaymentMonth,
   onRegisterCardPayment,
+  paymentMonthTitle,
+  statementMonthTitle,
   updateBank,
   updateCard,
   updateExpense,
@@ -102,10 +104,14 @@ export default function CardsModule({
               <div>
                 <p>{selectedBank.name}</p>
                 <h2>{selectedCard.name}</h2>
+                <small className="card-statement-note">
+                  Proximo resumen cierra en {statementMonthTitle} (dia {selectedCard.dueDay ?? 10}) · se paga con
+                  sueldo de {paymentMonthTitle}
+                </small>
               </div>
               <div className="section-heading-actions">
                 <label className="due-control">
-                  <span>Vence dia</span>
+                  <span>Cierra dia</span>
                   <input
                     min="1"
                     max="31"
@@ -120,12 +126,12 @@ export default function CardsModule({
                 </label>
                 <button
                   className="payment-button"
-                  disabled={isSelectedCardPaidThisMonth}
+                  disabled={isSelectedCardPaidForPaymentMonth}
                   onClick={() => onRegisterCardPayment(selectedCard.id)}
                   type="button"
                 >
                   <ReceiptText size={18} />
-                  {isSelectedCardPaidThisMonth ? "Pago registrado" : "Registrar pago"}
+                  {isSelectedCardPaidForPaymentMonth ? "Pago registrado" : `Registrar pago (${paymentMonthTitle})`}
                 </button>
                 <CreditCard size={34} strokeWidth={1.7} />
               </div>
