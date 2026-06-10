@@ -7,7 +7,7 @@ export function normalizeData(data) {
     ...data,
     salary: Number(data.salary) || 0,
     debitCards: normalizeDebitCards(data.debitCards ?? INITIAL_DATA.debitCards),
-    paymentDetails: data.paymentDetails ?? INITIAL_DATA.paymentDetails,
+    paymentDetails: normalizePaymentDetails(data.paymentDetails ?? INITIAL_DATA.paymentDetails),
     paymentHistory: data.paymentHistory ?? INITIAL_DATA.paymentHistory,
     paymentRegistry: data.paymentRegistry ?? INITIAL_DATA.paymentRegistry,
     banks: (data.banks ?? INITIAL_DATA.banks).map((bank) => ({
@@ -31,6 +31,19 @@ export function normalizeData(data) {
       data.extraordinaryExpenses ?? INITIAL_DATA.extraordinaryExpenses,
     ),
   };
+}
+
+function normalizePaymentDetails(details) {
+  return Object.fromEntries(
+    Object.entries(details ?? {}).map(([key, detail]) => [
+      key,
+      {
+        ...detail,
+        debited: Boolean(detail?.debited),
+        transferred: Boolean(detail?.transferred),
+      },
+    ]),
+  );
 }
 
 function normalizeExtraordinaryExpenses(expenses) {

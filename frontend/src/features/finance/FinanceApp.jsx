@@ -532,47 +532,58 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
     }));
   }
 
-  function togglePayment(year, monthIndex, serviceId) {
+  function setPaymentStatus(year, monthIndex, serviceId, status) {
     const key = getPaymentKey(year, monthIndex, serviceId);
     const service = registryServices.find((item) => item.id === serviceId);
+    const period = getPaymentPeriod(year, monthIndex);
+    const isFinalStatus = status === "paid" || status === "debited";
+    const isTransferredStatus = status === "transferred";
 
     setData((current) => {
-      const nextPaid = !current.paymentRegistry[key];
       const nextDetails = { ...current.paymentDetails };
-      let nextHistory = current.paymentHistory;
+      const previousDetail = current.paymentDetails[key] ?? {};
+      let nextHistory = current.paymentHistory.filter(
+        (item) => !(item.serviceId === serviceId && item.period === period),
+      );
 
-      if (nextPaid) {
-        const paidAt = new Date().toISOString();
-        nextDetails[key] = {
-          expectedAmount: service?.amount ?? 0,
-          method: service?.paymentCard ?? "",
-          notes: "",
-          paid: true,
-          paidAmount: service?.amount ?? 0,
-          paidAt,
-        };
-        nextHistory = [
-          {
-            category: service?.category ?? "",
-            expectedAmount: service?.amount ?? 0,
-            id: crypto.randomUUID(),
-            items: [],
-            method: service?.paymentCard ?? "",
-            notes: "",
-            paidAmount: service?.amount ?? 0,
-            paidAt,
-            period: getPaymentPeriod(year, monthIndex),
-            serviceId,
-            serviceName: service?.name ?? serviceId,
-            type: "manual_payment",
-          },
-          ...current.paymentHistory,
-        ];
-      } else {
+      if (status === "none") {
         delete nextDetails[key];
-        nextHistory = current.paymentHistory.filter(
-          (item) => !(item.serviceId === serviceId && item.period === getPaymentPeriod(year, monthIndex)),
-        );
+      } else {
+        const paidAt = isFinalStatus ? previousDetail.paidAt || new Date().toISOString() : previousDetail.paidAt || "";
+        const expectedAmount = Number(previousDetail.expectedAmount) || service?.amount || 0;
+        const paidAmount = isFinalStatus ? Number(previousDetail.paidAmount) || service?.amount || 0 : 0;
+
+        nextDetails[key] = {
+          ...previousDetail,
+          expectedAmount,
+          method: service?.paymentCard ?? previousDetail.method ?? "",
+          notes: previousDetail.notes ?? "",
+          paid: isFinalStatus,
+          paidAmount,
+          paidAt,
+          status,
+          transferred: isTransferredStatus || status === "debited",
+        };
+
+        if (isFinalStatus) {
+          nextHistory = [
+            {
+              category: service?.category ?? "",
+              expectedAmount,
+              id: crypto.randomUUID(),
+              items: [],
+              method: service?.paymentCard ?? previousDetail.method ?? "",
+              notes: previousDetail.notes ?? "",
+              paidAmount,
+              paidAt: paidAt || new Date().toISOString(),
+              period,
+              serviceId,
+              serviceName: service?.name ?? serviceId,
+              type: "manual_payment",
+            },
+            ...nextHistory,
+          ];
+        }
       }
 
       return {
@@ -581,7 +592,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
         paymentHistory: nextHistory,
         paymentRegistry: {
           ...current.paymentRegistry,
-          [key]: nextPaid,
+          [key]: isFinalStatus,
         },
       };
     });
@@ -848,8 +859,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
           paymentDetails={data.paymentDetails}
           paymentRegistry={data.paymentRegistry}
           services={registryServices}
-          onUpdatePaymentDetail={updatePaymentDetail}
-          onTogglePayment={togglePayment}
+          onSetPaymentStatus={setPaymentStatus}
         />
       ) : activeModule === "history" ? (
         <HistoryModule history={data.paymentHistory} />

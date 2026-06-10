@@ -52,6 +52,8 @@ class PaymentDetail(BaseModel):
     paidAmount: float = 0
     method: str = ""
     notes: str = ""
+    status: Literal["none", "transferred", "debited", "paid"] | None = None
+    transferred: bool = False
 
 
 class PaymentHistoryItem(BaseModel):

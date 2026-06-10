@@ -3,17 +3,17 @@ import { ListChecks, ReceiptText } from "lucide-react";
 import { getPaymentKey } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
+const PAYMENT_STATUS = {
+  DEBITED: "debited",
+  NONE: "none",
+  PAID: "paid",
+  TRANSFERRED: "transferred",
+};
+
 // Matriz anual: filas son cosas a pagar y columnas son meses.
-export default function RegistryModule({
-  onTogglePayment,
-  onUpdatePaymentDetail,
-  paymentDetails,
-  paymentRegistry,
-  services,
-}) {
+export default function RegistryModule({ paymentDetails, paymentRegistry, services, onSetPaymentStatus }) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedPaymentKey, setSelectedPaymentKey] = useState("");
   const months = [
     { label: "Enero", short: "Ene" },
     { label: "Febrero", short: "Feb" },
@@ -32,7 +32,12 @@ export default function RegistryModule({
   const paidCount = services.reduce((sum, service) => {
     return (
       sum +
-      months.filter((_, monthIndex) => paymentRegistry[getPaymentKey(selectedYear, monthIndex, service.id)]).length
+      months.filter((_, monthIndex) => {
+        const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
+        const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+
+        return status === PAYMENT_STATUS.PAID || status === PAYMENT_STATUS.DEBITED;
+      }).length
     );
   }, 0);
   const totalCells = services.length * months.length;
@@ -70,7 +75,7 @@ export default function RegistryModule({
         </div>
 
         <div className="total-strip">
-          <span>Abonados en {selectedYear}</span>
+          <span>Debitados / pagados en {selectedYear}</span>
           <strong>
             {paidCount} / {totalCells}
           </strong>
@@ -96,37 +101,37 @@ export default function RegistryModule({
                       <span>{service.name}</span>
                       <small>
                         {service.category} · <b className="amount-emphasis">{currency.format(service.amount)}</b>
+                        {service.paymentCard ? ` · Debita de ${service.paymentCard}` : ""}
                       </small>
                     </th>
                     {months.map((month, monthIndex) => {
                       const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
-                      const checked = Boolean(paymentRegistry[paymentKey] || paymentDetails[paymentKey]?.paid);
+                      const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+                      const usesDebitCard = Boolean(service.paymentCard);
 
                       return (
                         <td key={month.label}>
-                          <label className="check-cell">
-                            <input
-                              checked={checked}
-                              aria-label={`${service.name} ${month.label} ${selectedYear}`}
-                              onChange={() => {
-                                onTogglePayment(selectedYear, monthIndex, service.id);
-                                setSelectedPaymentKey(paymentKey);
-                              }}
-                              type="checkbox"
+                          {usesDebitCard ? (
+                            <DebitStatusControl
+                              month={month.label}
+                              service={service}
+                              status={status}
+                              year={selectedYear}
+                              onChange={(nextStatus) =>
+                                onSetPaymentStatus(selectedYear, monthIndex, service.id, nextStatus)
+                              }
                             />
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => setSelectedPaymentKey(paymentKey)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter") {
-                                  setSelectedPaymentKey(paymentKey);
-                                }
-                              }}
-                            >
-                              {checked ? (paymentDetails[paymentKey]?.transferred ? "Transferido" : "Pago") : "No"}
-                            </span>
-                          </label>
+                          ) : (
+                            <PaidStatusControl
+                              month={month.label}
+                              service={service}
+                              status={status}
+                              year={selectedYear}
+                              onChange={(nextStatus) =>
+                                onSetPaymentStatus(selectedYear, monthIndex, service.id, nextStatus)
+                              }
+                            />
+                          )}
                         </td>
                       );
                     })}
@@ -141,96 +146,67 @@ export default function RegistryModule({
             <p>Carga algun servicio o gasto para empezar a usar el registro.</p>
           </div>
         )}
-
-        {selectedPaymentKey && paymentDetails[selectedPaymentKey] ? (
-          <PaymentDetailPanel
-            detail={paymentDetails[selectedPaymentKey]}
-            onChange={(updates) => onUpdatePaymentDetail(selectedPaymentKey, updates)}
-            paymentKey={selectedPaymentKey}
-            service={services.find((service) => selectedPaymentKey.endsWith(service.id))}
-          />
-        ) : null}
       </section>
     </section>
   );
 }
 
-function PaymentDetailPanel({ detail, onChange, paymentKey, service }) {
-  const expectedAmount = Number(detail.expectedAmount) || service?.amount || 0;
-  const paidAmount = Number(detail.paidAmount) || 0;
-  const difference = paidAmount - expectedAmount;
-  const isTransferred = detail.transferred || false;
-  const hasPaymentCard = service?.paymentCard;
-
+function DebitStatusControl({ month, service, status, year, onChange }) {
   return (
-    <section className="payment-detail-panel">
-      <div>
-        <p>Detalle del pago</p>
-        <h3>{service?.name ?? paymentKey}</h3>
-      </div>
-
-      <div className="payment-detail-grid">
-        <label>
-          Fecha de pago
-          <input
-            type="date"
-            value={(detail.paidAt ?? "").slice(0, 10)}
-            onChange={(event) =>
-              onChange({
-                paidAt: event.target.value ? new Date(`${event.target.value}T12:00:00`).toISOString() : "",
-              })
-            }
-          />
-        </label>
-        <label>
-          Monto esperado
-          <input
-            min="0"
-            type="number"
-            value={expectedAmount}
-            onChange={(event) => onChange({ expectedAmount: Number(event.target.value) || 0 })}
-          />
-        </label>
-        <label>
-          Monto pagado
-          <input
-            min="0"
-            type="number"
-            value={paidAmount}
-            onChange={(event) => onChange({ paidAmount: Number(event.target.value) || 0 })}
-          />
-        </label>
-        <label>
-          Medio de pago
-          <input
-            placeholder="Transferencia, debito, efectivo..."
-            value={detail.method ?? ""}
-            onChange={(event) => onChange({ method: event.target.value })}
-          />
-        </label>
-        {hasPaymentCard && (
-          <label className="checkbox-field">
-            <input
-              checked={isTransferred}
-              onChange={(event) => onChange({ transferred: event.target.checked })}
-              type="checkbox"
-            />
-            <span>Transferido</span>
-          </label>
-        )}
-        <label className="payment-notes-field">
-          Observacion
-          <input
-            placeholder="Detalle opcional"
-            value={detail.notes ?? ""}
-            onChange={(event) => onChange({ notes: event.target.value })}
-          />
-        </label>
-        <div className={`difference-box ${difference < 0 ? "negative" : difference > 0 ? "warning" : "positive"}`}>
-          <span>Diferencia</span>
-          <strong>{currency.format(difference)}</strong>
-        </div>
-      </div>
-    </section>
+    <div className="registry-status-group registry-status-group-three" aria-label={`${service.name} ${month} ${year}`}>
+      <StatusButton isActive={status === PAYMENT_STATUS.NONE} label="No" tone="pending" onClick={() => onChange(PAYMENT_STATUS.NONE)} />
+      <StatusButton
+        isActive={status === PAYMENT_STATUS.TRANSFERRED}
+        label="Transferido"
+        tone="warning"
+        onClick={() => onChange(PAYMENT_STATUS.TRANSFERRED)}
+      />
+      <StatusButton
+        isActive={status === PAYMENT_STATUS.DEBITED}
+        label="Debitado"
+        tone="success"
+        onClick={() => onChange(PAYMENT_STATUS.DEBITED)}
+      />
+    </div>
   );
+}
+
+function PaidStatusControl({ month, service, status, year, onChange }) {
+  return (
+    <div className="registry-status-group registry-status-group-two" aria-label={`${service.name} ${month} ${year}`}>
+      <StatusButton isActive={status === PAYMENT_STATUS.NONE} label="No" tone="pending" onClick={() => onChange(PAYMENT_STATUS.NONE)} />
+      <StatusButton isActive={status === PAYMENT_STATUS.PAID} label="Pagado" tone="success" onClick={() => onChange(PAYMENT_STATUS.PAID)} />
+    </div>
+  );
+}
+
+function StatusButton({ isActive, label, tone, onClick }) {
+  return (
+    <button
+      className={`registry-status-button ${isActive ? "active" : ""} ${isActive ? tone : "muted"}`}
+      onClick={onClick}
+      type="button"
+    >
+      {label}
+    </button>
+  );
+}
+
+function getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service) {
+  const detail = paymentDetails[paymentKey];
+  const isPaid = Boolean(paymentRegistry[paymentKey] || detail?.paid);
+
+  if (service.paymentCard) {
+    if (isPaid || detail?.status === PAYMENT_STATUS.DEBITED) {
+      return PAYMENT_STATUS.DEBITED;
+    }
+
+    if (detail?.status === PAYMENT_STATUS.TRANSFERRED || detail?.transferred) {
+      return PAYMENT_STATUS.TRANSFERRED;
+    }
+
+    return PAYMENT_STATUS.NONE;
+  }
+
+  return isPaid ? PAYMENT_STATUS.PAID : PAYMENT_STATUS.NONE;
 }
