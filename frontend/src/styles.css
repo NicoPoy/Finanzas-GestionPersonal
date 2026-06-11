@@ -823,7 +823,7 @@ button {
 
 .card-expense-form {
   align-items: end;
-  grid-template-columns: minmax(260px, 1.55fr) minmax(150px, 0.72fr) minmax(120px, 0.58fr) minmax(170px, 0.8fr) auto;
+  grid-template-columns: minmax(240px, 1.45fr) minmax(150px, 0.72fr) minmax(150px, 0.72fr) minmax(180px, 0.82fr) minmax(140px, 0.62fr);
 }
 
 .card-expense-form > label:nth-child(1) {
@@ -857,7 +857,7 @@ button {
 }
 
 .card-expense-form .paid-by-other-field {
-  align-self: center;
+  align-self: end;
   align-items: center;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -870,6 +870,7 @@ button {
   min-height: 44px;
   padding: 7px 10px;
   position: relative;
+  width: 100%;
 }
 
 .card-expense-form .paid-by-other-field.active {
@@ -930,8 +931,10 @@ button {
 }
 
 .card-expense-form > button {
+  align-self: end;
   grid-column: 5 / 6;
   grid-row: 1;
+  width: 100%;
 }
 
 .fixed-expense-form {
