@@ -104,6 +104,8 @@ class FrontendFinanceProfile(BaseModel):
     Mantiene nombres camelCase para evitar transformaciones innecesarias en React.
     """
 
+    monthZeroDate: str = ""
+    registrationDate: str = ""
     salary: float = 0
     debitCards: list[str] = Field(default_factory=list)
     paymentDetails: dict[str, PaymentDetail] = Field(default_factory=dict)

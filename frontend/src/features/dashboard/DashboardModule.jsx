@@ -8,14 +8,13 @@ import {
   Home,
   LayoutDashboard,
   PiggyBank,
-  Star,
   Wallet,
 } from "lucide-react";
 import { currency } from "../../utils/formatters.js";
 
-export default function DashboardModule({ currentMonthSummary, dueItems, history, nextMonthSummary }) {
+export default function DashboardModule({ currentMonthSummary, dueItems, history, monthZeroDate, nextMonthSummary }) {
   const recentHistory = history.slice(0, 6);
-  const isJune2026 = new Date().getFullYear() === 2026 && new Date().getMonth() === 5;
+  const isMonthZero = isSummaryMonthZero(currentMonthSummary, monthZeroDate);
 
   return (
     <section className="workspace single-column">
@@ -34,28 +33,21 @@ export default function DashboardModule({ currentMonthSummary, dueItems, history
             Tarjetas: resumen de {nextMonthSummary.statementMonthTitle}
           </span>
         </p>
-        <DashboardSummaryGrid
-          cardHint="Resumen que cierra este mes"
-          showExtraordinary
-          summary={nextMonthSummary}
-        />
+        <DashboardSummaryGrid cardHint="Resumen que cierra este mes" summary={nextMonthSummary} />
 
-        <section className="dashboard-month-section">
+        {!isMonthZero ? (
+          <section className="dashboard-month-section">
           <div className="dashboard-month-heading">
             <div>
               <p>Sueldo actual</p>
               <h3>{currentMonthSummary.monthTitle}</h3>
-              {!isJune2026 && (
-                <small>
-                  Tarjetas: resumen de {currentMonthSummary.statementMonthTitle}
-                </small>
-              )}
+              <small>
+                Tarjetas: resumen de {currentMonthSummary.statementMonthTitle}
+              </small>
             </div>
           </div>
 
-          {!isJune2026 && (
-            <DashboardSummaryGrid cardHint="Resumen del mes anterior" compact summary={currentMonthSummary} />
-          )}
+          <DashboardSummaryGrid cardHint="Resumen del mes anterior" compact summary={currentMonthSummary} />
 
           <div className="split-panels">
             <section className="inline-panel">
@@ -106,22 +98,37 @@ export default function DashboardModule({ currentMonthSummary, dueItems, history
               )}
             </section>
           </div>
-        </section>
+          </section>
+        ) : null}
       </section>
     </section>
   );
 }
 
+function isSummaryMonthZero(summary, monthZeroDate) {
+  const monthZero = new Date(monthZeroDate);
+
+  if (Number.isNaN(monthZero.getTime())) {
+    return summary.monthTitle === "Junio de 2026";
+  }
+
+  if (summary.year != null && summary.monthIndex != null) {
+    return summary.year === monthZero.getFullYear() && summary.monthIndex === monthZero.getMonth();
+  }
+
+  const monthZeroTitle = monthZero.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  const normalizedMonthZeroTitle = monthZeroTitle.charAt(0).toUpperCase() + monthZeroTitle.slice(1);
+
+  return summary.monthTitle === normalizedMonthZeroTitle || summary.monthTitle === "Junio de 2026";
+}
+
 function DashboardSummaryGrid({
   cardHint = "Cuotas y consumos de tarjetas",
   compact = false,
-  showExtraordinary = false,
   summary,
 }) {
   return (
-    <div
-      className={`dashboard-grid ${compact ? "dashboard-grid-compact" : ""} ${showExtraordinary ? "dashboard-grid-with-extraordinary" : ""}`}
-    >
+    <div className={`dashboard-grid ${compact ? "dashboard-grid-compact" : ""}`}>
       <DashboardCard
         compact={compact}
         hint="Ingreso mensual configurado"
@@ -132,21 +139,9 @@ function DashboardSummaryGrid({
       />
       <DashboardCard
         compact={compact}
-        hint={
-          showExtraordinary
-            ? "Tarjetas + fijos + extraordinarios del proximo mes"
-            : "Tarjetas + gastos fijos del mes"
-        }
-        icon={<Wallet size={20} />}
-        label="Gasto total"
-        tone="expense"
-        value={currency.format(summary.totalExpenses)}
-      />
-      <DashboardCard
-        compact={compact}
         hint={cardHint}
         icon={<CreditCard size={20} />}
-        label="Gasto tarjetas"
+        label="Gastos tarjetas"
         tone="expense"
         value={currency.format(summary.cardExpenses)}
       />
@@ -157,6 +152,14 @@ function DashboardSummaryGrid({
         label="Gastos fijos"
         tone="expense"
         value={currency.format(summary.fixedExpenses)}
+      />
+      <DashboardCard
+        compact={compact}
+        hint="Tarjetas + fijos + extraordinarios"
+        icon={<Wallet size={20} />}
+        label="Gasto total"
+        tone="total"
+        value={currency.format(summary.totalExpenses)}
       />
       <DashboardCard
         compact={compact}
@@ -174,16 +177,6 @@ function DashboardSummaryGrid({
         tone={summary.pendingTotal > 0 ? "warning" : "neutral"}
         value={currency.format(summary.pendingTotal)}
       />
-      {showExtraordinary ? (
-        <DashboardCard
-          compact={compact}
-          hint="Gastos puntuales previstos para el proximo sueldo"
-          icon={<Star size={20} />}
-          label="Extraordinarios"
-          tone={summary.extraordinaryExpenses > 0 ? "warning" : "neutral"}
-          value={currency.format(summary.extraordinaryExpenses)}
-        />
-      ) : null}
     </div>
   );
 }
@@ -196,7 +189,7 @@ function DashboardCard({ compact = false, hint, icon, label, tone = "", value })
         <span className="dashboard-card-label">{label}</span>
       </div>
       <strong>{value}</strong>
-      {!compact && hint ? <small className="dashboard-card-hint">{hint}</small> : null}
+      {hint ? <small className="dashboard-card-hint">{hint}</small> : null}
     </article>
   );
 }

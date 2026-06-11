@@ -10,9 +10,13 @@ const PAYMENT_STATUS = {
   TRANSFERRED: "transferred",
 };
 
+const FIRST_REGISTRY_YEAR = 2026;
+
 // Matriz anual: filas son cosas a pagar y columnas son meses.
 export default function RegistryModule({ paymentDetails, paymentRegistry, services, onSetPaymentStatus }) {
-  const currentYear = new Date().getFullYear();
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonthIndex = today.getMonth();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const months = [
     { label: "Enero", short: "Ene" },
@@ -41,11 +45,26 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
     );
   }, 0);
   const totalCells = services.length * months.length;
+  const monthStates = months.map((_, monthIndex) => {
+    const isComplete =
+      services.length > 0 &&
+      services.every((service) => {
+        const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
+        const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+
+        return status === PAYMENT_STATUS.PAID || status === PAYMENT_STATUS.DEBITED;
+      });
+
+    return {
+      isComplete,
+      isCurrent: selectedYear === currentYear && monthIndex === currentMonthIndex,
+    };
+  });
 
   function handleYearChange(event) {
     const parsedYear = Number(event.target.value);
 
-    if (parsedYear >= 2000 && parsedYear <= 2100) {
+    if (parsedYear >= FIRST_REGISTRY_YEAR && parsedYear <= currentYear) {
       setSelectedYear(parsedYear);
     }
   }
@@ -62,14 +81,28 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
         </div>
 
         <div className="registry-toolbar">
-          <button type="button" onClick={() => setSelectedYear((year) => year - 1)}>
+          <button
+            disabled={selectedYear <= FIRST_REGISTRY_YEAR}
+            type="button"
+            onClick={() => setSelectedYear((year) => Math.max(FIRST_REGISTRY_YEAR, year - 1))}
+          >
             {selectedYear - 1}
           </button>
           <label>
             Año
-            <input min="2000" max="2100" type="number" value={selectedYear} onChange={handleYearChange} />
+            <input
+              min={FIRST_REGISTRY_YEAR}
+              max={currentYear}
+              type="number"
+              value={selectedYear}
+              onChange={handleYearChange}
+            />
           </label>
-          <button type="button" onClick={() => setSelectedYear((year) => year + 1)}>
+          <button
+            disabled={selectedYear >= currentYear}
+            type="button"
+            onClick={() => setSelectedYear((year) => Math.min(currentYear, year + 1))}
+          >
             {selectedYear + 1}
           </button>
         </div>
@@ -87,8 +120,12 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
               <thead>
                 <tr>
                   <th>Cosa a pagar</th>
-                  {months.map((month) => (
-                    <th className="month-heading" key={month.label} title={month.label}>
+                  {months.map((month, monthIndex) => (
+                    <th
+                      className={getMonthColumnClassName("month-heading", monthStates[monthIndex])}
+                      key={month.label}
+                      title={month.label}
+                    >
                       {month.short}
                     </th>
                   ))}
@@ -110,7 +147,7 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
                       const usesDebitCard = Boolean(service.paymentCard);
 
                       return (
-                        <td key={month.label}>
+                        <td className={getMonthColumnClassName("", monthStates[monthIndex])} key={month.label}>
                           {usesDebitCard ? (
                             <DebitStatusControl
                               month={month.label}
@@ -149,6 +186,16 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
       </section>
     </section>
   );
+}
+
+function getMonthColumnClassName(baseClass, monthState) {
+  return [
+    baseClass,
+    monthState.isComplete ? "registry-month-complete" : "",
+    monthState.isCurrent ? "registry-month-current" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function DebitStatusControl({ month, service, status, year, onChange }) {

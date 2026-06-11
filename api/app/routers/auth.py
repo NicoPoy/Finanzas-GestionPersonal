@@ -34,6 +34,7 @@ async def register(payload: RegisterRequest):
         "password_hash": hash_password(payload.password),
         "display_name": payload.display_name.strip(),
         "is_active": True,
+        "registration_date": now,
         "created_at": now,
         "updated_at": now,
     }

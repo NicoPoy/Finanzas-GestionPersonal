@@ -228,12 +228,14 @@ export function buildDashboardSummary({
     cardExpenses,
     extraordinaryExpenses,
     fixedExpenses: fixedExpensesTotal,
+    monthIndex,
     monthTitle: title,
     pendingTotal: monthStats.pendingTotal + extraordinaryExpenses,
     remaining: salary - totalExpenses,
     salary,
     statementMonthTitle: statementMonth.title,
     totalExpenses,
+    year,
   };
 }
 
@@ -302,12 +304,13 @@ export function buildMonthlyDashboard({ monthIndex, paymentDetails, paymentRegis
   const paidTotal = services.reduce((sum, service) => {
     const key = getPaymentKey(year, monthIndex, service.id);
     const detail = paymentDetails[key];
+    const isCompletedOrTransferred = paymentRegistry[key] || detail?.paid || detail?.status === "transferred" || detail?.transferred;
 
-    if (!paymentRegistry[key] && !detail?.paid) {
+    if (!isCompletedOrTransferred) {
       return sum;
     }
 
-    return sum + (Number(detail?.paidAmount) || service.amount);
+    return sum + (Number(detail?.paidAmount) || Number(detail?.expectedAmount) || service.amount);
   }, 0);
   const pendingTotal = Math.max(expectedTotal - paidTotal, 0);
   const usedPercentage = salary > 0 ? Math.min((expectedTotal / salary) * 100, 999) : 0;

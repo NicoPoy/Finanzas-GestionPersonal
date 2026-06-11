@@ -549,9 +549,11 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
       if (status === "none") {
         delete nextDetails[key];
       } else {
-        const paidAt = isFinalStatus ? previousDetail.paidAt || new Date().toISOString() : previousDetail.paidAt || "";
         const expectedAmount = Number(previousDetail.expectedAmount) || service?.amount || 0;
-        const paidAmount = isFinalStatus ? Number(previousDetail.paidAmount) || service?.amount || 0 : 0;
+        const movementAt = previousDetail.paidAt || new Date().toISOString();
+        const paidAt = isFinalStatus || isTransferredStatus ? movementAt : "";
+        const paidAmount =
+          isFinalStatus || isTransferredStatus ? Number(previousDetail.paidAmount) || expectedAmount : 0;
 
         nextDetails[key] = {
           ...previousDetail,
@@ -565,7 +567,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
           transferred: isTransferredStatus || status === "debited",
         };
 
-        if (isFinalStatus) {
+        if (isFinalStatus || isTransferredStatus) {
           nextHistory = [
             {
               category: service?.category ?? "",
@@ -573,13 +575,13 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
               id: crypto.randomUUID(),
               items: [],
               method: service?.paymentCard ?? previousDetail.method ?? "",
-              notes: previousDetail.notes ?? "",
+              notes: isTransferredStatus ? "Transferido, pendiente de debito." : previousDetail.notes ?? "",
               paidAmount,
               paidAt: paidAt || new Date().toISOString(),
               period,
               serviceId,
               serviceName: service?.name ?? serviceId,
-              type: "manual_payment",
+              type: isTransferredStatus ? "manual_transfer" : "manual_payment",
             },
             ...nextHistory,
           ];
@@ -819,6 +821,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
           currentMonthSummary={currentMonthSummary}
           dueItems={currentDueItems}
           history={data.paymentHistory}
+          monthZeroDate={data.monthZeroDate}
           nextMonthSummary={nextMonthSummary}
         />
       ) : activeModule === "cards" ? (

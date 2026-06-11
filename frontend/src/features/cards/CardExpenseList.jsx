@@ -164,7 +164,7 @@ export default function CardExpenseList({ card, onRemove, onUpdate, onUpdateSavi
                   expense.installments
                 )}
               </span>
-              <span className="amount-emphasis">{isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}</span>
+              <span className="pending-amount">{isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}</span>
               <div className="row-actions">
                 {isEditingSavings ? (
                   <>

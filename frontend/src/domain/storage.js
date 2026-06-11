@@ -5,6 +5,8 @@ export function normalizeData(data) {
   return {
     ...INITIAL_DATA,
     ...data,
+    monthZeroDate: normalizeProfileDate(data.monthZeroDate ?? INITIAL_DATA.monthZeroDate),
+    registrationDate: normalizeRegistrationDate(data.registrationDate ?? INITIAL_DATA.registrationDate),
     salary: Number(data.salary) || 0,
     debitCards: normalizeDebitCards(data.debitCards ?? INITIAL_DATA.debitCards),
     paymentDetails: normalizePaymentDetails(data.paymentDetails ?? INITIAL_DATA.paymentDetails),
@@ -31,6 +33,16 @@ export function normalizeData(data) {
       data.extraordinaryExpenses ?? INITIAL_DATA.extraordinaryExpenses,
     ),
   };
+}
+
+function normalizeRegistrationDate(registrationDate) {
+  return normalizeProfileDate(registrationDate);
+}
+
+function normalizeProfileDate(date) {
+  const parsedDate = new Date(date);
+
+  return Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toISOString();
 }
 
 function normalizePaymentDetails(details) {
