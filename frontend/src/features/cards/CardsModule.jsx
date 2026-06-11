@@ -113,15 +113,19 @@ export default function CardsModule({
                 <label className="due-control">
                   <span>Cierra dia</span>
                   <input
+                    key={selectedCard.id}
                     min="1"
                     max="31"
                     type="number"
-                    value={selectedCard.dueDay ?? 10}
-                    onChange={(event) =>
-                      updateCard(selectedCard.id, {
-                        dueDay: Math.min(Math.max(Number(event.target.value) || 10, 1), 31),
-                      })
-                    }
+                    defaultValue={selectedCard.dueDay ?? 10}
+                    onBlur={(event) => {
+                      const nextDueDay = Math.min(Math.max(Number(event.target.value) || 10, 1), 31);
+                      event.target.value = String(nextDueDay);
+
+                      if (nextDueDay !== (selectedCard.dueDay ?? 10)) {
+                        updateCard(selectedCard.id, { dueDay: nextDueDay });
+                      }
+                    }}
                   />
                 </label>
                 <button

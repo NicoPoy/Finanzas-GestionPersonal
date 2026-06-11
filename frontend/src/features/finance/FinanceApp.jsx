@@ -52,6 +52,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState("");
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -248,6 +249,20 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
     }
   }, [banksWithTotals, selectedBank, selectedBankId, selectedCardId]);
 
+  function requestConfirmation({ confirmLabel = "Confirmar", message, onConfirm, title, tone = "default" }) {
+    setConfirmation({ confirmLabel, message, onConfirm, title, tone });
+  }
+
+  function closeConfirmation() {
+    setConfirmation(null);
+  }
+
+  function confirmPendingAction() {
+    const action = confirmation?.onConfirm;
+    setConfirmation(null);
+    action?.();
+  }
+
   function selectBank(bankId) {
     const bank = banksWithTotals.find((item) => item.id === bankId);
     setSelectedBankId(bankId);
@@ -270,24 +285,38 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   }
 
   function updateBank(bankId, name) {
-    setData((current) => ({
-      ...current,
-      banks: current.banks.map((bank) => (bank.id === bankId ? { ...bank, name } : bank)),
-    }));
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se va a modificar el nombre del banco.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          banks: current.banks.map((bank) => (bank.id === bankId ? { ...bank, name } : bank)),
+        })),
+      title: "Modificar banco",
+    });
   }
 
   function removeBank(bankId) {
-    setData((current) => {
-      const removedCardIds = current.banks.find((bank) => bank.id === bankId)?.cards.map((card) => card.id) ?? [];
+    requestConfirmation({
+      confirmLabel: "Eliminar banco",
+      message: "Se va a eliminar el banco, sus tarjetas y los gastos asociados.",
+      onConfirm: () => {
+        setData((current) => {
+          const removedCardIds = current.banks.find((bank) => bank.id === bankId)?.cards.map((card) => card.id) ?? [];
 
-      return {
-        ...current,
-        banks: current.banks.filter((bank) => bank.id !== bankId),
-        expenses: current.expenses.filter((expense) => !removedCardIds.includes(expense.cardId)),
-      };
+          return {
+            ...current,
+            banks: current.banks.filter((bank) => bank.id !== bankId),
+            expenses: current.expenses.filter((expense) => !removedCardIds.includes(expense.cardId)),
+          };
+        });
+        setSelectedBankId("");
+        setSelectedCardId("");
+      },
+      title: "Eliminar banco",
+      tone: "danger",
     });
-    setSelectedBankId("");
-    setSelectedCardId("");
   }
 
   function addCard(name) {
@@ -312,32 +341,46 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   }
 
   function updateCard(cardId, updates) {
-    setData((current) => ({
-      ...current,
-      banks: current.banks.map((bank) => ({
-        ...bank,
-        cards: bank.cards.map((card) =>
-          card.id === cardId
-            ? {
-                ...card,
-                ...(typeof updates === "string" ? { name: updates } : updates),
-              }
-            : card,
-        ),
-      })),
-    }));
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se van a modificar los datos de la tarjeta.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          banks: current.banks.map((bank) => ({
+            ...bank,
+            cards: bank.cards.map((card) =>
+              card.id === cardId
+                ? {
+                    ...card,
+                    ...(typeof updates === "string" ? { name: updates } : updates),
+                  }
+                : card,
+            ),
+          })),
+        })),
+      title: "Modificar tarjeta",
+    });
   }
 
   function removeCard(cardId) {
-    setData((current) => ({
-      ...current,
-      banks: current.banks.map((bank) => ({
-        ...bank,
-        cards: bank.cards.filter((card) => card.id !== cardId),
-      })),
-      expenses: current.expenses.filter((expense) => expense.cardId !== cardId),
-    }));
-    setSelectedCardId("");
+    requestConfirmation({
+      confirmLabel: "Eliminar tarjeta",
+      message: "Se va a eliminar la tarjeta y todos sus gastos asociados.",
+      onConfirm: () => {
+        setData((current) => ({
+          ...current,
+          banks: current.banks.map((bank) => ({
+            ...bank,
+            cards: bank.cards.filter((card) => card.id !== cardId),
+          })),
+          expenses: current.expenses.filter((expense) => expense.cardId !== cardId),
+        }));
+        setSelectedCardId("");
+      },
+      title: "Eliminar tarjeta",
+      tone: "danger",
+    });
   }
 
   function addExpense(expense) {
@@ -359,119 +402,144 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   }
 
   function removeExpense(expenseId) {
-    setData((current) => ({
-      ...current,
-      expenses: current.expenses.filter((expense) => expense.id !== expenseId),
-    }));
+    requestConfirmation({
+      confirmLabel: "Eliminar gasto",
+      message: "Se va a eliminar este gasto de la tarjeta.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          expenses: current.expenses.filter((expense) => expense.id !== expenseId),
+        })),
+      title: "Eliminar gasto",
+      tone: "danger",
+    });
   }
 
   function updateExpense(expenseId, updates) {
-    setData((current) => ({
-      ...current,
-      expenses: current.expenses.map((expense) =>
-        expense.id === expenseId
-          ? {
-              ...expense,
-              ...updates,
-              savings: Math.min(Math.max(Number(updates.savings) || 0, 0), Number(updates.amount) || 0),
-            }
-          : expense,
-      ),
-    }));
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se van a modificar los datos de este gasto.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          expenses: current.expenses.map((expense) =>
+            expense.id === expenseId
+              ? {
+                  ...expense,
+                  ...updates,
+                  savings: Math.min(Math.max(Number(updates.savings) || 0, 0), Number(updates.amount) || 0),
+                }
+              : expense,
+          ),
+        })),
+      title: "Modificar gasto",
+    });
   }
 
   function updateExpenseSavings(expenseId, savings) {
-    setData((current) => ({
-      ...current,
-      expenses: current.expenses.map((expense) => {
-        if (expense.id !== expenseId) {
-          return expense;
-        }
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se va a modificar el ahorro de este gasto.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          expenses: current.expenses.map((expense) => {
+            if (expense.id !== expenseId) {
+              return expense;
+            }
 
-        return {
-          ...expense,
-          savings: Math.min(Math.max(savings, 0), expense.amount),
-        };
-      }),
-    }));
+            return {
+              ...expense,
+              savings: Math.min(Math.max(savings, 0), expense.amount),
+            };
+          }),
+        })),
+      title: "Modificar ahorro",
+    });
   }
 
   function registerCardPayment(cardId) {
     const paymentMonth = getCalendarMonth(1);
     const paymentKey = getPaymentKey(paymentMonth.year, paymentMonth.monthIndex, `card:${cardId}`);
 
-    setData((current) => {
-      if (current.paymentRegistry[paymentKey]) {
-        return current;
-      }
-
-      const updatedExpenses = current.expenses
-        .map((expense) => {
-          if (expense.cardId !== cardId || expense.isFixed) {
-            return expense;
+    requestConfirmation({
+      confirmLabel: "Registrar pago",
+      message: `Se va a registrar el pago de la tarjeta para ${paymentMonth.title}.`,
+      onConfirm: () =>
+        setData((current) => {
+          if (current.paymentRegistry[paymentKey]) {
+            return current;
           }
 
-          const remainingInstallments = Math.max((Number(expense.installments) || 1) - 1, 0);
+          const updatedExpenses = current.expenses
+            .map((expense) => {
+              if (expense.cardId !== cardId || expense.isFixed) {
+                return expense;
+              }
+
+              const remainingInstallments = Math.max((Number(expense.installments) || 1) - 1, 0);
+
+              return {
+                ...expense,
+                installments: remainingInstallments,
+              };
+            })
+            .filter((expense) => expense.cardId !== cardId || expense.isFixed || expense.installments > 0);
+          const paidItems = current.expenses
+            .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
+            .map((expense) => ({
+              amount: expense.amount,
+              expenseId: expense.id,
+              installmentPaid: expense.isFixed ? "fixed" : expense.installments,
+              origin: expense.origin,
+            }));
+          const paidAmount = current.expenses
+            .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
+            .reduce((sum, expense) => sum + Math.max((Number(expense.amount) || 0) - (Number(expense.savings) || 0), 0), 0);
+          const cardName = banksWithTotals
+            .flatMap((bank) => bank.cards.map((card) => ({ bankName: bank.name, card })))
+            .find((item) => item.card.id === cardId);
+          const serviceName = cardName ? `${cardName.card.name} - ${cardName.bankName}` : "Tarjeta";
+          const paidAt = new Date().toISOString();
 
           return {
-            ...expense,
-            installments: remainingInstallments,
+            ...current,
+            expenses: updatedExpenses,
+            paymentDetails: {
+              ...current.paymentDetails,
+              [paymentKey]: {
+                expectedAmount: paidAmount,
+                method: "Tarjeta",
+                notes: "",
+                paid: true,
+                paidAmount,
+                paidAt,
+              },
+            },
+            paymentHistory: [
+              {
+                category: "Tarjetas",
+                expectedAmount: paidAmount,
+                id: crypto.randomUUID(),
+                items: paidItems,
+                method: "Tarjeta",
+                notes: "",
+                paidAmount,
+                paidAt,
+                period: getPaymentPeriod(paymentMonth.year, paymentMonth.monthIndex),
+                serviceId: `card:${cardId}`,
+                serviceName,
+                type: "card_payment",
+              },
+              ...current.paymentHistory,
+            ],
+            paymentRegistry: {
+              ...current.paymentRegistry,
+              [paymentKey]: true,
+            },
           };
-        })
-        .filter((expense) => expense.cardId !== cardId || expense.isFixed || expense.installments > 0);
-      const paidItems = current.expenses
-        .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
-        .map((expense) => ({
-          amount: expense.amount,
-          expenseId: expense.id,
-          installmentPaid: expense.isFixed ? "fixed" : expense.installments,
-          origin: expense.origin,
-        }));
-      const paidAmount = current.expenses
-        .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
-        .reduce((sum, expense) => sum + Math.max((Number(expense.amount) || 0) - (Number(expense.savings) || 0), 0), 0);
-      const cardName = banksWithTotals
-        .flatMap((bank) => bank.cards.map((card) => ({ bankName: bank.name, card })))
-        .find((item) => item.card.id === cardId);
-      const serviceName = cardName ? `${cardName.card.name} - ${cardName.bankName}` : "Tarjeta";
-      const paidAt = new Date().toISOString();
-
-      return {
-        ...current,
-        expenses: updatedExpenses,
-        paymentDetails: {
-          ...current.paymentDetails,
-          [paymentKey]: {
-            expectedAmount: paidAmount,
-            method: "Tarjeta",
-            notes: "",
-            paid: true,
-            paidAmount,
-            paidAt,
-          },
-        },
-        paymentHistory: [
-          {
-            category: "Tarjetas",
-            expectedAmount: paidAmount,
-            id: crypto.randomUUID(),
-            items: paidItems,
-            method: "Tarjeta",
-            notes: "",
-            paidAmount,
-            paidAt,
-            period: getPaymentPeriod(paymentMonth.year, paymentMonth.monthIndex),
-            serviceId: `card:${cardId}`,
-            serviceName,
-            type: "card_payment",
-          },
-          ...current.paymentHistory,
-        ],
-        paymentRegistry: {
-          ...current.paymentRegistry,
-          [paymentKey]: true,
-        },
-      };
+        }),
+      title: "Registrar pago",
     });
   }
 
@@ -490,19 +558,32 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   }
 
   function removeSimpleExpense(storageKey, expenseId) {
-    setData((current) => ({
-      ...current,
-      [storageKey]: current[storageKey].filter((expense) => expense.id !== expenseId),
-    }));
+    requestConfirmation({
+      confirmLabel: "Eliminar gasto",
+      message: "Se va a eliminar este gasto.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          [storageKey]: current[storageKey].filter((expense) => expense.id !== expenseId),
+        })),
+      title: "Eliminar gasto",
+      tone: "danger",
+    });
   }
 
   function updateSimpleExpense(storageKey, expenseId, updates) {
-    setData((current) => ({
-      ...current,
-      [storageKey]: current[storageKey].map((expense) =>
-        expense.id === expenseId ? { ...expense, ...updates } : expense,
-      ),
-    }));
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se van a modificar los datos de este gasto.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          [storageKey]: current[storageKey].map((expense) =>
+            expense.id === expenseId ? { ...expense, ...updates } : expense,
+          ),
+        })),
+      title: "Modificar gasto",
+    });
   }
 
   function addExtraordinaryExpense(expense) {
@@ -519,17 +600,29 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   }
 
   function markExtraordinaryExpensePaid(expenseId) {
-    setData((current) => ({
-      ...current,
-      extraordinaryExpenses: current.extraordinaryExpenses.filter((expense) => expense.id !== expenseId),
-    }));
+    requestConfirmation({
+      confirmLabel: "Marcar pagado",
+      message: "Se va a marcar este extraordinario como pagado y se quitara de pendientes.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          extraordinaryExpenses: current.extraordinaryExpenses.filter((expense) => expense.id !== expenseId),
+        })),
+      title: "Confirmar pago",
+    });
   }
 
   function updateSalary(salary) {
-    setData((current) => ({
-      ...current,
-      salary,
-    }));
+    requestConfirmation({
+      confirmLabel: "Guardar sueldo",
+      message: "Se va a modificar el sueldo configurado.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          salary,
+        })),
+      title: "Modificar sueldo",
+    });
   }
 
   function setPaymentStatus(year, monthIndex, serviceId, status) {
@@ -538,94 +631,112 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
     const period = getPaymentPeriod(year, monthIndex);
     const isFinalStatus = status === "paid" || status === "debited";
     const isTransferredStatus = status === "transferred";
+    const statusLabels = {
+      debited: "debitado",
+      none: "no pagado",
+      paid: "pagado",
+      transferred: "transferido",
+    };
 
-    setData((current) => {
-      const nextDetails = { ...current.paymentDetails };
-      const previousDetail = current.paymentDetails[key] ?? {};
-      let nextHistory = current.paymentHistory.filter(
-        (item) => !(item.serviceId === serviceId && item.period === period),
-      );
+    requestConfirmation({
+      confirmLabel: "Cambiar estado",
+      message: `Se va a marcar ${service?.name ?? "este gasto"} como ${statusLabels[status] ?? status}.`,
+      onConfirm: () =>
+        setData((current) => {
+          const nextDetails = { ...current.paymentDetails };
+          const previousDetail = current.paymentDetails[key] ?? {};
+          let nextHistory = current.paymentHistory.filter(
+            (item) => !(item.serviceId === serviceId && item.period === period),
+          );
 
-      if (status === "none") {
-        delete nextDetails[key];
-      } else {
-        const expectedAmount = Number(previousDetail.expectedAmount) || service?.amount || 0;
-        const movementAt = previousDetail.paidAt || new Date().toISOString();
-        const paidAt = isFinalStatus || isTransferredStatus ? movementAt : "";
-        const paidAmount =
-          isFinalStatus || isTransferredStatus ? Number(previousDetail.paidAmount) || expectedAmount : 0;
+          if (status === "none") {
+            delete nextDetails[key];
+          } else {
+            const expectedAmount = Number(previousDetail.expectedAmount) || service?.amount || 0;
+            const movementAt = previousDetail.paidAt || new Date().toISOString();
+            const paidAt = isFinalStatus || isTransferredStatus ? movementAt : "";
+            const paidAmount =
+              isFinalStatus || isTransferredStatus ? Number(previousDetail.paidAmount) || expectedAmount : 0;
 
-        nextDetails[key] = {
-          ...previousDetail,
-          expectedAmount,
-          method: service?.paymentCard ?? previousDetail.method ?? "",
-          notes: previousDetail.notes ?? "",
-          paid: isFinalStatus,
-          paidAmount,
-          paidAt,
-          status,
-          transferred: isTransferredStatus || status === "debited",
-        };
-
-        if (isFinalStatus || isTransferredStatus) {
-          nextHistory = [
-            {
-              category: service?.category ?? "",
+            nextDetails[key] = {
+              ...previousDetail,
               expectedAmount,
-              id: crypto.randomUUID(),
-              items: [],
               method: service?.paymentCard ?? previousDetail.method ?? "",
-              notes: isTransferredStatus ? "Transferido, pendiente de debito." : previousDetail.notes ?? "",
+              notes: previousDetail.notes ?? "",
+              paid: isFinalStatus,
               paidAmount,
-              paidAt: paidAt || new Date().toISOString(),
-              period,
-              serviceId,
-              serviceName: service?.name ?? serviceId,
-              type: isTransferredStatus ? "manual_transfer" : "manual_payment",
-            },
-            ...nextHistory,
-          ];
-        }
-      }
+              paidAt,
+              status,
+              transferred: isTransferredStatus || status === "debited",
+            };
 
-      return {
-        ...current,
-        paymentDetails: nextDetails,
-        paymentHistory: nextHistory,
-        paymentRegistry: {
-          ...current.paymentRegistry,
-          [key]: isFinalStatus,
-        },
-      };
+            if (isFinalStatus || isTransferredStatus) {
+              nextHistory = [
+                {
+                  category: service?.category ?? "",
+                  expectedAmount,
+                  id: crypto.randomUUID(),
+                  items: [],
+                  method: service?.paymentCard ?? previousDetail.method ?? "",
+                  notes: isTransferredStatus ? "Transferido, pendiente de debito." : previousDetail.notes ?? "",
+                  paidAmount,
+                  paidAt: paidAt || new Date().toISOString(),
+                  period,
+                  serviceId,
+                  serviceName: service?.name ?? serviceId,
+                  type: isTransferredStatus ? "manual_transfer" : "manual_payment",
+                },
+                ...nextHistory,
+              ];
+            }
+          }
+
+          return {
+            ...current,
+            paymentDetails: nextDetails,
+            paymentHistory: nextHistory,
+            paymentRegistry: {
+              ...current.paymentRegistry,
+              [key]: isFinalStatus,
+            },
+          };
+        }),
+      title: "Modificar registro",
     });
   }
 
   function updatePaymentDetail(paymentKey, updates) {
-    setData((current) => {
-      const nextDetail = {
-        ...(current.paymentDetails[paymentKey] ?? {}),
-        ...updates,
-      };
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se van a modificar los detalles del pago.",
+      onConfirm: () =>
+        setData((current) => {
+          const nextDetail = {
+            ...(current.paymentDetails[paymentKey] ?? {}),
+            ...updates,
+          };
 
-      return {
-        ...current,
-        paymentDetails: {
-          ...current.paymentDetails,
-          [paymentKey]: nextDetail,
-        },
-        paymentHistory: current.paymentHistory.map((item) =>
-          `${item.period}-${item.serviceId}` === paymentKey
-            ? {
-                ...item,
-                expectedAmount: Number(nextDetail.expectedAmount) || 0,
-                method: nextDetail.method ?? "",
-                notes: nextDetail.notes ?? "",
-                paidAmount: Number(nextDetail.paidAmount) || 0,
-                paidAt: nextDetail.paidAt ?? item.paidAt,
-              }
-            : item,
-        ),
-      };
+          return {
+            ...current,
+            paymentDetails: {
+              ...current.paymentDetails,
+              [paymentKey]: nextDetail,
+            },
+            paymentHistory: current.paymentHistory.map((item) =>
+              `${item.period}-${item.serviceId}` === paymentKey
+                ? {
+                    ...item,
+                    expectedAmount: Number(nextDetail.expectedAmount) || 0,
+                    method: nextDetail.method ?? "",
+                    notes: nextDetail.notes ?? "",
+                    paidAmount: Number(nextDetail.paidAmount) || 0,
+                    paidAt: nextDetail.paidAt ?? item.paidAt,
+                  }
+                : item,
+            ),
+          };
+        }),
+      title: "Modificar pago",
     });
   }
 
@@ -880,6 +991,44 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
           onUpdate={updateSimpleExpense}
         />
       )}
+
+      <ConfirmModal
+        confirmation={confirmation}
+        onCancel={closeConfirmation}
+        onConfirm={confirmPendingAction}
+      />
     </main>
+  );
+}
+
+function ConfirmModal({ confirmation, onCancel, onConfirm }) {
+  if (!confirmation) {
+    return null;
+  }
+
+  return (
+    <div className="confirm-backdrop" role="presentation">
+      <section aria-modal="true" className="confirm-modal" role="dialog">
+        <div>
+          <span className={`confirm-kicker ${confirmation.tone === "danger" ? "danger" : ""}`}>
+            Confirmacion requerida
+          </span>
+          <h2>{confirmation.title}</h2>
+          <p>{confirmation.message}</p>
+        </div>
+        <div className="confirm-actions">
+          <button className="confirm-button confirm-button-secondary" onClick={onCancel} type="button">
+            Cancelar
+          </button>
+          <button
+            className={`confirm-button ${confirmation.tone === "danger" ? "confirm-button-danger" : "confirm-button-primary"}`}
+            onClick={onConfirm}
+            type="button"
+          >
+            {confirmation.confirmLabel}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
