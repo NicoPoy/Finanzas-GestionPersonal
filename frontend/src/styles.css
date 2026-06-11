@@ -2636,3 +2636,569 @@ button {
   background: #f8fafc;
   color: #64748b;
 }
+
+@media (max-width: 760px) {
+  body {
+    background: #f3f6fa;
+  }
+
+  .app-shell {
+    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+
+  .summary-band {
+    gap: 24px;
+    padding: 30px 16px 24px;
+  }
+
+  .summary-band {
+    padding-top: 54px;
+  }
+
+  .summary-copy {
+    gap: 8px;
+  }
+
+  .brand-lockup-hero {
+    margin-bottom: 12px;
+  }
+
+  .brand-lockup-hero img {
+    border-radius: 12px;
+    height: 52px;
+    width: 52px;
+  }
+
+  .brand-lockup-hero p {
+    font-size: 0.7rem;
+  }
+
+  .summary-copy h1 {
+    font-size: 2.35rem;
+    line-height: 1.04;
+    max-width: 20rem;
+  }
+
+  .summary-month-note {
+    font-size: 0.72rem;
+    max-width: 20rem;
+  }
+
+  .summary-side {
+    gap: 10px;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+    position: absolute;
+    right: 16px;
+    top: 14px;
+  }
+
+  .header-action-button {
+    background: rgba(255, 255, 255, 0.12);
+    height: 38px;
+    width: 38px;
+  }
+
+  .summary-metrics {
+    display: flex;
+    gap: 10px;
+    margin: 0 -16px;
+    overflow-x: auto;
+    padding: 2px 16px 8px;
+    scroll-snap-type: x proximity;
+  }
+
+  .summary-metrics .metric {
+    flex: 0 0 158px;
+    min-height: 104px;
+    padding: 13px;
+    scroll-snap-align: start;
+  }
+
+  .metric p {
+    font-size: 0.7rem;
+    margin-top: 5px;
+  }
+
+  .metric strong {
+    font-size: 1.08rem;
+  }
+
+  .module-bar {
+    background: rgba(248, 250, 252, 0.96);
+    border-top: 1px solid #dbe3ee;
+    bottom: 0;
+    box-shadow: 0 -14px 32px rgba(15, 23, 42, 0.14);
+    gap: 8px;
+    left: 0;
+    margin: 0;
+    max-width: none;
+    overflow-x: auto;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    scrollbar-width: none;
+    z-index: 50;
+  }
+
+  .module-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .module-group {
+    gap: 8px;
+  }
+
+  .module-group-main,
+  .module-group-tools {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .module-tab {
+    border-radius: 14px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    min-height: 52px;
+    min-width: 74px;
+    padding: 7px 10px;
+    display: inline-grid;
+    gap: 4px;
+    justify-items: center;
+  }
+
+  .module-tab svg {
+    height: 18px;
+    width: 18px;
+  }
+
+  .workspace {
+    gap: 14px;
+    padding: 14px 10px 24px;
+  }
+
+  .workspace.single-column,
+  .registry-workspace,
+  .projection-workspace {
+    max-width: 100%;
+  }
+
+  .cards-panel,
+  .detail-panel {
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  }
+
+  .cards-panel {
+    order: 1;
+    padding: 12px;
+  }
+
+  .detail-panel {
+    order: 2;
+    padding: 14px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+  }
+
+  .section-heading h2 {
+    font-size: 1.45rem;
+  }
+
+  .section-heading-actions {
+    align-items: stretch;
+    display: grid;
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .due-control,
+  .payment-button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-card {
+    border-radius: 12px;
+    gap: 8px;
+    min-height: 112px;
+    padding: 12px;
+  }
+
+  .dashboard-card-icon {
+    height: 32px;
+    width: 32px;
+  }
+
+  .dashboard-card-label {
+    font-size: 0.75rem;
+  }
+
+  .dashboard-card strong {
+    font-size: 1.12rem;
+  }
+
+  .dashboard-card-hint {
+    font-size: 0.7rem;
+  }
+
+  .split-panels,
+  .balance-grid,
+  .projection-summary-grid,
+  .payment-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-panel {
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .due-item,
+  .history-item,
+  .history-item.large,
+  .compact-history .history-item {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .status-pill {
+    justify-self: start;
+  }
+
+  .expense-entry-panel {
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .expense-form,
+  .card-expense-form,
+  .fixed-expense-form,
+  .salary-form,
+  .extraordinarios-form {
+    grid-template-columns: 1fr;
+  }
+
+  .card-expense-form > label:nth-child(1),
+  .card-expense-form > label:nth-child(2),
+  .card-expense-form > label:nth-child(3),
+  .card-expense-form .expense-kind-field,
+  .card-expense-form .fixed-category-field,
+  .card-expense-form .savings-field,
+  .card-expense-form .paid-by-other-field,
+  .card-expense-form > button {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .segmented-control {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .segmented-control button {
+    min-height: 36px;
+  }
+
+  .card-expense-form .paid-by-other-field,
+  .expense-form > button,
+  .inline-form button {
+    width: 100%;
+  }
+
+  .bank-list,
+  .card-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 0 -12px;
+    overflow-x: auto;
+    padding: 0 12px 4px;
+    scroll-snap-type: x proximity;
+  }
+
+  .bank-tab,
+  .card-tab {
+    flex: 0 0 82%;
+    min-height: 68px;
+    scroll-snap-align: start;
+  }
+
+  .total-strip,
+  .next-month-card-summary {
+    border-radius: 12px;
+    display: grid;
+    gap: 6px;
+    min-height: auto;
+    padding: 14px;
+  }
+
+  .total-strip strong,
+  .next-month-card-summary strong {
+    text-align: left;
+  }
+
+  .table-row {
+    border-radius: 12px;
+  }
+
+  .row-edit-extra label {
+    max-width: none;
+  }
+
+  .registry-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .registry-table-wrap {
+    border-radius: 12px;
+    margin: 0 -14px;
+    max-width: calc(100% + 28px);
+  }
+
+  .registry-table {
+    min-width: 960px;
+  }
+
+  .registry-table th:first-child,
+  .projection-table th:first-child {
+    min-width: 150px;
+    width: 150px;
+  }
+
+  .registry-table th,
+  .registry-table td {
+    padding: 8px 6px;
+  }
+
+  .registry-status-button {
+    font-size: 0.57rem;
+    height: 24px;
+  }
+
+  .projection-summary-grid {
+    gap: 10px;
+  }
+
+  .projection-summary-card {
+    min-height: 86px;
+    padding: 13px;
+  }
+
+  .projection-table {
+    min-width: 820px;
+  }
+
+  .projection-table td,
+  .projection-table .month-heading {
+    min-width: 92px;
+    width: 92px;
+  }
+
+  .projection-table .month-heading small {
+    font-size: 0.62rem;
+    line-height: 1.2;
+  }
+
+  .empty-state {
+    border-radius: 12px;
+    min-height: 120px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bank-tab,
+  .card-tab {
+    flex-basis: 88%;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace:not(.single-column) {
+    grid-template-columns: 1fr;
+  }
+
+  .cards-panel {
+    order: 1;
+  }
+
+  .detail-panel {
+    order: 2;
+  }
+
+  .section-heading > svg {
+    display: none;
+  }
+
+  .section-heading-actions {
+    gap: 8px;
+  }
+
+  .section-heading-actions > svg {
+    display: none;
+  }
+
+  .due-control {
+    display: grid;
+    grid-template-columns: 1fr minmax(64px, auto);
+    min-height: 44px;
+  }
+
+  .due-control input {
+    justify-self: end;
+  }
+
+  .payment-button {
+    min-height: 44px;
+  }
+
+  .expense-entry-panel {
+    background: #f8fafc;
+    margin: 0 -4px 16px;
+  }
+
+  .card-expense-form {
+    gap: 12px;
+  }
+
+  .payment-button svg,
+  .pay-row-button svg {
+    display: none;
+  }
+
+  .expense-form > button,
+  .inline-form button,
+  .payment-button,
+  .pay-row-button {
+    border-radius: 12px;
+    font-size: 0.86rem;
+    min-height: 46px;
+  }
+
+  .card-expense-form label,
+  .card-expense-form .expense-kind-field {
+    font-size: 0.78rem;
+  }
+
+  .card-expense-form input,
+  .card-expense-form select {
+    border-radius: 10px;
+    height: 46px;
+  }
+
+  .card-expense-form .segmented-control {
+    grid-template-columns: repeat(3, 1fr);
+    min-height: 46px;
+  }
+
+  .card-expense-form .segmented-control button {
+    min-height: 38px;
+    padding: 0 6px;
+  }
+
+  .card-expense-form .paid-by-other-field {
+    justify-content: flex-start;
+    min-height: 46px;
+  }
+
+  .paid-by-other-check {
+    height: 26px;
+    width: 26px;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row {
+    column-gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 14px 12px;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row > strong {
+    grid-column: 1;
+    padding-right: 2px;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row > strong small {
+    font-size: 0.72rem;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row .row-actions {
+    align-self: start;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    gap: 6px;
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-end;
+    padding: 3px;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row .icon-button {
+    border-radius: 10px;
+    height: 32px;
+    width: 32px;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    justify-content: normal;
+    min-height: 22px;
+    text-align: right;
+  }
+
+  .expense-table:not(.fixed-expense-table) .table-row span::before {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .expense-table:not(.fixed-expense-table) .row-edit-extra {
+    grid-column: 1 / -1;
+  }
+
+  .row-edit-input,
+  .savings-input,
+  .row-edit-extra input,
+  .row-edit-extra select {
+    min-height: 42px;
+  }
+
+  .row-edit-extra .inline-checkbox-field {
+    min-height: 42px;
+  }
+
+  .expense-table:not(.fixed-expense-table) .amount-emphasis,
+  .expense-table:not(.fixed-expense-table) .pending-amount {
+    text-align: right;
+  }
+
+  .fixed-expense-table .table-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .fixed-expense-table .table-row .row-actions,
+  .fixed-expense-table .table-row .icon-button {
+    align-self: start;
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
