@@ -1290,26 +1290,126 @@ button {
 }
 
 .projection-workspace {
-  max-width: 1280px;
+  max-width: 1480px;
+}
+
+.projection-workspace .detail-panel {
+  overflow: hidden;
+}
+
+.projection-summary-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 18px 0 16px;
+}
+
+.projection-summary-card {
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  min-height: 98px;
+  padding: 16px;
+}
+
+.projection-summary-card span {
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.projection-summary-card strong {
+  color: #1e3a8a;
+  font-size: 1.45rem;
+  line-height: 1.05;
+}
+
+.projection-summary-card small {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.projection-summary-card-next {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.projection-summary-card-next strong {
+  color: #1e40af;
+}
+
+.projection-summary-card-calm {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.projection-summary-card-calm strong {
+  color: #047857;
+}
+
+.projection-table-wrap {
+  background: #ffffff;
+  box-shadow: inset 0 -1px 0 #e2e8f0;
+}
+
+.projection-table {
+  min-width: 1220px;
 }
 
 .projection-table .month-heading small {
   margin-top: 2px;
 }
 
+.projection-table .month-heading span {
+  color: #0f172a;
+  font-size: 0.78rem;
+}
+
+.projection-table th:first-child {
+  min-width: 220px;
+  width: 220px;
+}
+
+.projection-table td,
+.projection-table .month-heading {
+  min-width: 86px;
+  width: 86px;
+}
+
 .projection-amount {
   color: #172033;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
 }
 
 .projection-empty {
   color: #94a3b8;
 }
 
+.projection-table .projection-next-month {
+  background: #eef2ff;
+}
+
+.projection-table thead .projection-next-month {
+  box-shadow: inset 0 3px 0 #6366f1;
+  color: #3730a3;
+}
+
+.projection-table tbody td.projection-next-month {
+  background: #f5f7ff;
+}
+
 .projection-total-row th,
 .projection-total-row td {
-  background: #f8fafc;
+  background: #f1f5f9;
   font-weight: 900;
+}
+
+.projection-total-row td strong {
+  color: #172033;
 }
 
 .table-header {
@@ -2106,6 +2206,7 @@ button {
   }
 
   .dashboard-grid,
+  .projection-summary-grid,
   .split-panels,
   .payment-detail-grid {
     grid-template-columns: 1fr;

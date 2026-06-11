@@ -13,7 +13,8 @@ import {
 import { currency } from "../../utils/formatters.js";
 
 export default function DashboardModule({ currentMonthSummary, dueItems, history, monthZeroDate, nextMonthSummary }) {
-  const recentHistory = history.slice(0, 6);
+  const currentMonthPeriod = getSummaryPeriod(currentMonthSummary);
+  const currentMonthHistory = history.filter((item) => item.period === currentMonthPeriod).slice(0, 6);
   const isMonthZero = isSummaryMonthZero(currentMonthSummary, monthZeroDate);
 
   return (
@@ -35,19 +36,30 @@ export default function DashboardModule({ currentMonthSummary, dueItems, history
         </p>
         <DashboardSummaryGrid cardHint="Resumen que cierra este mes" summary={nextMonthSummary} />
 
-        {!isMonthZero ? (
-          <section className="dashboard-month-section">
-          <div className="dashboard-month-heading">
-            <div>
-              <p>Sueldo actual</p>
-              <h3>{currentMonthSummary.monthTitle}</h3>
-              <small>
-                Tarjetas: resumen de {currentMonthSummary.statementMonthTitle}
-              </small>
-            </div>
-          </div>
+        <section className="dashboard-month-section">
+          {!isMonthZero ? (
+            <>
+              <div className="dashboard-month-heading">
+                <div>
+                  <p>Sueldo actual</p>
+                  <h3>{currentMonthSummary.monthTitle}</h3>
+                  <small>
+                    Tarjetas: resumen de {currentMonthSummary.statementMonthTitle}
+                  </small>
+                </div>
+              </div>
 
-          <DashboardSummaryGrid cardHint="Resumen del mes anterior" compact summary={currentMonthSummary} />
+              <DashboardSummaryGrid cardHint="Resumen del mes anterior" compact summary={currentMonthSummary} />
+            </>
+          ) : (
+            <div className="dashboard-month-heading">
+              <div>
+                <p>Este mes</p>
+                <h3>{currentMonthSummary.monthTitle}</h3>
+                <small>Vencimientos e historial de pagos</small>
+              </div>
+            </div>
+          )}
 
           <div className="split-panels">
             <section className="inline-panel">
@@ -77,11 +89,11 @@ export default function DashboardModule({ currentMonthSummary, dueItems, history
             <section className="inline-panel">
               <div className="inline-panel-heading">
                 <CheckCircle2 size={19} />
-                <h3>Ultimos pagos</h3>
+                <h3>Pagos de este mes</h3>
               </div>
-              {recentHistory.length ? (
+              {currentMonthHistory.length ? (
                 <div className="history-list compact-history">
-                  {recentHistory.map((item) => (
+                  {currentMonthHistory.map((item) => (
                     <div className="history-item" key={item.id}>
                       <span>
                         <strong>{item.serviceName}</strong>
@@ -94,15 +106,22 @@ export default function DashboardModule({ currentMonthSummary, dueItems, history
                   ))}
                 </div>
               ) : (
-                <p className="panel-empty">Todavia no registraste pagos.</p>
+                <p className="panel-empty">Todavia no registraste pagos este mes.</p>
               )}
             </section>
           </div>
-          </section>
-        ) : null}
+        </section>
       </section>
     </section>
   );
+}
+
+function getSummaryPeriod(summary) {
+  if (summary.year == null || summary.monthIndex == null) {
+    return "";
+  }
+
+  return `${summary.year}-${String(summary.monthIndex + 1).padStart(2, "0")}`;
 }
 
 function isSummaryMonthZero(summary, monthZeroDate) {

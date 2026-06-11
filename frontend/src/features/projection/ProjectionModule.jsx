@@ -10,7 +10,7 @@ import { currency } from "../../utils/formatters.js";
 
 // Pantalla de proyeccion: calcula cuanto se pagara en tarjetas por mes de sueldo.
 export default function ProjectionModule({ banks }) {
-  const months = getProjectionMonths(12);
+  const months = getProjectionMonths(7);
   const projectionRows = banks.flatMap((bank) =>
     bank.cards
       .filter((card) => card.expenses.length)
@@ -30,6 +30,8 @@ export default function ProjectionModule({ banks }) {
   );
 
   const monthlyTotals = months.map((month) => buildCardMonthlyTotalForPaymentMonth(banks, month.paymentMonthOffset));
+  const currentSalaryTotal = monthlyTotals[0] ?? 0;
+  const nextSalaryTotal = monthlyTotals[1] ?? 0;
 
   return (
     <section className="workspace single-column projection-workspace">
@@ -46,21 +48,30 @@ export default function ProjectionModule({ banks }) {
           Cada columna es el mes de sueldo con el que pagas el resumen que cerro el mes anterior.
         </p>
 
-        <div className="total-strip">
-          <span>Proximo mes de sueldo en tarjetas</span>
-          <strong>{currency.format(monthlyTotals[1] ?? 0)}</strong>
+        <div className="projection-summary-grid">
+          <ProjectionSummaryCard
+            label="Mes actual"
+            note="Primer mes proyectado"
+            value={currency.format(currentSalaryTotal)}
+          />
+          <ProjectionSummaryCard
+            label="Mes siguiente"
+            note="Proximo mes"
+            tone="next"
+            value={currency.format(nextSalaryTotal)}
+          />
         </div>
 
         {projectionRows.length ? (
-          <div className="registry-table-wrap">
+          <div className="registry-table-wrap projection-table-wrap">
             <table className="registry-table projection-table">
               <thead>
                 <tr>
                   <th>Tarjeta</th>
-                  {months.map((month) => (
-                    <th className="month-heading" key={month.key}>
+                  {months.map((month, index) => (
+                    <th className={`month-heading ${index === 0 ? "projection-next-month" : ""}`} key={month.key}>
                       <span>{month.label}</span>
-                      <small>Sueldo {month.year}</small>
+                      <small>Sueldo {month.salaryLabel}</small>
                     </th>
                   ))}
                 </tr>
@@ -73,7 +84,7 @@ export default function ProjectionModule({ banks }) {
                       <small>{row.bankName}</small>
                     </th>
                     {row.months.map((amount, index) => (
-                      <td key={`${row.id}-${months[index].key}`}>
+                      <td className={index === 0 ? "projection-next-month" : ""} key={`${row.id}-${months[index].key}`}>
                         <strong className={amount ? "projection-amount" : "projection-empty"}>
                           {amount ? currency.format(amount) : "-"}
                         </strong>
@@ -84,7 +95,7 @@ export default function ProjectionModule({ banks }) {
                 <tr className="projection-total-row">
                   <th>Total</th>
                   {monthlyTotals.map((amount, index) => (
-                    <td key={months[index].key}>
+                    <td className={index === 0 ? "projection-next-month" : ""} key={months[index].key}>
                       <strong>{amount ? currency.format(amount) : "-"}</strong>
                     </td>
                   ))}
@@ -103,17 +114,31 @@ export default function ProjectionModule({ banks }) {
   );
 }
 
+function ProjectionSummaryCard({ label, note, tone = "", value }) {
+  return (
+    <article className={`projection-summary-card ${tone ? `projection-summary-card-${tone}` : ""}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </article>
+  );
+}
+
 function getProjectionMonths(amount) {
   return Array.from({ length: amount }, (_, index) => {
     const paymentMonth = getCalendarMonth(index);
+    const salaryMonth = getCalendarMonth(index + 1);
     const label = new Date(paymentMonth.year, paymentMonth.monthIndex, 1)
       .toLocaleDateString("es-AR", { month: "short" })
       .replace(".", "");
+    const salaryLabel = new Date(salaryMonth.year, salaryMonth.monthIndex, 1)
+      .toLocaleDateString("es-AR", { month: "long", year: "numeric" });
 
     return {
       key: `${paymentMonth.year}-${paymentMonth.monthIndex}`,
       label,
       paymentMonthOffset: index,
+      salaryLabel: salaryLabel.charAt(0).toUpperCase() + salaryLabel.slice(1),
       year: paymentMonth.year,
     };
   });
