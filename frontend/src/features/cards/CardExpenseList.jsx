@@ -74,7 +74,7 @@ export default function CardExpenseList({ card, onRemove, onUpdate, onUpdateSavi
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
-  const nextMonthTotal = card.expenses.reduce((sum, expense) => sum + getNextMonthCardExpenseAmount(expense), 0);
+  const resumenTotal = card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
 
   return (
     <>
@@ -259,8 +259,8 @@ export default function CardExpenseList({ card, onRemove, onUpdate, onUpdateSavi
       </div>
 
       <section className="next-month-card-summary">
-        <span>Proximo mes</span>
-        <strong>{currency.format(nextMonthTotal)}</strong>
+        <span>Resumen</span>
+        <strong>{currency.format(resumenTotal)}</strong>
       </section>
     </>
   );
