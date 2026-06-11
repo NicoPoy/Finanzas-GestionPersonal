@@ -3020,26 +3020,19 @@ button {
   .registry-status-button {
     border-radius: 8px;
     font-size: 0;
-    height: 22px;
+    height: 23px;
+    overflow: hidden;
     padding: 0 4px;
+    white-space: nowrap;
   }
 
-  .registry-status-button::first-letter {
-    font-size: 0;
-  }
-
-  .registry-status-button.active {
+  .registry-status-button::after {
+    content: attr(data-mobile-label);
     font-size: 0.53rem;
   }
 
-  .registry-status-button.muted {
-    color: transparent;
-  }
-
-  .registry-status-button.muted::after {
-    color: #64748b;
-    content: "No";
-    font-size: 0.55rem;
+  .registry-status-button.active.warning::after {
+    font-size: 0.5rem;
   }
 
   .registry-status-group {

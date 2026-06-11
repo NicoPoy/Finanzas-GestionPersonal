@@ -201,16 +201,24 @@ function getMonthColumnClassName(baseClass, monthState) {
 function DebitStatusControl({ month, service, status, year, onChange }) {
   return (
     <div className="registry-status-group registry-status-group-three" aria-label={`${service.name} ${month} ${year}`}>
-      <StatusButton isActive={status === PAYMENT_STATUS.NONE} label="No" tone="pending" onClick={() => onChange(PAYMENT_STATUS.NONE)} />
+      <StatusButton
+        isActive={status === PAYMENT_STATUS.NONE}
+        label="No"
+        mobileLabel="No"
+        tone="pending"
+        onClick={() => onChange(PAYMENT_STATUS.NONE)}
+      />
       <StatusButton
         isActive={status === PAYMENT_STATUS.TRANSFERRED}
         label="Transferido"
+        mobileLabel="Transf."
         tone="warning"
         onClick={() => onChange(PAYMENT_STATUS.TRANSFERRED)}
       />
       <StatusButton
         isActive={status === PAYMENT_STATUS.DEBITED}
         label="Debitado"
+        mobileLabel="Deb."
         tone="success"
         onClick={() => onChange(PAYMENT_STATUS.DEBITED)}
       />
@@ -221,16 +229,30 @@ function DebitStatusControl({ month, service, status, year, onChange }) {
 function PaidStatusControl({ month, service, status, year, onChange }) {
   return (
     <div className="registry-status-group registry-status-group-two" aria-label={`${service.name} ${month} ${year}`}>
-      <StatusButton isActive={status === PAYMENT_STATUS.NONE} label="No" tone="pending" onClick={() => onChange(PAYMENT_STATUS.NONE)} />
-      <StatusButton isActive={status === PAYMENT_STATUS.PAID} label="Pagado" tone="success" onClick={() => onChange(PAYMENT_STATUS.PAID)} />
+      <StatusButton
+        isActive={status === PAYMENT_STATUS.NONE}
+        label="No"
+        mobileLabel="No"
+        tone="pending"
+        onClick={() => onChange(PAYMENT_STATUS.NONE)}
+      />
+      <StatusButton
+        isActive={status === PAYMENT_STATUS.PAID}
+        label="Pagado"
+        mobileLabel="Pag."
+        tone="success"
+        onClick={() => onChange(PAYMENT_STATUS.PAID)}
+      />
     </div>
   );
 }
 
-function StatusButton({ isActive, label, tone, onClick }) {
+function StatusButton({ isActive, label, mobileLabel, tone, onClick }) {
   return (
     <button
+      aria-label={label}
       className={`registry-status-button ${isActive ? "active" : ""} ${isActive ? tone : "muted"}`}
+      data-mobile-label={mobileLabel ?? label}
       onClick={onClick}
       type="button"
     >
