@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { Check, Plus, UserRound } from "lucide-react";
-import { CARD_FIXED_CATEGORIES } from "../../data/initialData.js";
+import MoneyInput from "../../components/forms/MoneyInput.jsx";
 
 // Formulario de consumos de tarjeta. Soporta cuotas, compra unica y gasto fijo recurrente.
-export default function CardExpenseForm({ onSubmit, cardName }) {
+export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardName }) {
   const [origin, setOrigin] = useState("");
   const [amount, setAmount] = useState("");
   const [savings, setSavings] = useState("");
   const [installments, setInstallments] = useState("");
   const [expenseType, setExpenseType] = useState("installments");
-  const [fixedCategory, setFixedCategory] = useState("subscriptions");
+  const [fixedCategory, setFixedCategory] = useState(fixedCategories[0]?.id ?? "subscriptions");
   const [isPaidByOther, setIsPaidByOther] = useState(false);
 
   function handleSubmit(event) {
@@ -33,7 +33,7 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
       origin: origin.trim(),
       amount: parsedAmount,
       savings: parsedSavings,
-      fixedCategory: isFixed ? fixedCategory : "",
+      fixedCategory: isFixed ? fixedCategory || fixedCategories[0]?.id || "" : "",
       installments: isFixed ? 0 : parsedInstallments,
       isFixed,
       isPaidByOther,
@@ -44,7 +44,7 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
     setSavings("");
     setInstallments("");
     setExpenseType("installments");
-    setFixedCategory("subscriptions");
+    setFixedCategory(fixedCategories[0]?.id ?? "subscriptions");
     setIsPaidByOther(false);
   }
 
@@ -62,12 +62,9 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
 
       <label>
         Monto por cuota
-        <input
-          min="1"
-          placeholder="10000"
-          type="number"
+        <MoneyInput
           value={amount}
-          onChange={(event) => setAmount(event.target.value)}
+          onValueChange={setAmount}
         />
       </label>
 
@@ -114,9 +111,9 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
         <label className="fixed-category-field">
           Seccion
           <select value={fixedCategory} onChange={(event) => setFixedCategory(event.target.value)}>
-            {Object.entries(CARD_FIXED_CATEGORIES).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
+            {fixedCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
@@ -125,13 +122,9 @@ export default function CardExpenseForm({ onSubmit, cardName }) {
 
       <label className="savings-field">
         Ahorro
-        <input
-          min="0"
-          max={amount || undefined}
-          placeholder="0"
-          type="number"
+        <MoneyInput
           value={savings}
-          onChange={(event) => setSavings(event.target.value)}
+          onValueChange={setSavings}
         />
       </label>
 

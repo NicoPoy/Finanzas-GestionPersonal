@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import ThemeToggle from "../common/ThemeToggle.jsx";
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, onToggleTheme, theme }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -32,13 +33,16 @@ export default function LoginScreen({ onLogin }) {
   return (
     <main className="login-shell">
       <section className="login-panel" aria-label="Inicio de sesion">
-        <div className="login-copy">
-          <div className="brand-lockup brand-lockup-login">
-            <img alt="" src="/logo_app_finanzas.png" />
-            <p>Finanzas personales</p>
+        <header className="login-header">
+          <div className="login-copy">
+            <div className="brand-lockup brand-lockup-login">
+              <img alt="" src="/logo_app_finanzas.png" />
+              <p>Finanzas personales</p>
+            </div>
+            <h1>Ingresar</h1>
           </div>
-          <h1>Ingresar</h1>
-        </div>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </header>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label>

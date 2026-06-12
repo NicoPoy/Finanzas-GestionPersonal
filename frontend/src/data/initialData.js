@@ -3,6 +3,8 @@ export const INITIAL_DATA = {
   monthZeroDate: "2026-06-01T00:00:00.000Z",
   registrationDate: "2026-06-01T00:00:00.000Z",
   salary: 0,
+  otherIncomes: [],
+  cardFixedCategories: [],
   debitCards: [],
   paymentDetails: {},
   paymentHistory: [],
@@ -28,3 +30,8 @@ export const CARD_FIXED_CATEGORIES = {
   activities: "Actividades",
   extras: "Extras",
 };
+
+export const DEFAULT_CARD_FIXED_CATEGORIES = Object.entries(CARD_FIXED_CATEGORIES).map(([id, name]) => ({
+  id,
+  name,
+}));

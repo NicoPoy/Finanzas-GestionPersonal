@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Check, Plus, ReceiptText, Star } from "lucide-react";
+import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { getCalendarMonth } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
@@ -102,12 +103,9 @@ function ExtraordinaryExpenseForm({ onSubmit }) {
 
       <label>
         Monto
-        <input
-          min="1"
-          placeholder="50000"
-          type="number"
+        <MoneyInput
           value={amount}
-          onChange={(event) => setAmount(event.target.value)}
+          onValueChange={setAmount}
         />
       </label>
 

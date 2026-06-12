@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError
 
 from api.app.core.security import create_access_token, decode_access_token, hash_password, verify_password
 from api.app.db.mongodb import get_database
-from api.app.models.auth import LoginRequest, LoginResponse, RegisterRequest, UserResponse
+from api.app.models.auth import LoginRequest, LoginResponse, RegisterRequest, ThemePreferenceUpdate, UserResponse
 
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticacion"])
@@ -33,6 +33,7 @@ async def register(payload: RegisterRequest):
         "email": email,
         "password_hash": hash_password(payload.password),
         "display_name": payload.display_name.strip(),
+        "dark_mode": False,
         "is_active": True,
         "registration_date": now,
         "created_at": now,
@@ -50,6 +51,7 @@ async def register(payload: RegisterRequest):
 
     return UserResponse(
         id=str(result.inserted_id),
+        dark_mode=user["dark_mode"],
         email=user["email"],
         display_name=user["display_name"],
     )
@@ -82,7 +84,7 @@ async def login(payload: LoginRequest):
             detail=str(error),
         ) from error
 
-    return LoginResponse(access_token=access_token)
+    return LoginResponse(access_token=access_token, dark_mode=bool(user.get("dark_mode", False)))
 
 
 async def get_current_user(authorization: str | None = Header(default=None)) -> dict:
@@ -130,6 +132,32 @@ async def me(current_user: dict = Depends(get_current_user)):
 
     return UserResponse(
         id=str(current_user["_id"]),
+        dark_mode=bool(current_user.get("dark_mode", False)),
+        email=current_user["email"],
+        display_name=current_user.get("display_name", ""),
+    )
+
+
+@router.patch("/theme", response_model=UserResponse)
+async def update_theme_preference(payload: ThemePreferenceUpdate, current_user: dict = Depends(get_current_user)):
+    """Guarda la preferencia dark/light del usuario autenticado."""
+
+    database = get_database()
+    now = datetime.utcnow()
+
+    await database.users.update_one(
+        {"_id": current_user["_id"]},
+        {
+            "$set": {
+                "dark_mode": payload.dark_mode,
+                "updated_at": now,
+            },
+        },
+    )
+
+    return UserResponse(
+        id=str(current_user["_id"]),
+        dark_mode=payload.dark_mode,
         email=current_user["email"],
         display_name=current_user.get("display_name", ""),
     )

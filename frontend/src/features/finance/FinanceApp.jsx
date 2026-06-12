@@ -25,6 +25,7 @@ import {
   buildCardMonthlyTotalForPaymentMonth,
   buildDashboardSummary,
   buildDueItems,
+  buildOtherIncomesTotal,
   buildRegistryServices,
   getCalendarMonth,
   countCards,
@@ -34,6 +35,7 @@ import {
 import { normalizeData } from "../../domain/storage.js";
 import { apiUrl } from "../../services/platform.js";
 import { currency } from "../../utils/formatters.js";
+import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 import CardsModule from "../cards/CardsModule.jsx";
 import DashboardModule from "../dashboard/DashboardModule.jsx";
 import HistoryModule from "../history/HistoryModule.jsx";
@@ -44,7 +46,7 @@ import ExtraordinariosModule from "../extraordinary/ExtraordinariosModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
-export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
+export default function FinanceApp({ accessToken, onBackToHome, onLogout, onToggleTheme, theme }) {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState("dashboard");
   const [selectedBankId, setSelectedBankId] = useState("");
@@ -123,9 +125,11 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
   const subscriptionsTotal = data.subscriptionExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const activitiesTotal = data.activityExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const extrasTotal = data.extraExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const otherIncomesTotal = buildOtherIncomesTotal(data);
+  const incomeTotal = data.salary + otherIncomesTotal;
   const fixedExpensesTotal = departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal;
   const currentPaymentMonthTotal = currentPaymentCardTotal + fixedExpensesTotal;
-  const remainingTotal = data.salary - currentPaymentMonthTotal;
+  const remainingTotal = incomeTotal - currentPaymentMonthTotal;
   const currentPaymentMonth = getCalendarMonth(0);
   const upcomingCardPaymentMonth = getCalendarMonth(1);
   const currentStatementMonth = getCalendarMonth(0);
@@ -175,8 +179,8 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
     [currentPaymentMonth, data.paymentDetails, data.paymentRegistry, registryServices],
   );
   const cardFixedExpensesByCategory = useMemo(
-    () => buildCardFixedExpensesByCategory(banksWithTotals),
-    [banksWithTotals],
+    () => buildCardFixedExpensesByCategory(banksWithTotals, data.cardFixedCategories),
+    [banksWithTotals, data.cardFixedCategories],
   );
   const simpleModules = {
     department: {
@@ -329,6 +333,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
       name,
       accent: CARD_COLORS[countCards(data.banks) % CARD_COLORS.length],
       dueDay: 10,
+      summarySavings: 0,
     };
 
     setData((current) => ({
@@ -422,15 +427,20 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
       onConfirm: () =>
         setData((current) => ({
           ...current,
-          expenses: current.expenses.map((expense) =>
-            expense.id === expenseId
-              ? {
-                  ...expense,
-                  ...updates,
-                  savings: Math.min(Math.max(Number(updates.savings) || 0, 0), Number(updates.amount) || 0),
-                }
-              : expense,
-          ),
+          expenses: current.expenses.map((expense) => {
+            if (expense.id !== expenseId) {
+              return expense;
+            }
+
+            const nextAmount = updates.amount ?? expense.amount;
+            const nextSavings = Object.hasOwn(updates, "savings") ? updates.savings : expense.savings;
+
+            return {
+              ...expense,
+              ...updates,
+              savings: Math.min(Math.max(Number(nextSavings) || 0, 0), Number(nextAmount) || 0),
+            };
+          }),
         })),
       title: "Modificar gasto",
     });
@@ -625,6 +635,171 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
     });
   }
 
+  function addOtherIncome(income) {
+    const incomeId = crypto.randomUUID();
+    const paidAt = new Date().toISOString();
+    const period = getPaymentPeriod(currentPaymentMonth.year, currentPaymentMonth.monthIndex);
+
+    setData((current) => ({
+      ...current,
+      otherIncomes: [
+        {
+          id: incomeId,
+          ...income,
+        },
+        ...current.otherIncomes,
+      ],
+      paymentHistory: [
+        {
+          category: "Ingresos",
+          expectedAmount: income.amount,
+          id: crypto.randomUUID(),
+          items: [],
+          method: "Ingreso adicional",
+          notes: "Ingreso adicional cargado desde Configuracion.",
+          paidAmount: income.amount,
+          paidAt,
+          period,
+          serviceId: `income:${incomeId}`,
+          serviceName: income.origin,
+          type: "other_income",
+        },
+        ...current.paymentHistory,
+      ],
+    }));
+  }
+
+  function updateOtherIncome(incomeId, updates) {
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se van a modificar los datos de este ingreso.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          otherIncomes: current.otherIncomes.map((income) =>
+            income.id === incomeId ? { ...income, ...updates } : income,
+          ),
+          paymentHistory: current.paymentHistory.map((item) =>
+            item.serviceId === `income:${incomeId}` && item.type === "other_income"
+              ? {
+                  ...item,
+                  expectedAmount: updates.amount,
+                  paidAmount: updates.amount,
+                  serviceName: updates.origin,
+                }
+              : item,
+          ),
+        })),
+      title: "Modificar ingreso",
+    });
+  }
+
+  function removeOtherIncome(incomeId) {
+    requestConfirmation({
+      confirmLabel: "Eliminar ingreso",
+      message: "Se va a eliminar este ingreso adicional.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          otherIncomes: current.otherIncomes.filter((income) => income.id !== incomeId),
+        })),
+      title: "Eliminar ingreso",
+      tone: "danger",
+    });
+  }
+
+  function addCardFixedCategory(name) {
+    setData((current) => ({
+      ...current,
+      cardFixedCategories: [
+        ...current.cardFixedCategories,
+        {
+          id: crypto.randomUUID(),
+          name,
+        },
+      ],
+    }));
+  }
+
+  function updateCardFixedCategory(categoryId, name) {
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se va a modificar el nombre de esta seccion.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          cardFixedCategories: current.cardFixedCategories.map((category) =>
+            category.id === categoryId ? { ...category, name } : category,
+          ),
+        })),
+      title: "Modificar seccion",
+    });
+  }
+
+  function removeCardFixedCategory(categoryId) {
+    requestConfirmation({
+      confirmLabel: "Eliminar seccion",
+      message: "Se va a eliminar esta seccion y sus gastos fijos de tarjeta se moveran a la primera seccion disponible.",
+      onConfirm: () =>
+        setData((current) => {
+          const nextCategories = current.cardFixedCategories.filter((category) => category.id !== categoryId);
+          const fallbackCategoryId = nextCategories[0]?.id ?? "";
+
+          return {
+            ...current,
+            cardFixedCategories: nextCategories,
+            expenses: current.expenses.map((expense) =>
+              expense.fixedCategory === categoryId ? { ...expense, fixedCategory: fallbackCategoryId } : expense,
+            ),
+          };
+        }),
+      title: "Eliminar seccion",
+      tone: "danger",
+    });
+  }
+
+  function addDebitCard(name) {
+    setData((current) => ({
+      ...current,
+      debitCards: [...current.debitCards, name],
+    }));
+  }
+
+  function updateDebitCard(previousName, nextName) {
+    requestConfirmation({
+      confirmLabel: "Guardar cambios",
+      message: "Se va a modificar esta opcion de debito en todo el perfil.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          debitCards: current.debitCards.map((card) => (card === previousName ? nextName : card)),
+          departmentExpenses: replacePaymentCardName(current.departmentExpenses, previousName, nextName),
+          subscriptionExpenses: replacePaymentCardName(current.subscriptionExpenses, previousName, nextName),
+          activityExpenses: replacePaymentCardName(current.activityExpenses, previousName, nextName),
+          extraExpenses: replacePaymentCardName(current.extraExpenses, previousName, nextName),
+        })),
+      title: "Modificar debito",
+    });
+  }
+
+  function removeDebitCard(name) {
+    requestConfirmation({
+      confirmLabel: "Eliminar debito",
+      message: "Se va a eliminar esta opcion y los gastos asociados quedaran sin asociar.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          debitCards: current.debitCards.filter((card) => card !== name),
+          departmentExpenses: replacePaymentCardName(current.departmentExpenses, name, ""),
+          subscriptionExpenses: replacePaymentCardName(current.subscriptionExpenses, name, ""),
+          activityExpenses: replacePaymentCardName(current.activityExpenses, name, ""),
+          extraExpenses: replacePaymentCardName(current.extraExpenses, name, ""),
+        })),
+      title: "Eliminar debito",
+      tone: "danger",
+    });
+  }
+
   function setPaymentStatus(year, monthIndex, serviceId, status) {
     const key = getPaymentKey(year, monthIndex, serviceId);
     const service = registryServices.find((item) => item.id === serviceId);
@@ -794,6 +969,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
             >
               <Download size={16} />
             </a>
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             <button
               aria-label="Cerrar sesion"
               className="header-action-button"
@@ -812,7 +988,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
               tone={nextMonthSummary.remaining < 0 ? "danger" : "success"}
               value={currency.format(nextMonthSummary.remaining)}
             />
-            <Metric icon={<Banknote size={18} />} label="Sueldo" tone="warning" value={currency.format(data.salary)} />
+            <Metric icon={<Banknote size={18} />} label="Ingresos" tone="warning" value={currency.format(incomeTotal)} />
             <Metric icon={<CalendarDays size={18} />} label="Gastos fijos" tone="expense" value={currency.format(fixedExpensesTotal)} />
             <Metric
               icon={<CreditCard size={18} />}
@@ -941,6 +1117,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
           addCard={addCard}
           addExpense={addExpense}
           banks={banksWithTotals}
+          fixedCategories={data.cardFixedCategories}
           removeBank={removeBank}
           removeCard={removeCard}
           removeExpense={removeExpense}
@@ -962,9 +1139,19 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout }) {
       ) : activeModule === "settings" ? (
         <SettingsModule
           expensesTotal={nextMonthSummary.totalExpenses}
+          incomeTotal={incomeTotal}
+          debitCards={data.debitCards}
+          onAddDebitCard={addDebitCard}
+          onAddOtherIncome={addOtherIncome}
+          onRemoveDebitCard={removeDebitCard}
+          onRemoveOtherIncome={removeOtherIncome}
           remainingTotal={nextMonthSummary.remaining}
+          otherIncomes={data.otherIncomes}
+          otherIncomesTotal={otherIncomesTotal}
           salary={data.salary}
           onSaveSalary={updateSalary}
+          onUpdateDebitCard={updateDebitCard}
+          onUpdateOtherIncome={updateOtherIncome}
         />
       ) : activeModule === "projection" ? (
         <ProjectionModule banks={banksWithTotals} />
@@ -1030,5 +1217,11 @@ function ConfirmModal({ confirmation, onCancel, onConfirm }) {
         </div>
       </section>
     </div>
+  );
+}
+
+function replacePaymentCardName(expenses, previousName, nextName) {
+  return expenses.map((expense) =>
+    expense.paymentCard === previousName ? { ...expense, paymentCard: nextName } : expense,
   );
 }

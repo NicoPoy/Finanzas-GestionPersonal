@@ -14,7 +14,9 @@ import { currency } from "../../utils/formatters.js";
 
 export default function DashboardModule({ currentMonthSummary, dueItems, history, monthZeroDate, nextMonthSummary }) {
   const currentMonthPeriod = getSummaryPeriod(currentMonthSummary);
-  const currentMonthHistory = history.filter((item) => item.period === currentMonthPeriod).slice(0, 6);
+  const currentMonthHistory = history
+    .filter((item) => item.period === currentMonthPeriod && item.type !== "other_income")
+    .slice(0, 6);
   const isMonthZero = isSummaryMonthZero(currentMonthSummary, monthZeroDate);
 
   return (
@@ -150,9 +152,9 @@ function DashboardSummaryGrid({
     <div className={`dashboard-grid ${compact ? "dashboard-grid-compact" : ""}`}>
       <DashboardCard
         compact={compact}
-        hint="Ingreso mensual configurado"
+        hint={summary.otherIncomesTotal > 0 ? "Sueldo + otros ingresos" : "Ingreso mensual configurado"}
         icon={<Banknote size={20} />}
-        label="Sueldo"
+        label={summary.otherIncomesTotal > 0 ? "Ingresos" : "Sueldo"}
         tone="income"
         value={currency.format(summary.salary)}
       />

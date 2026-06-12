@@ -23,6 +23,7 @@ class LoginResponse(BaseModel):
     """Respuesta esperada para una sesion autenticada."""
 
     access_token: str
+    dark_mode: bool = False
     token_type: str = "bearer"
 
 
@@ -30,5 +31,12 @@ class UserResponse(BaseModel):
     """Datos publicos del usuario. Nunca devuelve password_hash."""
 
     id: str
+    dark_mode: bool = False
     email: str
     display_name: str = ""
+
+
+class ThemePreferenceUpdate(BaseModel):
+    """Preferencia visual simple del usuario autenticado."""
+
+    dark_mode: bool

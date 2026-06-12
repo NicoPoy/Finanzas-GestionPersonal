@@ -19,6 +19,30 @@ export default function App() {
   const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
   const [isCheckingSession, setIsCheckingSession] = useState(Boolean(accessToken));
   const [activeSection, setActiveSection] = useState("home");
+  const [theme, setTheme] = useState(() => {
+    const storedTheme = window.localStorage.getItem("finanzas-theme");
+
+    if (storedTheme === "dark" || storedTheme === "light") {
+      return storedTheme;
+    }
+
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("finanzas-theme", theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+
+    setTheme(nextTheme);
+
+    if (accessToken) {
+      saveThemePreference(accessToken, nextTheme);
+    }
+  }
 
   function closeSession() {
     clearStoredAccessToken();
@@ -49,6 +73,9 @@ export default function App() {
         if (!response.ok) {
           throw new Error("Sesion invalida");
         }
+
+        const user = await response.json();
+        setTheme(user.dark_mode ? "dark" : "light");
       } catch {
         closeSession();
       } finally {
@@ -101,6 +128,7 @@ export default function App() {
 
     const session = await response.json();
     storeAccessToken(session.access_token);
+    setTheme(session.dark_mode ? "dark" : "light");
     setActiveSection("home");
     setAccessToken(session.access_token);
   }
@@ -110,7 +138,7 @@ export default function App() {
   }
 
   if (!accessToken) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onLogin={handleLogin} theme={theme} onToggleTheme={toggleTheme} />;
   }
 
   if (isCheckingSession) {
@@ -129,12 +157,21 @@ export default function App() {
         accessToken={accessToken}
         onBackToHome={() => setActiveSection("home")}
         onLogout={handleLogout}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
 
   if (activeSection === "notas") {
-    return <NotesModule onBackToHome={() => setActiveSection("home")} />;
+    return (
+      <NotesModule
+        accessToken={accessToken}
+        onBackToHome={() => setActiveSection("home")}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
   }
 
   return (
@@ -142,8 +179,25 @@ export default function App() {
       onLogout={handleLogout}
       onOpenFinanzas={() => setActiveSection("finanzas")}
       onOpenNotas={() => setActiveSection("notas")}
+      theme={theme}
+      onToggleTheme={toggleTheme}
     />
   );
+}
+
+async function saveThemePreference(accessToken, theme) {
+  try {
+    await fetch(apiUrl("/api/auth/theme"), {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ dark_mode: theme === "dark" }),
+    });
+  } catch {
+    // La preferencia local queda aplicada aunque falle el guardado remoto.
+  }
 }
 
 async function getApiErrorMessage(response) {

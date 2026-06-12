@@ -1,4 +1,4 @@
-import { CARD_FIXED_CATEGORIES } from "../data/initialData.js";
+import { DEFAULT_CARD_FIXED_CATEGORIES } from "../data/initialData.js";
 
 // Devuelve el ahorro aplicable a una cuota. Nunca puede ser mayor que el monto de esa cuota.
 export function getExpenseSavings(expense) {
@@ -14,8 +14,20 @@ export function isPaidByOther(expense) {
   return Boolean(expense.isPaidByOther);
 }
 
+export function isExpenseSaved(expense) {
+  return Boolean(expense.isSaved);
+}
+
 export function getOwnExpenseAmount(expense) {
-  return isPaidByOther(expense) ? 0 : getNetExpenseAmount(expense);
+  return isPaidByOther(expense) || isExpenseSaved(expense) ? 0 : getNetExpenseAmount(expense);
+}
+
+export function getCardSummarySavings(card) {
+  return Math.max(Number(card?.summarySavings) || 0, 0);
+}
+
+export function applyCardSummarySavings(total, card) {
+  return Math.max((Number(total) || 0) - getCardSummarySavings(card), 0);
 }
 
 export function getNextMonthCardExpenseAmount(expense) {
@@ -36,18 +48,16 @@ export function isFixedCardExpense(expense) {
 }
 
 // Agrupa gastos fijos de tarjeta para mostrarlos en Departamento/Suscripciones/etc.
-export function buildCardFixedExpensesByCategory(banks) {
-  const grouped = {
-    activities: [],
-    department: [],
-    extras: [],
-    subscriptions: [],
-  };
+export function buildCardFixedExpensesByCategory(banks, categories = DEFAULT_CARD_FIXED_CATEGORIES) {
+  const safeCategories = categories.length ? categories : DEFAULT_CARD_FIXED_CATEGORIES;
+  const fallbackCategoryId = safeCategories[0]?.id ?? "subscriptions";
+  const categoryIds = new Set(safeCategories.map((category) => category.id));
+  const grouped = Object.fromEntries(safeCategories.map((category) => [category.id, []]));
 
   banks.forEach((bank) => {
     bank.cards.forEach((card) => {
       card.expenses.filter(isFixedCardExpense).forEach((expense) => {
-        const category = CARD_FIXED_CATEGORIES[expense.fixedCategory] ? expense.fixedCategory : "subscriptions";
+        const category = categoryIds.has(expense.fixedCategory) ? expense.fixedCategory : fallbackCategoryId;
 
         grouped[category].push({
           id: expense.id,
@@ -87,7 +97,7 @@ export function getStatementOffsetForPaymentMonth(paymentMonthOffset = 0) {
 }
 
 export function getExpenseAmountForStatementOffset(expense, statementOffset = 0) {
-  if (isPaidByOther(expense)) {
+  if (isPaidByOther(expense) || (statementOffset === 0 && isExpenseSaved(expense))) {
     return 0;
   }
 
@@ -125,9 +135,12 @@ export function buildProjectedCardMonthlyTotal(banks, statementOffset = 0) {
       bank.cards.reduce(
         (cardSum, card) =>
           cardSum +
-          card.expenses.reduce(
-            (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
-            0,
+          applyCardSummarySavings(
+            card.expenses.reduce(
+              (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+              0,
+            ),
+            card,
           ),
         0,
       ),
@@ -150,9 +163,12 @@ function getCardMonthlyAmountForPayment(card, paymentMonthOffset = 0) {
     return card.monthlyTotal;
   }
 
-  return card.expenses.reduce(
-    (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
-    0,
+  return applyCardSummarySavings(
+    card.expenses.reduce(
+      (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+      0,
+    ),
+    card,
   );
 }
 
@@ -185,6 +201,10 @@ export function buildExtraordinaryExpensesTotal(data, paymentMonthOffset = 0) {
   return (data.extraordinaryExpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
 }
 
+export function buildOtherIncomesTotal(data) {
+  return (data.otherIncomes ?? []).reduce((sum, income) => sum + (Number(income.amount) || 0), 0);
+}
+
 export function buildDashboardSummary({
   banks,
   data,
@@ -212,13 +232,15 @@ export function buildDashboardSummary({
   });
 
   const extraordinaryExpenses = buildExtraordinaryExpensesTotal(data, paymentMonthOffset);
+  const otherIncomesTotal = buildOtherIncomesTotal(data);
+  const incomeTotal = salary + otherIncomesTotal;
   const totalExpenses = cardExpenses + fixedExpensesTotal + extraordinaryExpenses;
   const services = buildRegistryServices(data, banks, paymentMonthOffset);
   const monthStats = buildMonthlyDashboard({
     monthIndex,
     paymentDetails,
     paymentRegistry,
-    salary,
+    salary: incomeTotal,
     services,
     year,
   });
@@ -231,8 +253,10 @@ export function buildDashboardSummary({
     monthIndex,
     monthTitle: title,
     pendingTotal: monthStats.pendingTotal + extraordinaryExpenses,
-    remaining: salary - totalExpenses,
-    salary,
+    baseSalary: salary,
+    otherIncomesTotal,
+    remaining: incomeTotal - totalExpenses,
+    salary: incomeTotal,
     statementMonthTitle: statementMonth.title,
     totalExpenses,
     year,
@@ -270,15 +294,17 @@ export function buildBanksWithTotals(data) {
           sum + getOwnExpenseAmount(expense) + (isPaidByOther(expense) ? 0 : expense.amount * Math.max(expense.installments - 1, 0)),
         0,
       );
-      const monthlyTotal = cardExpenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
+      const monthlySubtotal = cardExpenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
+      const monthlyTotal = applyCardSummarySavings(monthlySubtotal, card);
       const savingsTotal = cardExpenses.reduce(
         (sum, expense) => sum + (isPaidByOther(expense) ? 0 : getExpenseSavings(expense)),
-        0,
+        getCardSummarySavings(card),
       );
 
       return {
         ...card,
         expenses: cardExpenses,
+        monthlySubtotal,
         monthlyTotal,
         savingsTotal,
         totalDebt,

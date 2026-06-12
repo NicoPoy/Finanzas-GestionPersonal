@@ -6,3 +6,4 @@ async def create_indexes() -> None:
 
     await database.users.create_index("email", unique=True)
     await database.finance_profiles.create_index("user_id", unique=True)
+    await database.notes_profiles.create_index("user_id", unique=True)

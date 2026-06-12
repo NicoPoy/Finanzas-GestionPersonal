@@ -11,6 +11,7 @@ export default function CardsModule({
   addCard,
   addExpense,
   banks,
+  fixedCategories,
   removeBank,
   removeCard,
   removeExpense,
@@ -142,14 +143,21 @@ export default function CardsModule({
             </div>
 
             <div className="expense-entry-panel">
-              <CardExpenseForm key={selectedCard.id} onSubmit={addExpense} cardName={selectedCard.name} />
+              <CardExpenseForm
+                key={selectedCard.id}
+                fixedCategories={fixedCategories}
+                onSubmit={addExpense}
+                cardName={selectedCard.name}
+              />
             </div>
 
             <CardExpenseList
               card={selectedCard}
+              fixedCategories={fixedCategories}
               onRemove={removeExpense}
               onUpdate={updateExpense}
               onUpdateSavings={updateExpenseSavings}
+              onUpdateSummarySavings={(summarySavings) => updateCard(selectedCard.id, { summarySavings })}
             />
           </>
         ) : (

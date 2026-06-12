@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Settings } from "lucide-react";
+import MoneyInput from "../../components/forms/MoneyInput.jsx";
 
 // Mantiene el valor editable del sueldo separado del estado global hasta guardar.
 export default function SalaryForm({ onSubmit, salary }) {
@@ -24,12 +25,10 @@ export default function SalaryForm({ onSubmit, salary }) {
     <form className="expense-form salary-form" onSubmit={handleSubmit}>
       <label>
         Sueldo mensual
-        <input
+        <MoneyInput
           min="0"
-          placeholder="Ej: 500000"
-          type="number"
           value={salaryValue}
-          onChange={(event) => setSalaryValue(event.target.value)}
+          onValueChange={setSalaryValue}
         />
       </label>
 

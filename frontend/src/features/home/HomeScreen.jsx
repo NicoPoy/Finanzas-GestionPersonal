@@ -1,7 +1,8 @@
 import React from "react";
 import { LogOut, NotebookPen, Wallet } from "lucide-react";
+import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 
-export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout }) {
+export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout, onToggleTheme, theme }) {
   return (
     <main className="home-shell">
       <section className="home-panel" aria-label="Inicio">
@@ -10,15 +11,18 @@ export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout }) {
             <img alt="" src="/logo_app_finanzas.png" />
             <p>Finanzas personales</p>
           </div>
-          <button
-            aria-label="Cerrar sesion"
-            className="header-action-button home-logout"
-            onClick={onLogout}
-            title="Cerrar sesion"
-            type="button"
-          >
-            <LogOut size={16} />
-          </button>
+          <div className="home-header-actions">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            <button
+              aria-label="Cerrar sesion"
+              className="header-action-button home-logout"
+              onClick={onLogout}
+              title="Cerrar sesion"
+              type="button"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </header>
 
         <div className="home-copy">
@@ -43,7 +47,7 @@ export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout }) {
             </span>
             <span className="home-option-text">
               <strong>Notas</strong>
-              <small>Proximamente</small>
+              <small>Productos por local</small>
             </span>
           </button>
         </div>

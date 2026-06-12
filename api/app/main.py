@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.app.routers import auth, database, profile, system
+from api.app.routers import auth, database, notes, profile, system
 
 
 # Instancia ASGI que usa Vercel para ejecutar FastAPI.
@@ -34,3 +34,4 @@ app.include_router(system.router)
 app.include_router(auth.router)
 app.include_router(database.router)
 app.include_router(profile.router)
+app.include_router(notes.router)

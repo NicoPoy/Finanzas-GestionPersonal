@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Check, Pencil, Plus, ReceiptText, Trash2, X } from "lucide-react";
+import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
 
 // Modulo generico para Departamento, Suscripciones, Actividades y Extras.
@@ -87,12 +88,9 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
 
       <label>
         Monto
-        <input
-          min="1"
-          placeholder="10000"
-          type="number"
+        <MoneyInput
           value={amount}
-          onChange={(event) => setAmount(event.target.value)}
+          onValueChange={setAmount}
         />
       </label>
 
@@ -232,12 +230,10 @@ function SimpleExpenseRow({ debitCards, draft, expense, isEditing, onCancel, onD
       </strong>
       <span>
         {isEditing ? (
-          <input
+          <MoneyInput
             className="row-edit-input"
-            min="1"
-            type="number"
             value={draft.amount}
-            onChange={(event) => onDraftChange((current) => ({ ...current, amount: event.target.value }))}
+            onValueChange={(value) => onDraftChange((current) => ({ ...current, amount: value }))}
           />
         ) : (
           <strong className="amount-emphasis">{currency.format(expense.amount)}</strong>
