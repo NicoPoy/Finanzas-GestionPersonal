@@ -6936,7 +6936,9 @@ button {
     border-radius: 0;
     display: grid;
     gap: 12px;
+    max-width: 100%;
     overflow: visible;
+    width: 100%;
   }
 
   .card-expense-table .table-header {
@@ -6960,6 +6962,7 @@ button {
       "pending"
       "actions";
     grid-template-columns: 1fr;
+    max-width: 100%;
     min-height: auto;
     overflow: hidden;
     padding: 0;
@@ -6974,6 +6977,19 @@ button {
     grid-column: auto;
     padding: 13px 14px;
     text-align: left;
+  }
+
+  .card-expense-table .final-payment-row > .origin-cell {
+    background: linear-gradient(90deg, #eef3f6 0%, #f8fafc 72%);
+    border-bottom-color: #dbe3ee;
+    box-shadow: inset 4px 0 0 #b6c6d2;
+  }
+
+  .card-expense-table .saved-expense-row > .origin-cell,
+  .card-expense-table .saved-expense-row.final-payment-row > .origin-cell {
+    background: linear-gradient(90deg, #dcfce7 0%, #f0fdf4 72%);
+    border-bottom-color: #bbf7d0;
+    box-shadow: inset 4px 0 0 #86efac;
   }
 
   .card-expense-table .expense-origin-line {
@@ -7071,10 +7087,25 @@ button {
     padding: 5px 11px;
   }
 
+  .card-expense-table .last-payment-note {
+    background: #e8eef2;
+    color: #5f728a;
+  }
+
+  .card-expense-table .saved-expense-note {
+    background: #dcfce7;
+    color: #0f766e;
+  }
+
   .card-expense-table .table-row > .net-cell {
     background: #eefafa;
     color: #0f766e;
     font-weight: 950;
+  }
+
+  .card-expense-table .saved-expense-row > .net-cell {
+    background: #ecfdf5;
+    color: #047857;
   }
 
   .card-expense-table .table-row > .pending-cell {
@@ -7106,6 +7137,28 @@ button {
     height: 40px;
     justify-content: center;
     width: 100%;
+  }
+
+  .card-expense-table .table-row .icon-button-saved {
+    background: #ecfdf5;
+    border-color: #86efac;
+    color: #047857;
+  }
+
+  .card-expense-table .table-row .icon-button-saved.active {
+    background: #dcfce7;
+    border-color: #4ade80;
+    color: #047857;
+  }
+
+  .card-expense-table .table-row .icon-button-neutral {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+
+  .card-expense-table .table-row .row-actions > .icon-button {
+    min-width: 0;
   }
 
   .card-expense-table .row-edit-extra {
