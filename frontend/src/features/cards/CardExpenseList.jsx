@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Check, Pencil, PiggyBank, ReceiptText, Trash2, X } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import {
-  applyCardSummarySavings,
   getExpenseSavings,
   getCardSummarySavings,
-  getNextMonthCardExpenseAmount,
+  getNetExpenseAmount,
   getOwnExpenseAmount,
+  isExpenseSaved,
   isFixedCardExpense,
   isPaidByOther,
 } from "../../domain/financeCalculations.js";
@@ -23,6 +23,7 @@ export default function CardExpenseList({
 }) {
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [draft, setDraft] = useState(null);
+  const [showNextMonthSummary, setShowNextMonthSummary] = useState(false);
   const summarySavings = getCardSummarySavings(card);
   const [summarySavingsDraft, setSummarySavingsDraft] = useState(summarySavings ? String(summarySavings) : "");
 
@@ -101,11 +102,16 @@ export default function CardExpenseList({
     onUpdateSummarySavings(parsedSavings);
   }
 
-  const resumenSubtotal = card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
-  const resumenTotal = applyCardSummarySavings(resumenSubtotal, card);
-  const nextMonthSubtotal = card.expenses.reduce((sum, expense) => sum + getNextMonthCardExpenseAmount(expense), 0);
-  const nextMonthTotal = applyCardSummarySavings(nextMonthSubtotal, card);
-  const hasSummarySavings = summarySavings > 0;
+  const currentMonthGrossTotal = card.expenses.reduce((sum, expense) => sum + getCurrentMonthGrossAmount(expense), 0);
+  const currentMonthNetTotal = Math.max(
+    card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0) - summarySavings,
+    0,
+  );
+  const nextMonthGrossTotal = card.expenses.reduce((sum, expense) => sum + getNextMonthGrossAmount(expense), 0);
+  const nextMonthNetTotal = Math.max(
+    card.expenses.reduce((sum, expense) => sum + getNextMonthNetAmount(expense), 0) - summarySavings,
+    0,
+  );
   const parsedSummarySavingsDraft = Number(summarySavingsDraft) || 0;
   const canSaveSummarySavings =
     parsedSummarySavingsDraft >= 0 && parsedSummarySavingsDraft !== summarySavings && Boolean(onUpdateSummarySavings);
@@ -141,7 +147,7 @@ export default function CardExpenseList({
               className={`table-row ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
               key={expense.id}
             >
-              <strong>
+              <strong className="origin-cell" data-label="Origen">
                 {isEditingSavings ? (
                   <input
                     className="row-edit-input"
@@ -159,7 +165,7 @@ export default function CardExpenseList({
                   </>
                 )}
               </strong>
-              <span className="money-cell monthly-cell">
+              <span className="money-cell monthly-cell" data-label="Por mes">
                 {isEditingSavings ? (
                   <MoneyInput
                     className="row-edit-input"
@@ -170,7 +176,7 @@ export default function CardExpenseList({
                   currency.format(expense.amount)
                 )}
               </span>
-              <span className="installments-cell">
+              <span className="installments-cell" data-label="Cuotas">
                 {isEditingSavings ? (
                   <select
                     className="row-edit-input"
@@ -189,7 +195,7 @@ export default function CardExpenseList({
                   <span className="installment-pill">{expense.installments}</span>
                 )}
               </span>
-              <span className="money-cell savings-cell">
+              <span className="money-cell savings-cell" data-label="Ahorro">
                 {isEditingSavings ? (
                   <MoneyInput
                     aria-label={`Ahorro de ${expense.origin}`}
@@ -201,8 +207,10 @@ export default function CardExpenseList({
                   currency.format(savings)
                 )}
               </span>
-              <span className="amount-emphasis money-cell net-cell">{currency.format(ownAmount)}</span>
-              <span className="pending-amount money-cell pending-cell">{isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}</span>
+              <span className="amount-emphasis money-cell net-cell" data-label="Neto">{currency.format(ownAmount)}</span>
+              <span className="pending-amount money-cell pending-cell" data-label="Pendiente">
+                {isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}
+              </span>
               <div className="row-actions">
                 {isEditingSavings ? (
                   <>
@@ -215,6 +223,7 @@ export default function CardExpenseList({
                       type="button"
                     >
                       <Check size={17} />
+                      <span className="mobile-action-label">Guardar</span>
                     </button>
                     <button
                       aria-label={`Cancelar edicion de ahorro de ${expense.origin}`}
@@ -224,6 +233,7 @@ export default function CardExpenseList({
                       type="button"
                     >
                       <X size={17} />
+                      <span className="mobile-action-label">Cancelar</span>
                     </button>
                   </>
                 ) : (
@@ -236,6 +246,7 @@ export default function CardExpenseList({
                       type="button"
                     >
                       <PiggyBank size={16} />
+                      <span className="mobile-action-label">{isSaved ? "Quitar" : "Ahorrar"}</span>
                     </button>
                     <button
                       aria-label={`Editar ${expense.origin}`}
@@ -245,6 +256,7 @@ export default function CardExpenseList({
                       type="button"
                     >
                       <Pencil size={16} />
+                      <span className="mobile-action-label">Editar</span>
                     </button>
                     <button
                       aria-label={`Eliminar ${expense.origin}`}
@@ -254,6 +266,7 @@ export default function CardExpenseList({
                       type="button"
                     >
                       <Trash2 size={17} />
+                      <span className="mobile-action-label">Borrar</span>
                     </button>
                   </>
                 )}
@@ -318,28 +331,78 @@ export default function CardExpenseList({
         </button>
       </form>
 
-      <section className="next-month-card-summary card-summary-breakdown">
-        <div className="summary-total-row summary-current-row">
-          <span>{hasSummarySavings ? "Subtotal de este mes" : "Resumen de este mes"}</span>
-          <strong>{currency.format(resumenSubtotal)}</strong>
+      <section className="card-summary-breakdown">
+        <div className="card-summary-heading">
+          <span>Resumen</span>
+          <button
+            className="summary-toggle-button"
+            onClick={() => setShowNextMonthSummary((current) => !current)}
+            type="button"
+          >
+            {showNextMonthSummary ? "Ocultar proximo mes" : "Mostrar proximo mes"}
+          </button>
         </div>
-        {hasSummarySavings ? (
-          <>
-            <div className="summary-savings-row">
-              <span>Ahorros</span>
-              <strong>- {currency.format(summarySavings)}</strong>
-            </div>
-            <div className="summary-total-row">
-              <span>Resumen de este mes</span>
-              <strong>{currency.format(resumenTotal)}</strong>
-            </div>
-          </>
-        ) : null}
-        <div className="summary-next-row">
-          <span>Resumen del proximo mes</span>
-          <strong>{currency.format(nextMonthTotal)}</strong>
+        <div className="card-summary-groups">
+          <SummaryGroup
+            variant="current"
+            title="Resumen de este mes"
+            grossLabel="Neto sin ahorros"
+            grossTotal={currentMonthGrossTotal}
+            netLabel="Neto con ahorros"
+            netTotal={currentMonthNetTotal}
+          />
+          {showNextMonthSummary ? (
+            <SummaryGroup
+              variant="next"
+              title="Resumen del proximo mes"
+              grossLabel="Neto sin ahorros"
+              grossTotal={nextMonthGrossTotal}
+              netLabel="Neto con ahorros"
+              netTotal={nextMonthNetTotal}
+            />
+          ) : null}
         </div>
       </section>
     </>
   );
+}
+
+function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, title, variant }) {
+  return (
+    <article className={`card-summary-group card-summary-group-${variant}`}>
+      <h3>{title}</h3>
+      <div>
+        <span>{grossLabel}</span>
+        <strong>{currency.format(grossTotal)}</strong>
+      </div>
+      <div className="summary-net-row">
+        <span>{netLabel}</span>
+        <strong>{currency.format(netTotal)}</strong>
+      </div>
+    </article>
+  );
+}
+
+function getCurrentMonthGrossAmount(expense) {
+  return isPaidByOther(expense) ? 0 : Number(expense.amount) || 0;
+}
+
+function getNextMonthGrossAmount(expense) {
+  if (isPaidByOther(expense) || isFixedCardExpense(expense)) {
+    return isFixedCardExpense(expense) && !isPaidByOther(expense) ? Number(expense.amount) || 0 : 0;
+  }
+
+  return Number(expense.installments) > 1 ? Number(expense.amount) || 0 : 0;
+}
+
+function getNextMonthNetAmount(expense) {
+  if (isPaidByOther(expense) || isExpenseSaved(expense)) {
+    return 0;
+  }
+
+  if (isFixedCardExpense(expense)) {
+    return getNetExpenseAmount(expense);
+  }
+
+  return Number(expense.installments) > 1 ? getNetExpenseAmount(expense) : 0;
 }

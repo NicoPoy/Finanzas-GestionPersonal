@@ -31,7 +31,7 @@ export function applyCardSummarySavings(total, card) {
 }
 
 export function getNextMonthCardExpenseAmount(expense) {
-  if (isPaidByOther(expense)) {
+  if (isPaidByOther(expense) || isExpenseSaved(expense)) {
     return 0;
   }
 
