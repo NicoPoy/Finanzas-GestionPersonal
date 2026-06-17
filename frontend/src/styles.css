@@ -7115,49 +7115,61 @@ button {
     font-weight: 950;
   }
 
-  .card-expense-table .table-row .row-actions {
+  .card-expense-table .table-row .card-row-actions {
     align-self: stretch;
     background: #ffffff;
     border: 0;
     border-radius: 0;
-    display: grid;
+    display: grid !important;
     gap: 8px;
     grid-area: actions;
-    grid-column: auto;
-    grid-row: auto;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-column: auto !important;
+    grid-row: auto !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     justify-content: stretch;
     padding: 10px;
-  }
-
-  .card-expense-table .table-row .icon-button {
-    border-radius: 10px;
-    display: inline-flex;
-    gap: 7px;
-    height: 40px;
-    justify-content: center;
     width: 100%;
   }
 
-  .card-expense-table .table-row .icon-button-saved {
+  .card-expense-table .table-row .card-action-button {
+    border-radius: 10px;
+    display: inline-flex !important;
+    gap: 7px;
+    height: 40px;
+    justify-content: center;
+    opacity: 1 !important;
+    position: static !important;
+    visibility: visible !important;
+    width: 100%;
+  }
+
+  .card-expense-table .table-row .card-action-saved {
     background: #ecfdf5;
     border-color: #86efac;
     color: #047857;
   }
 
-  .card-expense-table .table-row .icon-button-saved.active {
+  .card-expense-table .table-row .card-action-saved.active {
     background: #dcfce7;
     border-color: #4ade80;
     color: #047857;
   }
 
-  .card-expense-table .table-row .icon-button-neutral {
+  .card-expense-table .table-row .card-action-edit,
+  .card-expense-table .table-row .card-action-cancel {
     background: #f8fafc;
     border-color: #cbd5e1;
     color: #475569;
   }
 
-  .card-expense-table .table-row .row-actions > .icon-button {
+  .card-expense-table .table-row .card-action-delete {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #be123c;
+  }
+
+  .card-expense-table .table-row .card-row-actions > .card-action-button {
+    flex: initial !important;
     min-width: 0;
   }
 
