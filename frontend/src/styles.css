@@ -6997,13 +6997,14 @@ button {
 
 @media (max-width: 760px) {
   .card-expense-table {
-    background: transparent;
+    background: #eef3f8;
     border: 0;
-    border-radius: 0;
+    border-radius: 18px;
     display: grid;
-    gap: 18px;
+    gap: 14px;
     max-width: 100%;
     overflow: visible;
+    padding: 10px;
     width: 100%;
   }
 
@@ -7014,9 +7015,9 @@ button {
   .card-expense-table .table-row {
     align-items: stretch;
     background: #ffffff;
-    border: 1px solid #d8e2ee;
+    border: 2px solid #d5e0ec;
     border-radius: 16px;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    box-shadow: none;
     display: grid;
     gap: 0;
     grid-template-areas:
@@ -7036,15 +7037,7 @@ button {
   }
 
   .card-expense-table .table-row + .table-row::before {
-    background: #dbe3ee;
-    border-radius: 999px;
-    content: "";
-    height: 1px;
-    left: 14px;
-    opacity: 0.9;
-    position: absolute;
-    right: 14px;
-    top: -10px;
+    content: none;
   }
 
   .card-expense-table .final-payment-row {
@@ -7053,8 +7046,8 @@ button {
 
   .card-expense-table .saved-expense-row,
   .card-expense-table .saved-expense-row.final-payment-row {
-    border-color: #bbf7d0;
-    box-shadow: 0 14px 30px rgba(22, 163, 74, 0.12);
+    border-color: #86efac;
+    box-shadow: none;
   }
 
   .card-expense-table .table-row > .origin-cell {
