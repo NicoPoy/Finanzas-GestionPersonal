@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color: #172033;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -2212,30 +2212,30 @@ button {
   font-weight: 500;
 }
 
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header,
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header,
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
   column-gap: 12px;
   grid-template-columns: minmax(300px, 2.25fr) minmax(112px, 0.72fr) minmax(86px, 0.48fr) minmax(106px, 0.66fr) minmax(112px, 0.72fr) minmax(124px, 0.78fr) 112px;
 }
 
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .money-cell {
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .money-cell {
   font-variant-numeric: tabular-nums;
   justify-self: center;
   text-align: center;
   white-space: nowrap;
 }
 
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:not(:first-child),
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(2),
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(4),
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(5),
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(6) {
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:not(:first-child),
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(2),
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(4),
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(5),
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(6) {
   justify-self: center;
   text-align: center;
 }
 
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(3),
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .installments-cell {
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:nth-child(3),
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .installments-cell {
   justify-self: center;
   text-align: center;
 }
@@ -2358,8 +2358,8 @@ button {
   justify-content: center;
 }
 
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:first-child,
-.expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > strong {
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header span:first-child,
+.expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > strong {
   justify-self: start;
   text-align: left;
 }
@@ -3506,7 +3506,7 @@ button {
     max-width: 120px;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span,
   .fixed-expense-table .table-row span {
     align-items: baseline;
     color: #172033;
@@ -3516,7 +3516,7 @@ button {
     max-width: 100%;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span::before,
   .fixed-expense-table .table-row span::before {
     color: #64748b;
     content: "";
@@ -3526,30 +3526,30 @@ button {
     text-transform: uppercase;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(1)::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span:nth-of-type(1)::before {
     content: "Por mes";
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(2)::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span:nth-of-type(2)::before {
     content: "Cuotas";
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(3)::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span:nth-of-type(3)::before {
     content: "Ahorro";
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(4)::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span:nth-of-type(4)::before {
     content: "Neto";
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span:nth-of-type(5)::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span:nth-of-type(5)::before {
     content: "Pendiente";
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row .expense-origin-line::before,
-  .expense-table:not(.fixed-expense-table) .table-row .installment-pill::before,
-  .expense-table:not(.fixed-expense-table) .table-row .last-payment-note::before,
-  .expense-table:not(.fixed-expense-table) .table-row .saved-expense-note::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .expense-origin-line::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .installment-pill::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .last-payment-note::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .saved-expense-note::before {
     content: none;
   }
 
@@ -3825,16 +3825,23 @@ button {
     background: rgba(248, 250, 252, 0.96);
     border-top: 1px solid #dbe3ee;
     bottom: 0;
+    box-sizing: border-box;
     box-shadow: 0 -14px 32px rgba(15, 23, 42, 0.14);
     gap: 8px;
     left: 0;
     margin: 0;
     max-width: none;
     overflow-x: auto;
+    overflow-y: hidden;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     position: fixed;
     right: 0;
+    scroll-padding-inline: 12px;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
+    touch-action: pan-x;
+    width: 100vw;
+    -webkit-overflow-scrolling: touch;
     z-index: 50;
   }
 
@@ -3843,7 +3850,10 @@ button {
   }
 
   .module-group {
+    display: flex;
+    flex: 0 0 auto;
     gap: 8px;
+    scroll-snap-align: start;
   }
 
   .module-group-main,
@@ -4214,7 +4224,7 @@ button {
 }
 
 @media (max-width: 760px) {
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) {
     background: transparent;
     border: 0;
     border-radius: 0;
@@ -4223,11 +4233,11 @@ button {
     overflow: visible;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-header {
     display: none;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
     align-items: stretch;
     background: #ffffff;
     border: 1px solid #dbe3ee;
@@ -4241,14 +4251,14 @@ button {
     row-gap: 10px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .origin-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .origin-cell {
     grid-column: 1 / -1;
     min-width: 0;
     padding: 2px 2px 4px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
     align-content: center;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -4263,8 +4273,8 @@ button {
     white-space: normal;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell::before {
     color: #64748b;
     content: attr(data-label);
     font-size: 0.68rem;
@@ -4274,18 +4284,18 @@ button {
     text-transform: uppercase;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .net-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .net-cell {
     background: #eef6f7;
     border-color: #cfe0e1;
     color: #0f766e;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .pending-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .pending-cell {
     color: #172033;
     font-weight: 850;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
     align-items: stretch;
     display: grid;
     gap: 8px;
@@ -4294,18 +4304,18 @@ button {
     justify-content: stretch;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions .icon-button {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions .icon-button {
     border-radius: 10px;
     height: 42px;
     width: 100%;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-extra {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-extra {
     grid-column: 1 / -1;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-input,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .savings-input {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-input,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .savings-input {
     height: 40px;
     max-width: none;
     width: 100%;
@@ -4358,12 +4368,12 @@ button {
 }
 
 @media (max-width: 420px) {
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
     grid-template-columns: 1fr;
     padding: 10px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
     grid-template-columns: repeat(3, minmax(42px, 1fr));
   }
 
@@ -4377,11 +4387,11 @@ button {
 }
 
 @media (max-width: 760px) {
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) {
     gap: 12px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
     align-items: stretch;
     background: #ffffff;
     border: 1px solid #d8e2ee;
@@ -4400,7 +4410,7 @@ button {
     padding: 0;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .origin-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .origin-cell {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     display: grid;
@@ -4409,33 +4419,33 @@ button {
     padding: 13px 14px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .expense-origin-line {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .expense-origin-line {
     font-size: 0.96rem;
     line-height: 1.25;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .monthly-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .monthly-cell {
     grid-area: monthly;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .installments-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .installments-cell {
     grid-area: installments;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .savings-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .savings-cell {
     grid-area: savings;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .net-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .net-cell {
     grid-area: net;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .pending-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .pending-cell {
     grid-area: pending;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
     align-items: center;
     background: #ffffff;
     border: 0;
@@ -4454,13 +4464,13 @@ button {
     white-space: normal;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .monthly-cell,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .savings-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .monthly-cell,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .savings-cell {
     border-right: 1px solid #eef2f7;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell::before {
     color: #5b6f89;
     content: attr(data-label);
     font-size: 0.68rem;
@@ -4471,37 +4481,37 @@ button {
     text-transform: uppercase;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > span::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .expense-origin-line::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .installment-pill::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .last-payment-note::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .saved-expense-note::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > span::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .expense-origin-line::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .installment-pill::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .last-payment-note::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .saved-expense-note::before {
     content: none;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell::before,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell::before,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell::before {
     content: attr(data-label);
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .installment-pill {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .installment-pill {
     min-width: 54px;
     padding: 5px 11px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .net-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .net-cell {
     background: #eefafa;
     color: #0f766e;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .pending-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .pending-cell {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     color: #172033;
     font-size: 0.98rem;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
     align-items: stretch;
     background: #ffffff;
     border: 0;
@@ -4515,7 +4525,7 @@ button {
     padding: 10px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions .icon-button {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions .icon-button {
     border-radius: 10px;
     display: inline-flex;
     gap: 7px;
@@ -4529,20 +4539,20 @@ button {
     font-weight: 900;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-extra {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-extra {
     border-top: 1px solid #eef2f7;
     grid-column: 1 / -1;
     padding: 10px 14px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-input,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .savings-input {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-edit-input,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .savings-input {
     min-width: 0;
   }
 }
 
 @media (max-width: 420px) {
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
     grid-template-areas:
       "origin"
       "monthly"
@@ -4554,16 +4564,16 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .monthly-cell,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .savings-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .monthly-cell,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .savings-cell {
     border-right: 0;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions {
     grid-template-columns: 1fr;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions .icon-button {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .row-actions .icon-button {
     justify-content: center;
   }
 }
@@ -4661,22 +4671,22 @@ button {
     width: 26px;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row {
     column-gap: 12px;
     grid-template-columns: minmax(0, 1fr) auto;
     padding: 14px 12px;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row > strong {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row > strong {
     grid-column: 1;
     padding-right: 2px;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row > strong small {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row > strong small {
     font-size: 0.72rem;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .row-actions {
     align-self: start;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -4689,13 +4699,13 @@ button {
     padding: 3px;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row .icon-button {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .icon-button {
     border-radius: 10px;
     height: 32px;
     width: 32px;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: 86px minmax(0, 1fr);
@@ -4704,12 +4714,12 @@ button {
     text-align: right;
   }
 
-  .expense-table:not(.fixed-expense-table) .table-row span::before {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row span::before {
     min-width: 0;
     text-align: left;
   }
 
-  .expense-table:not(.fixed-expense-table) .row-edit-extra {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .row-edit-extra {
     grid-column: 1 / -1;
   }
 
@@ -4724,8 +4734,8 @@ button {
     min-height: 42px;
   }
 
-  .expense-table:not(.fixed-expense-table) .amount-emphasis,
-  .expense-table:not(.fixed-expense-table) .pending-amount {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .amount-emphasis,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table) .pending-amount {
     text-align: right;
   }
 
@@ -4742,7 +4752,7 @@ button {
 }
 
 @media (max-width: 760px) {
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
     align-items: stretch;
     display: grid;
     gap: 0;
@@ -4757,43 +4767,43 @@ button {
     padding: 0;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .origin-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .origin-cell {
     grid-area: origin;
     grid-column: auto;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .monthly-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .monthly-cell {
     grid-area: monthly;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
     grid-area: installments;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .savings-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .savings-cell {
     grid-area: savings;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .net-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .net-cell {
     grid-area: net;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .pending-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .pending-cell {
     grid-area: pending;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .money-cell,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row > .installments-cell {
     display: flex;
     grid-column: auto;
     grid-template-columns: none;
     justify-content: space-between;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .expense-origin-line,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .installment-pill,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .last-payment-note,
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .saved-expense-note {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .expense-origin-line,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .installment-pill,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .last-payment-note,
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .saved-expense-note {
     display: inline-flex;
     grid-column: auto;
     grid-template-columns: none;
@@ -4802,12 +4812,12 @@ button {
     text-align: inherit;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .expense-origin-line {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .expense-origin-line {
     justify-content: flex-start;
     text-align: left;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .row-actions {
     align-self: stretch;
     background: #ffffff;
     border: 0;
@@ -4820,14 +4830,14 @@ button {
     padding: 10px;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .icon-button {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .icon-button {
     height: 40px;
     width: 100%;
   }
 }
 
 @media (max-width: 420px) {
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row {
     grid-template-areas:
       "origin"
       "monthly"
@@ -4839,7 +4849,7 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .expense-table:not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .row-actions {
+  .expense-table:not(.card-expense-table):not(.fixed-expense-table):not(.other-income-table):not(.extraordinarios-table):not(.aguinaldo-table) .table-row .row-actions {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
@@ -5506,7 +5516,7 @@ button {
     box-shadow: 0 -14px 32px rgba(0, 0, 0, 0.36);
   }
 
-  :root[data-theme="dark"] .expense-table:not(.fixed-expense-table) .table-row .row-actions {
+  :root[data-theme="dark"] .expense-table:not(.card-expense-table):not(.fixed-expense-table) .table-row .row-actions {
     background: #111827;
     border-color: #2d3b4f;
   }
@@ -6916,5 +6926,205 @@ button {
   :root[data-theme="dark"] .module-bar {
     background: rgba(9, 15, 29, 0.96);
     border-top-color: var(--dark-border);
+  }
+}
+
+@media (max-width: 760px) {
+  .card-expense-table {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    display: grid;
+    gap: 12px;
+    overflow: visible;
+  }
+
+  .card-expense-table .table-header {
+    display: none;
+  }
+
+  .card-expense-table .table-row {
+    align-items: stretch;
+    background: #ffffff;
+    border: 1px solid #d8e2ee;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    display: grid;
+    gap: 0;
+    grid-template-areas:
+      "origin"
+      "monthly"
+      "installments"
+      "savings"
+      "net"
+      "pending"
+      "actions";
+    grid-template-columns: 1fr;
+    min-height: auto;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .card-expense-table .table-row > .origin-cell {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: grid;
+    gap: 6px;
+    grid-area: origin;
+    grid-column: auto;
+    padding: 13px 14px;
+    text-align: left;
+  }
+
+  .card-expense-table .expense-origin-line {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    font-size: 0.98rem;
+    gap: 8px;
+    justify-content: flex-start;
+    line-height: 1.25;
+    text-align: left;
+  }
+
+  .card-expense-table .monthly-cell {
+    grid-area: monthly;
+  }
+
+  .card-expense-table .installments-cell {
+    grid-area: installments;
+  }
+
+  .card-expense-table .savings-cell {
+    grid-area: savings;
+  }
+
+  .card-expense-table .net-cell {
+    grid-area: net;
+  }
+
+  .card-expense-table .pending-cell {
+    grid-area: pending;
+  }
+
+  .card-expense-table .table-row > .money-cell,
+  .card-expense-table .table-row > .installments-cell {
+    align-items: center;
+    background: #ffffff;
+    border: 0;
+    border-bottom: 1px solid #eef2f7;
+    border-radius: 0;
+    color: #172033;
+    display: flex;
+    font-size: 0.94rem;
+    font-weight: 850;
+    gap: 14px;
+    grid-column: auto;
+    grid-template-columns: none;
+    justify-content: space-between;
+    min-height: 48px;
+    min-width: 0;
+    padding: 11px 14px;
+    text-align: right;
+    white-space: normal;
+  }
+
+  .card-expense-table .table-row > .money-cell::before,
+  .card-expense-table .table-row > .installments-cell::before {
+    color: #5b6f89;
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+    font-weight: 950;
+    letter-spacing: 0;
+    line-height: 1;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .card-expense-table .table-row > span::before,
+  .card-expense-table .expense-origin-line::before,
+  .card-expense-table .installment-pill::before,
+  .card-expense-table .last-payment-note::before,
+  .card-expense-table .saved-expense-note::before {
+    content: none;
+  }
+
+  .card-expense-table .table-row > .money-cell::before,
+  .card-expense-table .table-row > .installments-cell::before {
+    content: attr(data-label);
+  }
+
+  .card-expense-table .installment-pill,
+  .card-expense-table .last-payment-note,
+  .card-expense-table .saved-expense-note {
+    display: inline-flex;
+    grid-column: auto;
+    grid-template-columns: none;
+    justify-content: center;
+    min-height: auto;
+    text-align: inherit;
+  }
+
+  .card-expense-table .installment-pill {
+    min-width: 58px;
+    padding: 5px 11px;
+  }
+
+  .card-expense-table .table-row > .net-cell {
+    background: #eefafa;
+    color: #0f766e;
+    font-weight: 950;
+  }
+
+  .card-expense-table .table-row > .pending-cell {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    color: #172033;
+    font-weight: 950;
+  }
+
+  .card-expense-table .table-row .row-actions {
+    align-self: stretch;
+    background: #ffffff;
+    border: 0;
+    border-radius: 0;
+    display: grid;
+    gap: 8px;
+    grid-area: actions;
+    grid-column: auto;
+    grid-row: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: stretch;
+    padding: 10px;
+  }
+
+  .card-expense-table .table-row .icon-button {
+    border-radius: 10px;
+    display: inline-flex;
+    gap: 7px;
+    height: 40px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .card-expense-table .row-edit-extra {
+    border-top: 1px solid #eef2f7;
+    grid-column: 1 / -1;
+    padding: 10px 14px;
+  }
+
+  .card-expense-table .row-edit-input,
+  .card-expense-table .savings-input {
+    height: 40px;
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .card-expense-table .mobile-action-label {
+    display: inline;
+    font-size: 0.72rem;
+    font-weight: 900;
   }
 }

@@ -118,7 +118,7 @@ export default function CardExpenseList({
 
   return (
     <>
-      <div className="expense-table">
+      <div className="expense-table card-expense-table">
         <div className="table-header">
           <span>Origen</span>
           <span>Por mes</span>
