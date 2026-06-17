@@ -216,98 +216,57 @@ export default function CardExpenseList({
                   <>
                     <button
                       aria-label={`Guardar ahorro de ${expense.origin}`}
-                      className="icon-button icon-button-success card-action-button card-desktop-action card-action-save"
+                      className="card-row-action card-row-action-save"
                       disabled={!canSaveSavings}
                       onClick={() => saveSavingsEdit(expense)}
                       title="Guardar ahorro"
                       type="button"
                     >
                       <Check size={17} />
-                      <span className="mobile-action-label">Guardar</span>
+                      <span>Guardar</span>
                     </button>
                     <button
                       aria-label={`Cancelar edicion de ahorro de ${expense.origin}`}
-                      className="icon-button icon-button-neutral card-action-button card-desktop-action card-action-cancel"
+                      className="card-row-action card-row-action-cancel"
                       onClick={cancelSavingsEdit}
                       title="Cancelar"
                       type="button"
                     >
                       <X size={17} />
-                      <span className="mobile-action-label">Cancelar</span>
-                    </button>
-                    <button
-                      className="card-mobile-action card-mobile-action-save"
-                      disabled={!canSaveSavings}
-                      onClick={() => saveSavingsEdit(expense)}
-                      type="button"
-                    >
-                      <Check size={17} />
-                      Guardar
-                    </button>
-                    <button
-                      className="card-mobile-action card-mobile-action-cancel"
-                      onClick={cancelSavingsEdit}
-                      type="button"
-                    >
-                      <X size={17} />
-                      Cancelar
+                      <span>Cancelar</span>
                     </button>
                   </>
                 ) : (
                   <>
                     <button
                       aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
-                      className={`icon-button icon-button-saved card-action-button card-desktop-action card-action-saved ${isSaved ? "active" : ""}`}
+                      className={`card-row-action card-row-action-saved ${isSaved ? "active" : ""}`}
                       onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
                       title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
                       type="button"
                     >
                       <PiggyBank size={16} />
-                      <span className="mobile-action-label">{isSaved ? "Quitar" : "Ahorrar"}</span>
+                      <span>{isSaved ? "Quitar" : "Ahorrar"}</span>
                     </button>
                     <button
                       aria-label={`Editar ${expense.origin}`}
-                      className="icon-button icon-button-neutral card-action-button card-desktop-action card-action-edit"
+                      className="card-row-action card-row-action-edit"
                       onClick={() => startSavingsEdit(expense)}
                       title="Editar gasto"
                       type="button"
                     >
                       <Pencil size={16} />
-                      <span className="mobile-action-label">Editar</span>
+                      <span>Editar</span>
                     </button>
                     <button
                       aria-label={`Eliminar ${expense.origin}`}
-                      className="icon-button card-action-button card-desktop-action card-action-delete"
+                      className="card-row-action card-row-action-delete"
                       onClick={() => onRemove(expense.id)}
                       title="Eliminar gasto"
                       type="button"
                     >
                       <Trash2 size={17} />
-                      <span className="mobile-action-label">Borrar</span>
-                    </button>
-                    <button
-                      className={`card-mobile-action card-mobile-action-saved ${isSaved ? "active" : ""}`}
-                      onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
-                      type="button"
-                    >
-                      <PiggyBank size={16} />
-                      {isSaved ? "Quitar" : "Ahorrar"}
-                    </button>
-                    <button
-                      className="card-mobile-action card-mobile-action-edit"
-                      onClick={() => startSavingsEdit(expense)}
-                      type="button"
-                    >
-                      <Pencil size={16} />
-                      Editar
-                    </button>
-                    <button
-                      className="card-mobile-action card-mobile-action-delete"
-                      onClick={() => onRemove(expense.id)}
-                      type="button"
-                    >
-                      <Trash2 size={17} />
-                      Borrar
+                      <span>Borrar</span>
                     </button>
                   </>
                 )}
