@@ -195,7 +195,7 @@ export default function CardExpenseList({
                   <span className="installment-pill">{expense.installments}</span>
                 )}
               </span>
-              <span className="money-cell savings-cell" data-label="Ahorro">
+              <span className={`money-cell savings-cell ${savings === 0 ? "zero-value-cell" : ""}`} data-label="Ahorro">
                 {isEditingSavings ? (
                   <MoneyInput
                     aria-label={`Ahorro de ${expense.origin}`}
@@ -204,12 +204,14 @@ export default function CardExpenseList({
                     onValueChange={(value) => updateDraft("savings", value)}
                   />
                 ) : (
-                  currency.format(savings)
+                  formatTableAmount(savings)
                 )}
               </span>
-              <span className="amount-emphasis money-cell net-cell" data-label="Neto">{currency.format(ownAmount)}</span>
-              <span className="pending-amount money-cell pending-cell" data-label="Pendiente">
-                {isFixedCardExpense(expense) ? "Mensual" : currency.format(pendingValue)}
+              <span className={`amount-emphasis money-cell net-cell ${ownAmount === 0 ? "zero-value-cell" : ""}`} data-label="Neto">
+                {formatTableAmount(ownAmount)}
+              </span>
+              <span className={`pending-amount money-cell pending-cell ${!isFixedCardExpense(expense) && pendingValue === 0 ? "zero-value-cell" : ""}`} data-label="Pendiente">
+                {isFixedCardExpense(expense) ? "Mensual" : formatTableAmount(pendingValue)}
               </span>
               <div className={`row-actions card-row-actions ${isEditingSavings ? "card-row-actions-editing" : ""}`}>
                 {isEditingSavings ? (
@@ -381,6 +383,10 @@ function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, title, varia
       </div>
     </article>
   );
+}
+
+function formatTableAmount(value) {
+  return Number(value) === 0 ? "•" : currency.format(value);
 }
 
 function getCurrentMonthGrossAmount(expense) {
