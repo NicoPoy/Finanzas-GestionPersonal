@@ -7034,6 +7034,16 @@ button {
     padding: 0;
   }
 
+  .card-expense-table .final-payment-row {
+    border-color: #dbe3ee;
+  }
+
+  .card-expense-table .saved-expense-row,
+  .card-expense-table .saved-expense-row.final-payment-row {
+    border-color: #bbf7d0;
+    box-shadow: 0 10px 24px rgba(22, 163, 74, 0.1);
+  }
+
   .card-expense-table .table-row > .origin-cell {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
@@ -7041,19 +7051,21 @@ button {
     gap: 6px;
     grid-area: origin;
     grid-column: auto;
+    justify-self: stretch;
     padding: 13px 14px;
     text-align: left;
+    width: 100%;
   }
 
   .card-expense-table .final-payment-row > .origin-cell {
-    background: linear-gradient(90deg, #eef3f6 0%, #f8fafc 72%);
+    background: linear-gradient(90deg, #eef3f6 0%, #f8fafc 84%);
     border-bottom-color: #dbe3ee;
     box-shadow: inset 4px 0 0 #b6c6d2;
   }
 
   .card-expense-table .saved-expense-row > .origin-cell,
   .card-expense-table .saved-expense-row.final-payment-row > .origin-cell {
-    background: linear-gradient(90deg, #dcfce7 0%, #f0fdf4 72%);
+    background: linear-gradient(90deg, #dcfce7 0%, #f0fdf4 84%);
     border-bottom-color: #bbf7d0;
     box-shadow: inset 4px 0 0 #86efac;
   }
@@ -7103,12 +7115,14 @@ button {
     gap: 14px;
     grid-column: auto;
     grid-template-columns: none;
+    justify-self: stretch;
     justify-content: space-between;
-    min-height: 48px;
+    min-height: 54px;
     min-width: 0;
-    padding: 11px 14px;
+    padding: 12px 14px;
     text-align: right;
     white-space: normal;
+    width: 100%;
   }
 
   .card-expense-table .table-row > .money-cell::before,
@@ -7116,7 +7130,7 @@ button {
     color: #5b6f89;
     content: attr(data-label);
     flex: 0 0 auto;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     font-weight: 950;
     letter-spacing: 0;
     line-height: 1;
@@ -7155,22 +7169,27 @@ button {
 
   .card-expense-table .last-payment-note {
     background: #e8eef2;
+    border: 1px solid #dbe3ee;
     color: #5f728a;
   }
 
   .card-expense-table .saved-expense-note {
     background: #dcfce7;
+    border: 1px solid #bbf7d0;
     color: #0f766e;
   }
 
   .card-expense-table .table-row > .net-cell {
     background: #eefafa;
+    border-left: 0;
+    border-right: 0;
+    border-bottom-color: #d8eeee;
     color: #0f766e;
     font-weight: 950;
   }
 
   .card-expense-table .saved-expense-row > .net-cell {
-    background: #ecfdf5;
+    background: #e9fff1;
     color: #047857;
   }
 
