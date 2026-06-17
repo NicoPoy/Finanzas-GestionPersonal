@@ -15,7 +15,13 @@ def get_mongo_client() -> AsyncIOMotorClient:
     if not settings.mongodb_uri:
         raise RuntimeError("MONGODB_URI no esta configurada")
 
-    return AsyncIOMotorClient(settings.mongodb_uri, server_api=ServerApi("1"))
+    return AsyncIOMotorClient(
+        settings.mongodb_uri,
+        server_api=ServerApi("1"),
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000,
+        socketTimeoutMS=5000,
+    )
 
 
 def get_database():

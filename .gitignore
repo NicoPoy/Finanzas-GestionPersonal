@@ -1,8 +1,7 @@
 .vercel
 .env*
+!.env.example
 node_modules
 dist
 __pycache__/
 *.py[cod]
-
-.env*

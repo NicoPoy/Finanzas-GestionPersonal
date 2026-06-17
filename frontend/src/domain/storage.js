@@ -36,6 +36,7 @@ export function normalizeData(data) {
     extraordinaryExpenses: normalizeExtraordinaryExpenses(
       data.extraordinaryExpenses ?? INITIAL_DATA.extraordinaryExpenses,
     ),
+    aguinaldo: normalizeAguinaldo(data.aguinaldo ?? INITIAL_DATA.aguinaldo),
   };
 }
 
@@ -94,6 +95,29 @@ function normalizeOtherIncomes(incomes) {
     id: String(income.id ?? crypto.randomUUID()),
     origin: String(income.origin ?? "").trim(),
   }));
+}
+
+function normalizeAguinaldo(aguinaldo) {
+  const source = aguinaldo ?? INITIAL_DATA.aguinaldo;
+
+  return {
+    amount: Number(source.amount) || 0,
+    savingsAmount: Number(source.savingsAmount) || 0,
+    expenses: (Array.isArray(source.expenses) ? source.expenses : []).map((expense) => ({
+      ...expense,
+      amount: Number(expense.amount) || 0,
+      id: String(expense.id ?? crypto.randomUUID()),
+      origin: String(expense.origin ?? "").trim(),
+    })),
+    dollarPurchases: (Array.isArray(source.dollarPurchases) ? source.dollarPurchases : []).map((purchase) => ({
+      ...purchase,
+      amount: Number(purchase.amount) || 0,
+      fechaActualizacion: purchase.fechaActualizacion ?? "",
+      id: String(purchase.id ?? crypto.randomUUID()),
+      rate: Number(purchase.rate) || 0,
+      usdAmount: Number(purchase.usdAmount) || 0,
+    })),
+  };
 }
 
 function normalizeDebitCards(cards) {

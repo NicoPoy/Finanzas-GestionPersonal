@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Banknote,
-  BarChart3,
   CalendarDays,
   CreditCard,
   Download,
@@ -12,6 +11,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  PiggyBank,
   Repeat,
   Settings,
   Sparkles,
@@ -36,8 +36,10 @@ import { normalizeData } from "../../domain/storage.js";
 import { apiUrl } from "../../services/platform.js";
 import { currency } from "../../utils/formatters.js";
 import ThemeToggle from "../../components/common/ThemeToggle.jsx";
+import AguinaldoModule from "../aguinaldo/AguinaldoModule.jsx";
 import CardsModule from "../cards/CardsModule.jsx";
 import DashboardModule from "../dashboard/DashboardModule.jsx";
+import DollarPurchaseModule from "../dollars/DollarPurchaseModule.jsx";
 import HistoryModule from "../history/HistoryModule.jsx";
 import ProjectionModule from "../projection/ProjectionModule.jsx";
 import RegistryModule from "../registry/RegistryModule.jsx";
@@ -567,6 +569,82 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
     }));
   }
 
+  function addDollarPurchase(expense) {
+    addSimpleExpense("extraExpenses", expense);
+  }
+
+  function updateAguinaldoAmount(amount) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        ...current.aguinaldo,
+        amount,
+      },
+    }));
+  }
+
+  function updateAguinaldoSavings(savingsAmount) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        ...current.aguinaldo,
+        savingsAmount,
+      },
+    }));
+  }
+
+  function addAguinaldoExpense(expense) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        ...current.aguinaldo,
+        expenses: [
+          {
+            id: crypto.randomUUID(),
+            ...expense,
+          },
+          ...(current.aguinaldo?.expenses ?? []),
+        ],
+      },
+    }));
+  }
+
+  function removeAguinaldoExpense(expenseId) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        ...current.aguinaldo,
+        expenses: (current.aguinaldo?.expenses ?? []).filter((expense) => expense.id !== expenseId),
+      },
+    }));
+  }
+
+  function addAguinaldoDollarPurchase(purchase) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        ...current.aguinaldo,
+        dollarPurchases: [
+          {
+            id: crypto.randomUUID(),
+            ...purchase,
+          },
+          ...(current.aguinaldo?.dollarPurchases ?? []),
+        ],
+      },
+    }));
+  }
+
+  function removeAguinaldoDollarPurchase(purchaseId) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        ...current.aguinaldo,
+        dollarPurchases: (current.aguinaldo?.dollarPurchases ?? []).filter((purchase) => purchase.id !== purchaseId),
+      },
+    }));
+  }
+
   function removeSimpleExpense(storageKey, expenseId) {
     requestConfirmation({
       confirmLabel: "Eliminar gasto",
@@ -1077,12 +1155,20 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
 
         <div className="module-group module-group-tools">
           <button
-            className={`module-tab tool-tab ${activeModule === "projection" ? "active" : ""}`}
-            onClick={() => setActiveModule("projection")}
+            className={`module-tab tool-tab ${activeModule === "dollars" ? "active" : ""}`}
+            onClick={() => setActiveModule("dollars")}
             type="button"
           >
-            <BarChart3 size={18} />
-            Proyeccion
+            <Banknote size={18} />
+            Dolares
+          </button>
+          <button
+            className={`module-tab tool-tab ${activeModule === "aguinaldo" ? "active" : ""}`}
+            onClick={() => setActiveModule("aguinaldo")}
+            type="button"
+          >
+            <PiggyBank size={18} />
+            Aguinaldo
           </button>
           <button
             className={`module-tab tool-tab ${activeModule === "history" ? "active" : ""}`}
@@ -1155,6 +1241,18 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
         />
       ) : activeModule === "projection" ? (
         <ProjectionModule banks={banksWithTotals} />
+      ) : activeModule === "dollars" ? (
+        <DollarPurchaseModule onAddPurchase={addDollarPurchase} />
+      ) : activeModule === "aguinaldo" ? (
+        <AguinaldoModule
+          aguinaldo={data.aguinaldo}
+          onAddDollarPurchase={addAguinaldoDollarPurchase}
+          onAddExpense={addAguinaldoExpense}
+          onRemoveDollarPurchase={removeAguinaldoDollarPurchase}
+          onRemoveExpense={removeAguinaldoExpense}
+          onUpdateAmount={updateAguinaldoAmount}
+          onUpdateSavings={updateAguinaldoSavings}
+        />
       ) : activeModule === "registry" ? (
         <RegistryModule
           paymentDetails={data.paymentDetails}

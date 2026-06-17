@@ -24,6 +24,15 @@ http://localhost:5173
 
 En local, `vite.config.js` redirige `/api` hacia `https://finanzas-gestion.vercel.app`. Asi el frontend corre en localhost y la API sale desde produccion.
 
+Si la API publicada tarda en responder o queres cambiar temporalmente el destino del proxy, podes usar:
+
+```powershell
+$env:API_PROXY_TARGET="http://127.0.0.1:8000"
+npm run dev -- --host localhost --port 5173 --strictPort
+```
+
+Si no definis `API_PROXY_TARGET`, Vite usa `https://finanzas-gestion.vercel.app`.
+
 Si alguna vez queres levantar backend local:
 
 ```powershell

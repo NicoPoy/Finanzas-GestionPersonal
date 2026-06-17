@@ -39,12 +39,21 @@ class Bank(BaseModel):
     cards: list[Card] = Field(default_factory=list)
 
 
+class DollarPurchaseMetadata(BaseModel):
+    casa: str = "blue"
+    fechaActualizacion: str = ""
+    rate: float = 0
+    rateType: str = "venta"
+    usdAmount: float = 0
+
+
 class SimpleExpense(BaseModel):
     id: str
     name: str
     amount: float
     dueDay: int = 10
     paymentCard: str = ""
+    dollarPurchase: DollarPurchaseMetadata | None = None
 
 
 class OtherIncome(BaseModel):
@@ -91,6 +100,29 @@ class PaymentRegistryEntry(BaseModel):
     paid: bool = False
 
 
+class AguinaldoExpense(BaseModel):
+    id: str
+    origin: str
+    amount: float
+
+
+class AguinaldoDollarPurchase(BaseModel):
+    id: str
+    amount: float
+    casa: str = "blue"
+    fechaActualizacion: str = ""
+    rate: float = 0
+    rateType: str = "venta"
+    usdAmount: float = 0
+
+
+class AguinaldoProfile(BaseModel):
+    amount: float = 0
+    savingsAmount: float = 0
+    expenses: list[AguinaldoExpense] = Field(default_factory=list)
+    dollarPurchases: list[AguinaldoDollarPurchase] = Field(default_factory=list)
+
+
 class FinanceProfileDocument(BaseModel):
     """Documento principal de finanzas por usuario.
 
@@ -107,6 +139,7 @@ class FinanceProfileDocument(BaseModel):
     subscription_expenses: list[SimpleExpense] = Field(default_factory=list)
     activity_expenses: list[SimpleExpense] = Field(default_factory=list)
     extra_expenses: list[SimpleExpense] = Field(default_factory=list)
+    aguinaldo: AguinaldoProfile = Field(default_factory=AguinaldoProfile)
     payment_registry: list[PaymentRegistryEntry] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -134,3 +167,4 @@ class FrontendFinanceProfile(BaseModel):
     activityExpenses: list[SimpleExpense] = Field(default_factory=list)
     extraExpenses: list[SimpleExpense] = Field(default_factory=list)
     extraordinaryExpenses: list[SimpleExpense] = Field(default_factory=list)
+    aguinaldo: AguinaldoProfile = Field(default_factory=AguinaldoProfile)
