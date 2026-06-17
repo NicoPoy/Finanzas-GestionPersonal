@@ -21,6 +21,7 @@ export const INITIAL_DATA = {
     savingsAmount: 0,
     expenses: [],
     dollarPurchases: [],
+    history: [],
   },
 };
 

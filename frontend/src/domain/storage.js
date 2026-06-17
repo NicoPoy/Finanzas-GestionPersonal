@@ -117,6 +117,31 @@ function normalizeAguinaldo(aguinaldo) {
       rate: Number(purchase.rate) || 0,
       usdAmount: Number(purchase.usdAmount) || 0,
     })),
+    history: (Array.isArray(source.history) ? source.history : []).map((item) => ({
+      ...item,
+      amount: Number(item.amount) || 0,
+      assignedTotal: Number(item.assignedTotal) || 0,
+      closedAt: item.closedAt || new Date().toISOString(),
+      dollarPurchases: (Array.isArray(item.dollarPurchases) ? item.dollarPurchases : []).map((purchase) => ({
+        ...purchase,
+        amount: Number(purchase.amount) || 0,
+        fechaActualizacion: purchase.fechaActualizacion ?? "",
+        id: String(purchase.id ?? crypto.randomUUID()),
+        rate: Number(purchase.rate) || 0,
+        usdAmount: Number(purchase.usdAmount) || 0,
+      })),
+      dollarsTotal: Number(item.dollarsTotal) || 0,
+      expenses: (Array.isArray(item.expenses) ? item.expenses : []).map((expense) => ({
+        ...expense,
+        amount: Number(expense.amount) || 0,
+        id: String(expense.id ?? crypto.randomUUID()),
+        origin: String(expense.origin ?? "").trim(),
+      })),
+      expensesTotal: Number(item.expensesTotal) || 0,
+      id: String(item.id ?? crypto.randomUUID()),
+      remainingTotal: Number(item.remainingTotal) || 0,
+      savingsAmount: Number(item.savingsAmount) || 0,
+    })),
   };
 }
 

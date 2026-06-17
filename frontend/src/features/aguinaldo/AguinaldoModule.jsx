@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Banknote, PiggyBank, Plus, ReceiptText, RefreshCw, Trash2 } from "lucide-react";
+import { Banknote, PiggyBank, Plus, ReceiptText, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
 
@@ -11,6 +11,7 @@ export default function AguinaldoModule({
   onAddExpense,
   onRemoveDollarPurchase,
   onRemoveExpense,
+  onReset,
   onUpdateAmount,
   onUpdateSavings,
 }) {
@@ -27,6 +28,7 @@ export default function AguinaldoModule({
   const savingsAmount = Number(aguinaldo?.savingsAmount) || 0;
   const expenses = aguinaldo?.expenses ?? [];
   const dollarPurchases = aguinaldo?.dollarPurchases ?? [];
+  const history = aguinaldo?.history ?? [];
   const expensesTotal = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
   const dollarsTotal = dollarPurchases.reduce((sum, purchase) => sum + (Number(purchase.amount) || 0), 0);
   const dollarUsdTotal = dollarPurchases.reduce((sum, purchase) => sum + (Number(purchase.usdAmount) || 0), 0);
@@ -46,6 +48,7 @@ export default function AguinaldoModule({
   const canSaveSavings = parsedSavingsDraft >= 0 && parsedSavingsDraft <= maxSavings && parsedSavingsDraft !== savingsAmount;
   const canAddExpense = expenseOrigin.trim() && parsedExpenseAmount > 0 && parsedExpenseAmount <= Math.max(remainingTotal, 0);
   const canAddDollar = parsedDollarAmount > 0 && dollarPurchaseTotal > 0 && dollarPurchaseTotal <= Math.max(remainingTotal, 0);
+  const canReset = baseAmount > 0 || assignedTotal > 0 || expenses.length > 0 || dollarPurchases.length > 0;
 
   useEffect(() => {
     setAmountDraft(baseAmount ? String(baseAmount) : "");
@@ -138,6 +141,23 @@ export default function AguinaldoModule({
     setDollarAmount("");
   }
 
+  function resetAguinaldo() {
+    if (!canReset) {
+      return;
+    }
+
+    onReset({
+      amount: baseAmount,
+      assignedTotal,
+      dollarPurchases,
+      dollarsTotal,
+      expenses,
+      expensesTotal,
+      remainingTotal,
+      savingsAmount,
+    });
+  }
+
   return (
     <section className="workspace single-column">
       <section className="detail-panel">
@@ -147,7 +167,13 @@ export default function AguinaldoModule({
             <h2>Aguinaldo</h2>
             <small className="card-statement-note">Este modulo no impacta en Dashboard, Extras ni Registro.</small>
           </div>
-          <PiggyBank size={34} strokeWidth={1.7} />
+          <div className="aguinaldo-heading-actions">
+            <button className="aguinaldo-reset-button" disabled={!canReset} onClick={resetAguinaldo} type="button">
+              <RotateCcw size={17} />
+              Finalizar ciclo
+            </button>
+            <PiggyBank size={34} strokeWidth={1.7} />
+          </div>
         </div>
 
         <div className="dashboard-grid dashboard-grid-compact aguinaldo-summary-grid">
@@ -166,7 +192,7 @@ export default function AguinaldoModule({
 
         <div className="aguinaldo-grid">
           <section className="aguinaldo-panel">
-            <h3>Ahorros</h3>
+            <PanelHeading title="Ahorros" description="Monto reservado del aguinaldo." />
             <form className="expense-form aguinaldo-mini-form" onSubmit={saveSavings}>
               <label>
                 Monto para ahorrar
@@ -181,7 +207,7 @@ export default function AguinaldoModule({
           </section>
 
           <section className="aguinaldo-panel">
-            <h3>Gastos</h3>
+            <PanelHeading title="Gastos" description="Usos puntuales que salen del aguinaldo." />
             <form className="expense-form aguinaldo-expense-form" onSubmit={addExpense}>
               <label>
                 Origen
@@ -209,7 +235,7 @@ export default function AguinaldoModule({
           </section>
 
           <section className="aguinaldo-panel">
-            <h3>Dolares</h3>
+            <PanelHeading title="Dolares" description="Compra estimada con dolar blue venta." />
             <form className="expense-form aguinaldo-dollar-form" onSubmit={addDollarPurchase}>
               <label>
                 Dolares a comprar
@@ -249,6 +275,8 @@ export default function AguinaldoModule({
             <DollarPurchaseList purchases={dollarPurchases} onRemove={onRemoveDollarPurchase} />
           </section>
         </div>
+
+        <AguinaldoHistory history={history} />
       </section>
     </section>
   );
@@ -260,6 +288,15 @@ function SummaryCard({ label, tone = "", value }) {
       <span className="dashboard-card-label">{label}</span>
       <strong>{currency.format(value)}</strong>
     </article>
+  );
+}
+
+function PanelHeading({ description, title }) {
+  return (
+    <div className="aguinaldo-panel-heading">
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
   );
 }
 
@@ -313,5 +350,31 @@ function DollarPurchaseList({ purchases, onRemove }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function AguinaldoHistory({ history }) {
+  if (!history.length) {
+    return null;
+  }
+
+  return (
+    <section className="aguinaldo-panel aguinaldo-history-panel">
+      <h3>Historial finalizado</h3>
+      <div className="expense-table aguinaldo-table">
+        {history.map((item) => (
+          <div className="table-row aguinaldo-history-row" key={item.id}>
+            <strong>
+              {new Date(item.closedAt).toLocaleDateString("es-AR")}
+              <small>Asignado {currency.format(item.assignedTotal)}</small>
+            </strong>
+            <span>Ahorros {currency.format(item.savingsAmount)}</span>
+            <span>Gastos {currency.format(item.expensesTotal)}</span>
+            <span>Dolares {currency.format(item.dollarsTotal)}</span>
+            <span>Disponible {currency.format(item.remainingTotal)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

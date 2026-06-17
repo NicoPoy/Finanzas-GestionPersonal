@@ -1495,74 +1495,141 @@ button {
   margin-bottom: 16px;
 }
 
+.aguinaldo-heading-actions {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.aguinaldo-reset-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.aguinaldo-reset-button:hover:not(:disabled) {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.aguinaldo-reset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .aguinaldo-amount-form {
   grid-template-columns: minmax(220px, 1fr) auto;
 }
 
 .aguinaldo-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  grid-template-columns: 1fr;
 }
 
 .aguinaldo-panel {
   align-content: start;
-  background: #ffffff;
+  background: #fbfdff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
-  padding: 14px;
+  padding: 16px;
 }
 
-.aguinaldo-panel h3 {
+.aguinaldo-panel-heading {
+  align-items: start;
+  border-bottom: 1px solid #e2e8f0;
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+}
+
+.aguinaldo-panel-heading h3,
+.aguinaldo-history-panel h3 {
   color: #172033;
   font-size: 1rem;
   margin: 0;
 }
 
+.aguinaldo-panel-heading p {
+  color: #64748b;
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin: 0;
+}
+
 .aguinaldo-mini-form,
 .aguinaldo-dollar-form {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.65fr) minmax(150px, auto);
   margin: 0;
 }
 
 .aguinaldo-expense-form {
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.7fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.55fr) minmax(150px, auto);
   margin: 0;
 }
 
+.aguinaldo-mini-form {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto);
+}
+
+.aguinaldo-mini-form > button,
+.aguinaldo-dollar-form > button,
+.aguinaldo-expense-form > button {
+  min-width: 150px;
+  width: 100%;
+}
+
 .aguinaldo-total-strip {
+  background: #ffffff;
   margin-bottom: 0;
 }
 
 .aguinaldo-table {
   border-radius: 8px;
+  display: grid;
+  gap: 8px;
   overflow: visible;
 }
 
-.aguinaldo-table-row {
+.aguinaldo-table .aguinaldo-table-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   column-gap: 10px;
   grid-template-columns: minmax(0, 1fr) minmax(110px, auto) 36px;
-  padding: 0 10px;
+  min-height: 58px;
+  padding: 10px 12px;
 }
 
-.aguinaldo-table-row .icon-button {
+.aguinaldo-table .aguinaldo-table-row .icon-button {
   justify-self: end;
 }
 
 .aguinaldo-empty-state {
+  background: #ffffff;
   min-height: 116px;
 }
 
-@media (max-width: 1100px) {
-  .aguinaldo-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.aguinaldo-history-panel {
+  margin-top: 16px;
 }
 
-@media (max-width: 760px) {
+.aguinaldo-history-row {
+  grid-template-columns: minmax(180px, 1.2fr) repeat(4, minmax(120px, auto));
+  min-height: 62px;
+}
+
+@media (max-width: 900px) {
   .aguinaldo-grid,
   .aguinaldo-amount-form,
   .aguinaldo-mini-form,
@@ -1571,13 +1638,29 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .aguinaldo-table-row {
+  .aguinaldo-table .aguinaldo-table-row,
+  .aguinaldo-history-row {
     grid-template-columns: 1fr;
   }
 
-  .aguinaldo-table-row .icon-button {
+  .aguinaldo-table .aguinaldo-table-row .icon-button {
     justify-self: start;
   }
+
+  .aguinaldo-heading-actions {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+  }
+
+  .section-heading .aguinaldo-heading-actions > svg {
+    align-self: flex-end;
+  }
+
+  .aguinaldo-reset-button {
+    justify-content: center;
+    width: 100%;
+  }
+
 }
 
 .total-strip span {
@@ -6020,6 +6103,18 @@ button {
 
 :root[data-theme="dark"] .aguinaldo-panel h3 {
   color: var(--dark-text);
+}
+
+:root[data-theme="dark"] .aguinaldo-reset-button {
+  background: #18263a;
+  border-color: var(--dark-border);
+  color: #c9d7e8;
+}
+
+:root[data-theme="dark"] .aguinaldo-reset-button:hover:not(:disabled) {
+  background: rgba(225, 29, 72, 0.13);
+  border-color: rgba(251, 113, 133, 0.38);
+  color: #fda4af;
 }
 
 :root[data-theme="dark"] .mini-icon-button.danger,

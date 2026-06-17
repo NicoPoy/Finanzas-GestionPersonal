@@ -116,11 +116,25 @@ class AguinaldoDollarPurchase(BaseModel):
     usdAmount: float = 0
 
 
+class AguinaldoHistoryItem(BaseModel):
+    id: str
+    amount: float = 0
+    assignedTotal: float = 0
+    closedAt: str = ""
+    dollarPurchases: list[AguinaldoDollarPurchase] = Field(default_factory=list)
+    dollarsTotal: float = 0
+    expenses: list[AguinaldoExpense] = Field(default_factory=list)
+    expensesTotal: float = 0
+    remainingTotal: float = 0
+    savingsAmount: float = 0
+
+
 class AguinaldoProfile(BaseModel):
     amount: float = 0
     savingsAmount: float = 0
     expenses: list[AguinaldoExpense] = Field(default_factory=list)
     dollarPurchases: list[AguinaldoDollarPurchase] = Field(default_factory=list)
+    history: list[AguinaldoHistoryItem] = Field(default_factory=list)
 
 
 class FinanceProfileDocument(BaseModel):

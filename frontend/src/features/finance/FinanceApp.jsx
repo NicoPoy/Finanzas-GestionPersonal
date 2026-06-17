@@ -645,6 +645,26 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
     }));
   }
 
+  function closeAguinaldoCycle(summary) {
+    setData((current) => ({
+      ...current,
+      aguinaldo: {
+        amount: 0,
+        savingsAmount: 0,
+        expenses: [],
+        dollarPurchases: [],
+        history: [
+          {
+            id: crypto.randomUUID(),
+            closedAt: new Date().toISOString(),
+            ...summary,
+          },
+          ...(current.aguinaldo?.history ?? []),
+        ],
+      },
+    }));
+  }
+
   function removeSimpleExpense(storageKey, expenseId) {
     requestConfirmation({
       confirmLabel: "Eliminar gasto",
@@ -1250,6 +1270,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
           onAddExpense={addAguinaldoExpense}
           onRemoveDollarPurchase={removeAguinaldoDollarPurchase}
           onRemoveExpense={removeAguinaldoExpense}
+          onReset={closeAguinaldoCycle}
           onUpdateAmount={updateAguinaldoAmount}
           onUpdateSavings={updateAguinaldoSavings}
         />
