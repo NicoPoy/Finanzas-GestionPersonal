@@ -2676,7 +2676,7 @@ button {
 
 .amount-emphasis {
   color: #172033;
-  font-weight: 950;
+  font-weight: 820;
 }
 
 .pending-amount {
@@ -2927,19 +2927,31 @@ button {
 }
 
 .paid-by-other-row {
-  background: #fff7ed;
-  border-top-color: #fed7aa;
-  box-shadow: inset 4px 0 0 #f97316;
+  background: linear-gradient(90deg, #fff1f2, #ffffff 38%);
+  border-top-color: #fecdd3;
+  box-shadow: inset 3px 0 0 #fb7185;
 }
 
 .paid-by-other-row strong small {
-  color: #9a3412;
+  color: #be123c;
 }
 
 .shared-half-row {
-  background: #f0f9ff;
-  border-top-color: #bae6fd;
-  box-shadow: inset 4px 0 0 #38bdf8;
+  background: linear-gradient(90deg, #eff6ff, #ffffff 38%);
+  border-top-color: #bfdbfe;
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+.fixed-card-row {
+  background: linear-gradient(90deg, #f5f3ff, #ffffff 38%);
+  border-top-color: #ddd6fe;
+  box-shadow: inset 3px 0 0 #8b5cf6;
+}
+
+.fixed-card-row.saved-expense-row {
+  background: linear-gradient(90deg, #dcfce7 0%, #f7fffb 44%);
+  border-top-color: #bbf7d0;
+  box-shadow: inset 4px 0 0 #86efac;
 }
 
 .shared-half-row strong small {
@@ -2947,10 +2959,22 @@ button {
 }
 
 .shared-half-note {
-  background: #e0f2fe;
-  border: 1px solid #bae6fd;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-radius: 999px;
-  color: #0369a1;
+  color: #1d4ed8;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 3px 7px;
+  text-transform: uppercase;
+}
+
+.fixed-expense-note {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  color: #6d28d9;
   display: inline-flex;
   font-size: 0.72rem;
   font-weight: 900;
@@ -7566,17 +7590,43 @@ button {
     box-shadow: none;
   }
 
+  .card-expense-table .paid-by-other-row {
+    border-color: #fecdd3;
+  }
+
   .card-expense-table .shared-half-row {
-    border-color: #7dd3fc;
+    border-color: #bfdbfe;
+  }
+
+  .card-expense-table .fixed-card-row {
+    border-color: #ddd6fe;
+  }
+
+  .card-expense-table .fixed-card-row > .origin-cell {
+    background: linear-gradient(90deg, #f5f3ff 0%, #ffffff 84%);
+    border-bottom-color: #ddd6fe;
+    box-shadow: inset 4px 0 0 #8b5cf6;
   }
 
   .card-expense-table .shared-half-row > .origin-cell {
-    background: linear-gradient(90deg, #e0f2fe 0%, #f0f9ff 84%);
-    border-bottom-color: #bae6fd;
-    box-shadow: inset 4px 0 0 #38bdf8;
+    background: linear-gradient(90deg, #eff6ff 0%, #ffffff 84%);
+    border-bottom-color: #bfdbfe;
+    box-shadow: inset 4px 0 0 #60a5fa;
+  }
+
+  .card-expense-table .paid-by-other-row > .origin-cell {
+    background: linear-gradient(90deg, #fff1f2 0%, #ffffff 84%);
+    border-bottom-color: #fecdd3;
+    box-shadow: inset 4px 0 0 #fb7185;
   }
 
   .card-expense-table .saved-expense-row.shared-half-row > .origin-cell {
+    background: linear-gradient(90deg, #dcfce7 0%, #f0fdf4 84%);
+    border-bottom-color: #bbf7d0;
+    box-shadow: inset 4px 0 0 #86efac;
+  }
+
+  .card-expense-table .saved-expense-row.fixed-card-row > .origin-cell {
     background: linear-gradient(90deg, #dcfce7 0%, #f0fdf4 84%);
     border-bottom-color: #bbf7d0;
     box-shadow: inset 4px 0 0 #86efac;
@@ -7680,6 +7730,7 @@ button {
   .card-expense-table .expense-origin-line::before,
   .card-expense-table .installment-pill::before,
   .card-expense-table .last-payment-note::before,
+  .card-expense-table .shared-half-note::before,
   .card-expense-table .saved-expense-note::before {
     content: none;
   }
@@ -7691,6 +7742,8 @@ button {
 
   .card-expense-table .installment-pill,
   .card-expense-table .last-payment-note,
+  .card-expense-table .fixed-expense-note,
+  .card-expense-table .shared-half-note,
   .card-expense-table .saved-expense-note {
     display: inline-flex;
     grid-column: auto;
@@ -7717,13 +7770,25 @@ button {
     color: #0f766e;
   }
 
+  .card-expense-table .fixed-expense-note {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    color: #6d28d9;
+  }
+
+  .card-expense-table .shared-half-note {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+  }
+
   .card-expense-table .table-row > .net-cell {
     background: #eefafa;
     border-left: 0;
     border-right: 0;
     border-bottom-color: #d8eeee;
     color: #0f766e;
-    font-weight: 950;
+    font-weight: 850;
   }
 
   .card-expense-table .table-row > .zero-value-cell {

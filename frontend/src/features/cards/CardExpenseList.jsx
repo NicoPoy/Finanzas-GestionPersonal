@@ -122,7 +122,7 @@ export default function CardExpenseList({
 
   return (
     <>
-      <div className="expense-table card-expense-table">
+      <div className="expense-table card-expense-table" style={{ "--card-accent": card.accent || "#2563eb" }}>
         <div className="table-header">
           <span>Origen</span>
           <span>Por mes</span>
@@ -138,6 +138,8 @@ export default function CardExpenseList({
           const ownAmount = getOwnExpenseAmount(expense);
           const isSaved = Boolean(expense.isSaved);
           const isHalfShared = isSharedHalf(expense);
+          const fixedCategoryName =
+            fixedCategories.find((category) => category.id === expense.fixedCategory)?.name || "Sin seccion";
           const isFinalPayment = !isFixedCardExpense(expense) && Number(expense.installments) === 1;
           const pendingValue = isFixedCardExpense(expense)
             ? null
@@ -152,7 +154,7 @@ export default function CardExpenseList({
 
           return (
             <div
-              className={`table-row ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
+              className={`table-row ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isFixedCardExpense(expense) ? "fixed-card-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
               key={expense.id}
             >
               <strong className="origin-cell" data-label="Origen">
@@ -167,7 +169,10 @@ export default function CardExpenseList({
                     <span className="expense-origin-line">
                       {expense.origin}
                       {isFinalPayment ? <small className="last-payment-note">Ultima</small> : null}
-                    {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
+                      {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
+                      {isFixedCardExpense(expense) ? (
+                        <small className="fixed-expense-note">Fijo - {fixedCategoryName}</small>
+                      ) : null}
                       {isHalfShared ? <small className="shared-half-note">A medias</small> : null}
                     </span>
                     {isPaidByOther(expense) ? <small>Lo paga otra persona</small> : null}
