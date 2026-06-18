@@ -22,6 +22,7 @@ class CardExpense(BaseModel):
     is_fixed: bool = False
     fixed_category: ExpenseCategory | None = None
     is_paid_by_other: bool = False
+    is_shared_half: bool = False
     is_saved: bool = False
 
 

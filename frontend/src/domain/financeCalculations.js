@@ -14,12 +14,22 @@ export function isPaidByOther(expense) {
   return Boolean(expense.isPaidByOther);
 }
 
+export function isSharedHalf(expense) {
+  return Boolean(expense.isSharedHalf);
+}
+
 export function isExpenseSaved(expense) {
   return Boolean(expense.isSaved);
 }
 
 export function getOwnExpenseAmount(expense) {
-  return isPaidByOther(expense) || isExpenseSaved(expense) ? 0 : getNetExpenseAmount(expense);
+  if (isPaidByOther(expense) || isExpenseSaved(expense)) {
+    return 0;
+  }
+
+  const netAmount = getNetExpenseAmount(expense);
+
+  return isSharedHalf(expense) ? netAmount / 2 : netAmount;
 }
 
 export function getCardSummarySavings(card) {
@@ -36,10 +46,10 @@ export function getNextMonthCardExpenseAmount(expense) {
   }
 
   if (isFixedCardExpense(expense)) {
-    return getNetExpenseAmount(expense);
+    return getOwnExpenseAmount(expense);
   }
 
-  return Number(expense.installments) > 1 ? getNetExpenseAmount(expense) : 0;
+  return Number(expense.installments) > 1 ? getOwnExpenseAmount(expense) : 0;
 }
 
 // Los gastos fijos de tarjeta se repiten todos los meses hasta que el usuario los elimine.
@@ -102,7 +112,7 @@ export function getExpenseAmountForStatementOffset(expense, statementOffset = 0)
   }
 
   if (isFixedCardExpense(expense)) {
-    return getNetExpenseAmount(expense);
+    return getOwnExpenseAmount(expense);
   }
 
   const installments = Number(expense.installments) || 0;
@@ -114,7 +124,7 @@ export function getExpenseAmountForStatementOffset(expense, statementOffset = 0)
       return 0;
     }
 
-    return Number(expense.amount) || 0;
+    return isSharedHalf(expense) ? (Number(expense.amount) || 0) / 2 : Number(expense.amount) || 0;
   }
 
   if (statementOffset === 0) {
@@ -125,7 +135,7 @@ export function getExpenseAmountForStatementOffset(expense, statementOffset = 0)
     return 0;
   }
 
-  return Number(expense.amount) || 0;
+  return isSharedHalf(expense) ? (Number(expense.amount) || 0) / 2 : Number(expense.amount) || 0;
 }
 
 export function buildProjectedCardMonthlyTotal(banks, statementOffset = 0) {
@@ -291,7 +301,11 @@ export function buildBanksWithTotals(data) {
       const cardExpenses = data.expenses.filter((expense) => expense.cardId === card.id);
       const totalDebt = cardExpenses.reduce(
         (sum, expense) =>
-          sum + getOwnExpenseAmount(expense) + (isPaidByOther(expense) ? 0 : expense.amount * Math.max(expense.installments - 1, 0)),
+          sum +
+          getOwnExpenseAmount(expense) +
+          (isPaidByOther(expense)
+            ? 0
+            : (isSharedHalf(expense) ? expense.amount / 2 : expense.amount) * Math.max(expense.installments - 1, 0)),
         0,
       );
       const monthlySubtotal = cardExpenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);

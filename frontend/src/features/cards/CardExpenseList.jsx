@@ -9,6 +9,7 @@ import {
   isExpenseSaved,
   isFixedCardExpense,
   isPaidByOther,
+  isSharedHalf,
 } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 
@@ -48,6 +49,7 @@ export default function CardExpenseList({
       fixedCategory: expense.fixedCategory || fixedCategories[0]?.id || "subscriptions",
       installments: String(expense.installments || ""),
       isPaidByOther: isPaidByOther(expense),
+      isSharedHalf: isSharedHalf(expense),
       origin: expense.origin,
       savings: String(getExpenseSavings(expense)),
     });
@@ -80,6 +82,7 @@ export default function CardExpenseList({
       installments: isFixed ? 0 : parsedInstallments,
       isFixed,
       isPaidByOther: draft.isPaidByOther,
+      isSharedHalf: !draft.isPaidByOther && draft.isSharedHalf,
       origin: draft.origin.trim(),
       savings: parsedSavings,
     });
@@ -115,6 +118,7 @@ export default function CardExpenseList({
   const parsedSummarySavingsDraft = Number(summarySavingsDraft) || 0;
   const canSaveSummarySavings =
     parsedSummarySavingsDraft >= 0 && parsedSummarySavingsDraft !== summarySavings && Boolean(onUpdateSummarySavings);
+  const sortedExpenses = [...card.expenses].sort(compareCardExpenses);
 
   return (
     <>
@@ -129,14 +133,18 @@ export default function CardExpenseList({
           <span aria-label="Acciones" />
         </div>
 
-        {card.expenses.map((expense) => {
+        {sortedExpenses.map((expense) => {
           const savings = getExpenseSavings(expense);
           const ownAmount = getOwnExpenseAmount(expense);
           const isSaved = Boolean(expense.isSaved);
+          const isHalfShared = isSharedHalf(expense);
           const isFinalPayment = !isFixedCardExpense(expense) && Number(expense.installments) === 1;
           const pendingValue = isFixedCardExpense(expense)
             ? null
-            : ownAmount + (isPaidByOther(expense) ? 0 : expense.amount * Math.max(expense.installments - 1, 0));
+            : ownAmount +
+              (isPaidByOther(expense)
+                ? 0
+                : (isHalfShared ? expense.amount / 2 : expense.amount) * Math.max(expense.installments - 1, 0));
           const isEditingSavings = editingExpenseId === expense.id;
           const parsedDraft = Number(draft?.savings);
           const canSaveSavings =
@@ -144,7 +152,7 @@ export default function CardExpenseList({
 
           return (
             <div
-              className={`table-row ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
+              className={`table-row ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
               key={expense.id}
             >
               <strong className="origin-cell" data-label="Origen">
@@ -159,9 +167,11 @@ export default function CardExpenseList({
                     <span className="expense-origin-line">
                       {expense.origin}
                       {isFinalPayment ? <small className="last-payment-note">Ultima</small> : null}
-                      {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
+                    {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
+                      {isHalfShared ? <small className="shared-half-note">A medias</small> : null}
                     </span>
                     {isPaidByOther(expense) ? <small>Lo paga otra persona</small> : null}
+                    {isHalfShared ? <small>Pago la mitad</small> : null}
                   </>
                 )}
               </strong>
@@ -309,9 +319,33 @@ export default function CardExpenseList({
                     <input
                       checked={draft.isPaidByOther}
                       type="checkbox"
-                      onChange={(event) => updateDraft("isPaidByOther", event.target.checked)}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          isPaidByOther: event.target.checked,
+                          isSharedHalf: event.target.checked ? false : current.isSharedHalf,
+                        }))
+                      }
                     />
                     Lo paga otra persona
+                  </label>
+                </div>
+              ) : null}
+              {isEditingSavings ? (
+                <div className="row-edit-extra">
+                  <label className="checkbox-field inline-checkbox-field">
+                    <input
+                      checked={draft.isSharedHalf}
+                      type="checkbox"
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          isPaidByOther: event.target.checked ? false : current.isPaidByOther,
+                          isSharedHalf: event.target.checked,
+                        }))
+                      }
+                    />
+                    A medias
                   </label>
                 </div>
               ) : null}
@@ -389,16 +423,63 @@ function formatTableAmount(value) {
   return Number(value) === 0 ? "•" : currency.format(value);
 }
 
+function compareCardExpenses(firstExpense, secondExpense) {
+  const firstSaved = isExpenseSaved(firstExpense) ? 1 : 0;
+  const secondSaved = isExpenseSaved(secondExpense) ? 1 : 0;
+
+  if (firstSaved !== secondSaved) {
+    return firstSaved - secondSaved;
+  }
+
+  const firstInstallments = getSortableInstallments(firstExpense);
+  const secondInstallments = getSortableInstallments(secondExpense);
+
+  if (firstInstallments !== secondInstallments) {
+    return firstInstallments - secondInstallments;
+  }
+
+  const firstNetAmount = getOwnExpenseAmount(firstExpense);
+  const secondNetAmount = getOwnExpenseAmount(secondExpense);
+
+  if (firstNetAmount !== secondNetAmount) {
+    return firstNetAmount - secondNetAmount;
+  }
+
+  return String(firstExpense.origin).localeCompare(String(secondExpense.origin), "es");
+}
+
+function getSortableInstallments(expense) {
+  if (isFixedCardExpense(expense)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return Number(expense.installments) || 0;
+}
+
 function getCurrentMonthGrossAmount(expense) {
-  return isPaidByOther(expense) ? 0 : Number(expense.amount) || 0;
+  if (isPaidByOther(expense)) {
+    return 0;
+  }
+
+  const amount = Number(expense.amount) || 0;
+
+  return isSharedHalf(expense) ? amount / 2 : amount;
 }
 
 function getNextMonthGrossAmount(expense) {
   if (isPaidByOther(expense) || isFixedCardExpense(expense)) {
-    return isFixedCardExpense(expense) && !isPaidByOther(expense) ? Number(expense.amount) || 0 : 0;
+    if (!isFixedCardExpense(expense) || isPaidByOther(expense)) {
+      return 0;
+    }
+
+    const amount = Number(expense.amount) || 0;
+
+    return isSharedHalf(expense) ? amount / 2 : amount;
   }
 
-  return Number(expense.installments) > 1 ? Number(expense.amount) || 0 : 0;
+  const amount = Number(expense.amount) || 0;
+
+  return Number(expense.installments) > 1 ? (isSharedHalf(expense) ? amount / 2 : amount) : 0;
 }
 
 function getNextMonthNetAmount(expense) {

@@ -26,6 +26,7 @@ export function normalizeData(data) {
       ...expense,
       fixedCategory: expense.fixedCategory ?? (expense.isFixed ? "subscriptions" : ""),
       isPaidByOther: Boolean(expense.isPaidByOther),
+      isSharedHalf: !expense.isPaidByOther && Boolean(expense.isSharedHalf),
       isSaved: Boolean(expense.isSaved),
       savings: Number(expense.savings) || 0,
     })),

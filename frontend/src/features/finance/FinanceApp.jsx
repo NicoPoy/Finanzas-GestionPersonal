@@ -29,6 +29,7 @@ import {
   buildRegistryServices,
   getCalendarMonth,
   countCards,
+  getOwnExpenseAmount,
   getPaymentKey,
   getPaymentPeriod,
 } from "../../domain/financeCalculations.js";
@@ -500,14 +501,14 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
           const paidItems = current.expenses
             .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
             .map((expense) => ({
-              amount: expense.amount,
+              amount: getOwnExpenseAmount(expense),
               expenseId: expense.id,
               installmentPaid: expense.isFixed ? "fixed" : expense.installments,
               origin: expense.origin,
             }));
           const paidAmount = current.expenses
             .filter((expense) => expense.cardId === cardId && !expense.isPaidByOther)
-            .reduce((sum, expense) => sum + Math.max((Number(expense.amount) || 0) - (Number(expense.savings) || 0), 0), 0);
+            .reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
           const cardName = banksWithTotals
             .flatMap((bank) => bank.cards.map((card) => ({ bankName: bank.name, card })))
             .find((item) => item.card.id === cardId);
