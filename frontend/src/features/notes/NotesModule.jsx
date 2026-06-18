@@ -3,7 +3,10 @@ import {
   ArrowLeft,
   Building2,
   Check,
+  Circle,
   ClipboardList,
+  CopyPlus,
+  Home,
   Loader2,
   NotebookPen,
   PackagePlus,
@@ -17,7 +20,11 @@ import { apiUrl } from "../../services/platform.js";
 import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 
 const UNIT_OPTIONS = ["unidad", "kg", "g", "lt", "ml", "pack"];
+const CATEGORY_OPTIONS = ["general", "comida", "limpieza", "higiene", "mascota", "farmacia"];
+const DEPARTMENT_CATEGORY_OPTIONS = ["general", "cocina", "baño", "habitacion", "limpieza", "decoracion", "arreglo"];
+const PRIORITY_OPTIONS = ["baja", "media", "alta"];
 const INITIAL_NOTES_DATA = {
+  departmentNeeds: [],
   productStores: [],
 };
 
@@ -86,6 +93,12 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
     [data.productStores, selectedStoreId],
   );
   const productCount = data.productStores.reduce((total, store) => total + store.products.length, 0);
+  const shoppingItems = data.productStores.flatMap((store) =>
+    store.products
+      .filter((product) => product.needed && !product.checked)
+      .map((product) => ({ ...product, storeId: store.id, storeName: store.name })),
+  );
+  const pendingDepartmentNeeds = data.departmentNeeds.filter((item) => !item.done).length;
 
   function updateStores(updater) {
     setData((currentData) => ({
@@ -131,6 +144,40 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
                 ...store.products,
                 {
                   ...product,
+                  category: product.category || "general",
+                  checked: false,
+                  id: crypto.randomUUID(),
+                  needed: Boolean(product.needed),
+                },
+              ],
+            }
+          : store,
+      ),
+    );
+  }
+
+  function handleDuplicateProduct(sourceStoreId, productId, targetStoreId) {
+    if (!targetStoreId || sourceStoreId === targetStoreId) {
+      return;
+    }
+
+    const sourceStore = data.productStores.find((store) => store.id === sourceStoreId);
+    const product = sourceStore?.products.find((item) => item.id === productId);
+
+    if (!product) {
+      return;
+    }
+
+    updateStores((stores) =>
+      stores.map((store) =>
+        store.id === targetStoreId
+          ? {
+              ...store,
+              products: [
+                ...store.products,
+                {
+                  ...product,
+                  checked: false,
                   id: crypto.randomUUID(),
                 },
               ],
@@ -138,6 +185,32 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
           : store,
       ),
     );
+  }
+
+  function updateDepartmentNeeds(updater) {
+    setData((currentData) => ({
+      ...currentData,
+      departmentNeeds: updater(currentData.departmentNeeds),
+    }));
+  }
+
+  function handleAddDepartmentNeed(item) {
+    updateDepartmentNeeds((items) => [
+      ...items,
+      {
+        ...item,
+        done: false,
+        id: crypto.randomUUID(),
+      },
+    ]);
+  }
+
+  function handleUpdateDepartmentNeed(itemId, updates) {
+    updateDepartmentNeeds((items) => items.map((item) => (item.id === itemId ? { ...item, ...updates } : item)));
+  }
+
+  function handleRemoveDepartmentNeed(itemId) {
+    updateDepartmentNeeds((items) => items.filter((item) => item.id !== itemId));
   }
 
   function handleUpdateProduct(storeId, productId, updates) {
@@ -204,6 +277,14 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
               <strong>{productCount}</strong>
               productos
             </span>
+            <span>
+              <strong>{shoppingItems.length}</strong>
+              compras
+            </span>
+            <span>
+              <strong>{pendingDepartmentNeeds}</strong>
+              casa
+            </span>
           </div>
         </section>
 
@@ -255,6 +336,11 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
             </aside>
 
             <section className="notes-products-panel" aria-label="Productos del local">
+              <ShoppingMode
+                items={shoppingItems}
+                onToggle={(storeId, productId, checked) => handleUpdateProduct(storeId, productId, { checked })}
+              />
+
               {selectedStore ? (
                 <>
                   <StoreHeader
@@ -266,9 +352,14 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
                   <ProductForm onSubmit={(product) => handleAddProduct(selectedStore.id, product)} />
 
                   <ProductList
+                    stores={data.productStores}
                     onRemove={(productId) => handleRemoveProduct(selectedStore.id, productId)}
+                    onDuplicate={(productId, targetStoreId) =>
+                      handleDuplicateProduct(selectedStore.id, productId, targetStoreId)
+                    }
                     onUpdate={(productId, updates) => handleUpdateProduct(selectedStore.id, productId, updates)}
                     products={selectedStore.products}
+                    selectedStoreId={selectedStore.id}
                   />
                 </>
               ) : (
@@ -278,6 +369,13 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
                   <span>Crea un local para empezar a guardar sus productos.</span>
                 </div>
               )}
+
+              <DepartmentNeedsSection
+                items={data.departmentNeeds}
+                onAdd={handleAddDepartmentNeed}
+                onRemove={handleRemoveDepartmentNeed}
+                onUpdate={handleUpdateDepartmentNeed}
+              />
             </section>
           </section>
         )}
@@ -290,13 +388,25 @@ function normalizeNotesData(data) {
   return {
     ...INITIAL_NOTES_DATA,
     ...data,
+    departmentNeeds: (Array.isArray(data?.departmentNeeds) ? data.departmentNeeds : []).map((item) => ({
+      ...item,
+      category: String(item.category ?? "general").trim() || "general",
+      done: Boolean(item.done),
+      id: String(item.id ?? crypto.randomUUID()),
+      name: String(item.name ?? "").trim(),
+      note: String(item.note ?? "").trim(),
+      priority: String(item.priority ?? "media").trim() || "media",
+    })),
     productStores: (Array.isArray(data?.productStores) ? data.productStores : []).map((store) => ({
       ...store,
       id: String(store.id ?? crypto.randomUUID()),
       name: String(store.name ?? "").trim(),
       products: (Array.isArray(store.products) ? store.products : []).map((product) => ({
         ...product,
+        category: String(product.category ?? "general").trim() || "general",
+        checked: Boolean(product.checked),
         id: String(product.id ?? crypto.randomUUID()),
+        needed: Boolean(product.needed),
         name: String(product.name ?? "").trim(),
         note: String(product.note ?? "").trim(),
         quantity: String(product.quantity ?? "").trim(),
@@ -304,6 +414,183 @@ function normalizeNotesData(data) {
       })),
     })),
   };
+}
+
+function ShoppingMode({ items, onToggle }) {
+  const groupedItems = CATEGORY_OPTIONS.map((category) => ({
+    category,
+    items: items.filter((item) => item.category === category),
+  })).filter((group) => group.items.length);
+
+  return (
+    <section className="notes-shopping-panel" aria-label="Modo compra">
+      <div className="notes-section-heading">
+        <div>
+          <p>Modo compra</p>
+          <h3>Pendientes para comprar</h3>
+        </div>
+        <ClipboardList size={22} />
+      </div>
+
+      {items.length ? (
+        <div className="notes-shopping-groups">
+          {groupedItems.map((group) => (
+            <div className="notes-shopping-group" key={group.category}>
+              <h4>{formatLabel(group.category)}</h4>
+              {group.items.map((item) => (
+                <button
+                  className="notes-shopping-item"
+                  key={`${item.storeId}-${item.id}`}
+                  onClick={() => onToggle(item.storeId, item.id, true)}
+                  type="button"
+                >
+                  <Circle size={16} />
+                  <span>
+                    <strong>{item.name}</strong>
+                    <small>
+                      {item.storeName}
+                      {item.quantity ? ` · ${item.quantity} ${item.unit}` : ""}
+                    </small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="notes-mini-empty notes-shopping-empty">
+          <Check size={22} />
+          <p>No tenes compras pendientes.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DepartmentNeedsSection({ items, onAdd, onRemove, onUpdate }) {
+  return (
+    <section className="notes-department-panel" aria-label="Pendientes del departamento">
+      <div className="notes-section-heading">
+        <div>
+          <p>Departamento</p>
+          <h3>Mejoras pendientes para casa</h3>
+        </div>
+        <Home size={22} />
+      </div>
+      <DepartmentNeedForm onSubmit={onAdd} />
+      <DepartmentNeedList items={items} onRemove={onRemove} onUpdate={onUpdate} />
+    </section>
+  );
+}
+
+function DepartmentNeedForm({ onSubmit }) {
+  const [category, setCategory] = useState("general");
+  const [name, setName] = useState("");
+  const [note, setNote] = useState("");
+  const [priority, setPriority] = useState("media");
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!name.trim()) {
+      return;
+    }
+
+    onSubmit({
+      category,
+      name: name.trim(),
+      note: note.trim(),
+      priority,
+    });
+    setCategory("general");
+    setName("");
+    setNote("");
+    setPriority("media");
+  }
+
+  return (
+    <form className="notes-department-form" onSubmit={handleSubmit}>
+      <label>
+        Necesito
+        <input
+          autoComplete="off"
+          placeholder="Ej: cortinas blackout"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
+      </label>
+      <label>
+        Categoria
+        <select value={category} onChange={(event) => setCategory(event.target.value)}>
+          {DEPARTMENT_CATEGORY_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {formatLabel(option)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Prioridad
+        <select value={priority} onChange={(event) => setPriority(event.target.value)}>
+          {PRIORITY_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {formatLabel(option)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="notes-department-note-field">
+        Nota
+        <input
+          autoComplete="off"
+          placeholder="Opcional"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
+      </label>
+      <button type="submit">
+        <Plus size={18} />
+        Agregar
+      </button>
+    </form>
+  );
+}
+
+function DepartmentNeedList({ items, onRemove, onUpdate }) {
+  if (!items.length) {
+    return (
+      <div className="notes-mini-empty">
+        <Home size={24} />
+        <p>No cargaste pendientes para el departamento.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="notes-department-list">
+      {items.map((item) => (
+        <div className={`notes-department-item ${item.done ? "done" : ""}`} key={item.id}>
+          <button
+            className={`notes-product-check ${item.done ? "checked" : ""}`}
+            onClick={() => onUpdate(item.id, { done: !item.done })}
+            type="button"
+          >
+            {item.done ? <Check size={14} /> : <Circle size={14} />}
+          </button>
+          <div>
+            <strong>{item.name}</strong>
+            <span>
+              {formatLabel(item.category)} · prioridad {formatLabel(item.priority)}
+            </span>
+            {item.note ? <small>{item.note}</small> : null}
+          </div>
+          <button className="danger notes-department-delete" onClick={() => onRemove(item.id)} type="button">
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function StoreForm({ onSubmit }) {
@@ -405,6 +692,8 @@ function StoreHeader({ onRemove, onRename, store }) {
 }
 
 function ProductForm({ onSubmit }) {
+  const [category, setCategory] = useState("general");
+  const [needed, setNeeded] = useState(false);
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("unidad");
@@ -418,12 +707,16 @@ function ProductForm({ onSubmit }) {
     }
 
     onSubmit({
+      category,
       name: name.trim(),
+      needed,
       note: note.trim(),
       quantity: quantity.trim(),
       unit,
     });
+    setCategory("general");
     setName("");
+    setNeeded(false);
     setQuantity("");
     setUnit("unidad");
     setNote("");
@@ -460,6 +753,16 @@ function ProductForm({ onSubmit }) {
           ))}
         </select>
       </label>
+      <label>
+        Categoria
+        <select value={category} onChange={(event) => setCategory(event.target.value)}>
+          {CATEGORY_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {formatLabel(option)}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="notes-product-note-field">
         Nota
         <input
@@ -469,6 +772,10 @@ function ProductForm({ onSubmit }) {
           onChange={(event) => setNote(event.target.value)}
         />
       </label>
+      <label className={`notes-check-field ${needed ? "active" : ""}`}>
+        <input checked={needed} type="checkbox" onChange={(event) => setNeeded(event.target.checked)} />
+        Agregar a compra
+      </label>
       <button type="submit">
         <PackagePlus size={18} />
         Agregar
@@ -477,9 +784,17 @@ function ProductForm({ onSubmit }) {
   );
 }
 
-function ProductList({ onRemove, onUpdate, products }) {
+function ProductList({ onDuplicate, onRemove, onUpdate, products, selectedStoreId, stores }) {
   const [editingId, setEditingId] = useState("");
-  const [draft, setDraft] = useState({ name: "", note: "", quantity: "", unit: "unidad" });
+  const [draft, setDraft] = useState({
+    category: "general",
+    name: "",
+    needed: false,
+    note: "",
+    quantity: "",
+    unit: "unidad",
+  });
+  const [copyTargetByProduct, setCopyTargetByProduct] = useState({});
 
   if (!products.length) {
     return (
@@ -526,20 +841,87 @@ function ProductList({ onRemove, onUpdate, products }) {
                     </option>
                   ))}
                 </select>
+                <select
+                  aria-label="Categoria"
+                  value={draft.category}
+                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, category: event.target.value }))}
+                >
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {formatLabel(option)}
+                    </option>
+                  ))}
+                </select>
                 <input
                   aria-label="Nota"
                   autoComplete="off"
                   value={draft.note}
                   onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, note: event.target.value }))}
                 />
+                <label className={`notes-check-field ${draft.needed ? "active" : ""}`}>
+                  <input
+                    checked={draft.needed}
+                    type="checkbox"
+                    onChange={(event) =>
+                      setDraft((currentDraft) => ({ ...currentDraft, needed: event.target.checked }))
+                    }
+                  />
+                  En compra
+                </label>
               </div>
             ) : (
               <div className="notes-product-copy">
-                <strong>{product.name}</strong>
+                <div className="notes-product-title-line">
+                  <button
+                    aria-label={product.checked ? `Desmarcar ${product.name}` : `Marcar ${product.name} comprado`}
+                    className={`notes-product-check ${product.checked ? "checked" : ""}`}
+                    onClick={() => onUpdate(product.id, { checked: !product.checked })}
+                    type="button"
+                  >
+                    {product.checked ? <Check size={14} /> : <Circle size={14} />}
+                  </button>
+                  <strong>{product.name}</strong>
+                </div>
                 <span>
                   {product.quantity ? `${product.quantity} ${product.unit}` : product.unit}
                   {product.note ? <small>{product.note}</small> : null}
                 </span>
+                <div className="notes-product-tags">
+                  <small>{formatLabel(product.category)}</small>
+                  {product.needed ? <small className="shopping">En compra</small> : null}
+                  {product.checked ? <small className="done">Comprado</small> : null}
+                </div>
+                {stores.length > 1 ? (
+                  <div className="notes-copy-control">
+                    <select
+                      aria-label={`Copiar ${product.name} a otro local`}
+                      value={copyTargetByProduct[product.id] ?? ""}
+                      onChange={(event) =>
+                        setCopyTargetByProduct((current) => ({ ...current, [product.id]: event.target.value }))
+                      }
+                    >
+                      <option value="">Copiar a...</option>
+                      {stores
+                        .filter((store) => store.id !== selectedStoreId)
+                        .map((store) => (
+                          <option key={store.id} value={store.id}>
+                            {store.name}
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      disabled={!copyTargetByProduct[product.id]}
+                      onClick={() => {
+                        onDuplicate(product.id, copyTargetByProduct[product.id]);
+                        setCopyTargetByProduct((current) => ({ ...current, [product.id]: "" }));
+                      }}
+                      title="Duplicar producto"
+                      type="button"
+                    >
+                      <CopyPlus size={15} />
+                    </button>
+                  </div>
+                ) : null}
               </div>
             )}
 
@@ -553,7 +935,9 @@ function ProductList({ onRemove, onUpdate, products }) {
                       }
 
                       onUpdate(product.id, {
+                        category: draft.category,
                         name: draft.name.trim(),
+                        needed: draft.needed,
                         note: draft.note.trim(),
                         quantity: draft.quantity.trim(),
                         unit: draft.unit,
@@ -568,7 +952,7 @@ function ProductList({ onRemove, onUpdate, products }) {
                   <button
                     onClick={() => {
                       setEditingId("");
-                      setDraft({ name: "", note: "", quantity: "", unit: "unidad" });
+                      setDraft({ category: "general", name: "", needed: false, note: "", quantity: "", unit: "unidad" });
                     }}
                     title="Cancelar edicion"
                     type="button"
@@ -581,7 +965,9 @@ function ProductList({ onRemove, onUpdate, products }) {
                   onClick={() => {
                     setEditingId(product.id);
                     setDraft({
+                      category: product.category ?? "general",
                       name: product.name,
+                      needed: Boolean(product.needed),
                       note: product.note ?? "",
                       quantity: product.quantity ?? "",
                       unit: product.unit ?? "unidad",
@@ -602,4 +988,10 @@ function ProductList({ onRemove, onUpdate, products }) {
       })}
     </div>
   );
+}
+
+function formatLabel(value) {
+  return String(value || "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

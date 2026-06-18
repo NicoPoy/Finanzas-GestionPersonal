@@ -5,6 +5,9 @@ from pydantic import BaseModel, Field
 
 class ProductItem(BaseModel):
     id: str
+    category: str = "general"
+    checked: bool = False
+    needed: bool = False
     name: str
     quantity: str = ""
     unit: str = "unidad"
@@ -17,9 +20,19 @@ class ProductStore(BaseModel):
     products: list[ProductItem] = Field(default_factory=list)
 
 
+class DepartmentNeed(BaseModel):
+    id: str
+    category: str = "general"
+    done: bool = False
+    name: str
+    note: str = ""
+    priority: str = "media"
+
+
 class FrontendNotesProfile(BaseModel):
     """Estructura de Notas, separada del perfil financiero."""
 
+    departmentNeeds: list[DepartmentNeed] = Field(default_factory=list)
     productStores: list[ProductStore] = Field(default_factory=list)
 
 
