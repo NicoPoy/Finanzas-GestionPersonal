@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  AlertTriangle,
   Banknote,
   CalendarDays,
   CreditCard,
@@ -157,6 +158,9 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
       }),
     [banksWithTotals, data, fixedExpensesTotal],
   );
+  const salaryUsagePercent =
+    incomeTotal > 0 ? Math.max(0, Math.round(((incomeTotal - nextMonthSummary.remaining) / incomeTotal) * 100)) : 0;
+  const shouldShowSpendingWarning = incomeTotal > 0 && nextMonthSummary.remaining <= incomeTotal * 0.5;
   const currentMonthSummary = useMemo(
     () =>
       buildDashboardSummary({
@@ -1079,6 +1083,16 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
               <LogOut size={16} />
             </button>
           </div>
+
+          {shouldShowSpendingWarning ? (
+            <div className={`salary-warning ${salaryUsagePercent > 70 ? "critical" : ""}`} role="status">
+              <AlertTriangle size={17} />
+              <div>
+                <strong>Gastos altos</strong>
+                <span>Ya usaste {salaryUsagePercent}% de tus ingresos.</span>
+              </div>
+            </div>
+          ) : null}
 
           <div className="summary-metrics" aria-label="Resumen de gastos">
             <Metric

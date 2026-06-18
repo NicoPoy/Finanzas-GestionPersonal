@@ -1121,6 +1121,57 @@ button {
   color: #ffffff;
 }
 
+.salary-warning {
+  align-items: center;
+  background: rgba(254, 243, 199, 0.13);
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  border-radius: 8px;
+  color: #fde68a;
+  display: flex;
+  gap: 10px;
+  justify-self: end;
+  max-width: 800px;
+  padding: 9px 11px;
+  width: min(100%, 800px);
+}
+
+.salary-warning svg {
+  flex: 0 0 auto;
+}
+
+.salary-warning div {
+  display: grid;
+  gap: 1px;
+}
+
+.salary-warning strong {
+  color: #fff7ed;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.salary-warning span {
+  color: rgba(254, 243, 199, 0.9);
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.salary-warning.critical {
+  background: rgba(254, 226, 226, 0.14);
+  border-color: rgba(248, 113, 113, 0.48);
+  color: #fecaca;
+}
+
+.salary-warning.critical strong {
+  color: #fff1f2;
+}
+
+.salary-warning.critical span {
+  color: rgba(254, 202, 202, 0.92);
+}
+
 .metric {
   backdrop-filter: blur(16px);
   background: rgba(255, 255, 255, 0.14);
@@ -3865,6 +3916,12 @@ button {
     justify-items: stretch;
   }
 
+  .salary-warning {
+    justify-self: stretch;
+    max-width: none;
+    width: 100%;
+  }
+
   .expense-form {
     grid-template-columns: 1fr 1fr;
   }
@@ -3950,6 +4007,11 @@ button {
     overflow-x: auto;
     padding: 2px 16px 8px;
     scroll-snap-type: x proximity;
+  }
+
+  .salary-warning {
+    margin: 0;
+    width: 100%;
   }
 
   .summary-metrics .metric {
@@ -4389,6 +4451,12 @@ button {
 
   .summary-side {
     gap: 10px;
+  }
+
+  .salary-warning {
+    justify-self: stretch;
+    max-width: none;
+    width: 100%;
   }
 
   .header-actions {
