@@ -1009,6 +1009,11 @@ button {
     justify-content: flex-end;
   }
 
+  .notes-row-actions button {
+    min-height: 40px;
+    width: 40px;
+  }
+
   .notes-product-copy small {
     border-left: 0;
     display: block;
@@ -2989,7 +2994,6 @@ button {
 
 .shared-half-row {
   background: linear-gradient(90deg, #eff6ff, #ffffff 38%);
-  border-top-color: #bfdbfe;
   box-shadow: inset 3px 0 0 #60a5fa;
 }
 
@@ -3011,7 +3015,7 @@ button {
 
 .shared-half-note {
   background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  border: 0;
   border-radius: 999px;
   color: #1d4ed8;
   display: inline-flex;
@@ -5417,11 +5421,65 @@ button {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .fixed-expense-table .table-row .row-actions,
-  .fixed-expense-table .table-row .icon-button {
+  .fixed-expense-table .table-row .row-actions {
     align-self: start;
+    display: grid;
     grid-column: 2;
     grid-row: 1;
+    grid-template-columns: repeat(2, 40px);
+    width: auto;
+  }
+
+  .fixed-expense-table .table-row .icon-button {
+    height: 40px;
+    width: 40px;
+  }
+}
+
+@media (max-width: 760px) {
+  .other-income-table {
+    background: transparent;
+    border: 0;
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+  }
+
+  .other-income-table .table-header {
+    display: none;
+  }
+
+  .other-income-table .table-row {
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 14px;
+    display: grid;
+    gap: 8px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .other-income-table .table-row > strong,
+  .other-income-table .table-row > span {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .other-income-table .row-actions {
+    align-self: start;
+    display: grid;
+    gap: 8px;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    grid-template-columns: repeat(2, 40px);
+    justify-self: end;
+    width: auto;
+  }
+
+  .other-income-table .row-actions .icon-button {
+    height: 40px;
+    width: 40px;
   }
 }
 
@@ -5612,6 +5670,159 @@ button {
   color: #ffffff;
 }
 
+.confirm-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.record-edit-modal {
+  max-width: 560px;
+  width: min(100%, 560px);
+}
+
+.record-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.record-edit-form label {
+  color: #475569;
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.record-edit-form input,
+.record-edit-form select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #172033;
+  font: inherit;
+  font-weight: 500;
+  min-height: 42px;
+  min-width: 0;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.record-edit-form input:focus,
+.record-edit-form select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  outline: none;
+}
+
+.record-edit-form input[type="checkbox"],
+.card-expense-edit-form input[type="checkbox"] {
+  min-height: 0;
+  padding: 0;
+  width: auto;
+}
+
+.card-expense-edit-form,
+.card-expense-edit-modal .record-edit-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-expense-edit-form .confirm-actions,
+.card-expense-edit-modal .record-edit-form .confirm-actions,
+.card-expense-edit-flags,
+.record-edit-form > .notes-check-field {
+  grid-column: 1 / -1;
+}
+
+.card-expense-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.card-expense-edit-form label {
+  color: #475569;
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.card-expense-edit-form input,
+.card-expense-edit-form select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #172033;
+  font: inherit;
+  font-weight: 500;
+  min-height: 42px;
+  min-width: 0;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.card-expense-edit-flags {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-expense-edit-flags .paid-by-other-field {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  min-height: 54px;
+  margin: 0;
+  padding: 8px 10px;
+  position: relative;
+  text-align: left;
+  width: 100%;
+}
+
+.card-expense-edit-flags .paid-by-other-field.active {
+  background: #fff7ed;
+  border-color: #fb923c;
+  color: #9a3412;
+}
+
+.card-expense-edit-flags .shared-half-field.active {
+  background: #f0f9ff;
+  border-color: #38bdf8;
+  color: #0369a1;
+}
+
+.card-expense-edit-flags .paid-by-other-field > span:last-child {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.card-expense-edit-flags .paid-by-other-field strong {
+  color: inherit;
+  font-size: 0.8rem;
+  line-height: 1.05;
+}
+
+.card-expense-edit-flags .paid-by-other-field small {
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.card-expense-edit-flags .paid-by-other-field.active small {
+  color: #9a3412;
+}
+
+.card-expense-edit-flags .shared-half-field.active small {
+  color: #0369a1;
+}
+
 @media (max-width: 760px) {
   .confirm-backdrop {
     align-items: flex-end;
@@ -5631,6 +5842,20 @@ button {
 
   .confirm-button {
     width: 100%;
+  }
+
+  .record-edit-modal {
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+
+  .card-expense-edit-form,
+  .card-expense-edit-modal .record-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .card-expense-edit-flags {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -7662,10 +7887,6 @@ button {
     border-color: #fecdd3;
   }
 
-  .card-expense-table .shared-half-row {
-    border-color: #bfdbfe;
-  }
-
   .card-expense-table .fixed-card-row {
     border-color: #ddd6fe;
   }
@@ -7678,7 +7899,6 @@ button {
 
   .card-expense-table .shared-half-row > .origin-cell {
     background: linear-gradient(90deg, #eff6ff 0%, #ffffff 84%);
-    border-bottom-color: #bfdbfe;
     box-shadow: inset 4px 0 0 #60a5fa;
   }
 
@@ -7846,7 +8066,7 @@ button {
 
   .card-expense-table .shared-half-note {
     background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    border: 0;
     color: #1d4ed8;
   }
 
@@ -7962,9 +8182,29 @@ button {
   .card-expense-table .row-edit-input,
   .card-expense-table .savings-input {
     height: 40px;
+    font-weight: 500;
     max-width: none;
     min-width: 0;
     width: 100%;
+  }
+
+  .card-expense-table .card-edit-flags {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+  }
+
+  .card-expense-table .card-edit-flags .inline-checkbox-field {
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    max-width: none;
+    min-height: 24px;
+  }
+
+  .card-expense-table .card-edit-flags .inline-checkbox-field input {
+    flex: 0 0 auto;
   }
 
 }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Pencil, Plus, ReceiptText, Trash2, X } from "lucide-react";
+import { Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
 
@@ -137,6 +137,38 @@ function FixedExpenseList({
 }) {
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "", paymentCard: "" });
+  const editingExpense = expenses.find((expense) => expense.id === editingId);
+  const parsedDraftAmount = Number(draft.amount);
+  const canSaveEdit = Boolean(editingExpense) && draft.name.trim() && parsedDraftAmount > 0;
+
+  function closeEditModal() {
+    setEditingId("");
+    setDraft({ amount: "", dueDay: "", name: "", paymentCard: "" });
+  }
+
+  function startEdit(expense) {
+    setEditingId(expense.id);
+    setDraft({
+      amount: String(expense.amount),
+      dueDay: String(expense.dueDay ?? 10),
+      name: expense.name,
+      paymentCard: expense.paymentCard ?? "",
+    });
+  }
+
+  function saveEdit() {
+    if (!editingExpense || !canSaveEdit) {
+      return;
+    }
+
+    onUpdate(editingExpense.id, {
+      amount: parsedDraftAmount,
+      dueDay: Math.min(Math.max(Number(draft.dueDay) || 10, 1), 31),
+      name: draft.name.trim(),
+      paymentCard: draft.paymentCard,
+    });
+    closeEditModal();
+  }
 
   if (!expenses.length && !cardExpenses.length) {
     return (
@@ -148,53 +180,22 @@ function FixedExpenseList({
   }
 
   return (
-    <div className="expense-table fixed-expense-table">
-      <div className="table-header fixed-table-row">
-        <span>Nombre</span>
-        <span>Monto</span>
-        <span>Vence</span>
-        <span>Debita de</span>
-        <span aria-label="Acciones" />
-      </div>
+    <>
+      <div className="expense-table fixed-expense-table">
+        <div className="table-header fixed-table-row">
+          <span>Nombre</span>
+          <span>Monto</span>
+          <span>Vence</span>
+          <span>Debita de</span>
+          <span aria-label="Acciones" />
+        </div>
 
       {expenses.map((expense) => (
         <SimpleExpenseRow
-          draft={draft}
-          debitCards={debitCards}
           expense={expense}
-          isEditing={editingId === expense.id}
           key={expense.id}
-          onCancel={() => {
-            setEditingId("");
-            setDraft({ amount: "", dueDay: "", name: "", paymentCard: "" });
-          }}
           onDelete={() => onRemove(expense.id)}
-          onDraftChange={setDraft}
-          onEdit={() => {
-            setEditingId(expense.id);
-            setDraft({
-              amount: String(expense.amount),
-              dueDay: String(expense.dueDay ?? 10),
-              name: expense.name,
-              paymentCard: expense.paymentCard ?? "",
-            });
-          }}
-          onSave={() => {
-            const parsedAmount = Number(draft.amount);
-
-            if (!draft.name.trim() || parsedAmount <= 0) {
-              return;
-            }
-
-            onUpdate(expense.id, {
-              amount: parsedAmount,
-              dueDay: Math.min(Math.max(Number(draft.dueDay) || 10, 1), 31),
-              name: draft.name.trim(),
-              paymentCard: draft.paymentCard,
-            });
-            setEditingId("");
-            setDraft({ amount: "", dueDay: "", name: "", paymentCard: "" });
-          }}
+          onEdit={() => startEdit(expense)}
         />
       ))}
 
@@ -210,93 +211,101 @@ function FixedExpenseList({
           <span className="card-paid-badge">Ya incluido en Tarjetas</span>
         </div>
       ))}
-    </div>
+      </div>
+
+      {editingExpense ? (
+        <div className="confirm-backdrop" role="presentation">
+          <section
+            aria-labelledby="simple-expense-edit-title"
+            aria-modal="true"
+            className="confirm-modal record-edit-modal"
+            role="dialog"
+          >
+            <h2 id="simple-expense-edit-title">Editar gasto</h2>
+            <form
+              className="record-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveEdit();
+              }}
+            >
+              <label>
+                Nombre
+                <input
+                  autoComplete="off"
+                  value={draft.name}
+                  onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+                />
+              </label>
+              <label>
+                Monto
+                <MoneyInput
+                  value={draft.amount}
+                  onValueChange={(value) => setDraft((current) => ({ ...current, amount: value }))}
+                />
+              </label>
+              <label>
+                Vence dia
+                <input
+                  max="31"
+                  min="1"
+                  type="number"
+                  value={draft.dueDay}
+                  onChange={(event) => setDraft((current) => ({ ...current, dueDay: event.target.value }))}
+                />
+              </label>
+              <label>
+                Debita de
+                <select
+                  value={draft.paymentCard ?? ""}
+                  onChange={(event) => setDraft((current) => ({ ...current, paymentCard: event.target.value }))}
+                >
+                  <option value="">Sin asociar</option>
+                  {debitCards.map((card) => (
+                    <option key={card} value={card}>
+                      {card}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="confirm-actions">
+                <button className="confirm-button confirm-button-secondary" onClick={closeEditModal} type="button">
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!canSaveEdit} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 
-function SimpleExpenseRow({ debitCards, draft, expense, isEditing, onCancel, onDelete, onDraftChange, onEdit, onSave }) {
+function SimpleExpenseRow({ expense, onDelete, onEdit }) {
   return (
     <div className="table-row fixed-table-row" key={expense.id}>
-      <strong>
-        {isEditing ? (
-          <input
-            className="row-edit-input"
-            value={draft.name}
-            onChange={(event) => onDraftChange((current) => ({ ...current, name: event.target.value }))}
-          />
-        ) : (
-          expense.name
-        )}
-      </strong>
+      <strong>{expense.name}</strong>
       <span>
-        {isEditing ? (
-          <MoneyInput
-            className="row-edit-input"
-            value={draft.amount}
-            onValueChange={(value) => onDraftChange((current) => ({ ...current, amount: value }))}
-          />
-        ) : (
-          <strong className="amount-emphasis">{currency.format(expense.amount)}</strong>
-        )}
+        <strong className="amount-emphasis">{currency.format(expense.amount)}</strong>
       </span>
-      <span>
-        {isEditing ? (
-          <input
-            className="row-edit-input"
-            max="31"
-            min="1"
-            type="number"
-            value={draft.dueDay}
-            onChange={(event) => onDraftChange((current) => ({ ...current, dueDay: event.target.value }))}
-          />
-        ) : (
-          `Dia ${expense.dueDay ?? 10}`
-        )}
-      </span>
-      <span>
-        {isEditing ? (
-          <select
-            className="row-edit-input"
-            value={draft.paymentCard ?? ""}
-            onChange={(event) => onDraftChange((current) => ({ ...current, paymentCard: event.target.value }))}
-          >
-            <option value="">Sin asociar</option>
-            {debitCards.map((card) => (
-              <option key={card} value={card}>
-                {card}
-              </option>
-            ))}
-          </select>
-        ) : (
-          expense.paymentCard || "Sin asociar"
-        )}
-      </span>
+      <span>{`Dia ${expense.dueDay ?? 10}`}</span>
+      <span>{expense.paymentCard || "Sin asociar"}</span>
       <div className="row-actions">
-        {isEditing ? (
-          <>
-            <button className="icon-button icon-button-success" onClick={onSave} title="Guardar" type="button">
-              <Check size={17} />
-            </button>
-            <button className="icon-button icon-button-neutral" onClick={onCancel} title="Cancelar" type="button">
-              <X size={17} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="icon-button icon-button-neutral" onClick={onEdit} title="Editar gasto" type="button">
-              <Pencil size={16} />
-            </button>
-            <button
-              aria-label={`Eliminar ${expense.name}`}
-              className="icon-button"
-              onClick={onDelete}
-              title="Eliminar gasto"
-              type="button"
-            >
-              <Trash2 size={17} />
-            </button>
-          </>
-        )}
+        <button className="icon-button icon-button-neutral" onClick={onEdit} title="Editar gasto" type="button">
+          <Pencil size={16} />
+        </button>
+        <button
+          aria-label={`Eliminar ${expense.name}`}
+          className="icon-button"
+          onClick={onDelete}
+          title="Eliminar gasto"
+          type="button"
+        >
+          <Trash2 size={17} />
+        </button>
       </div>
     </div>
   );

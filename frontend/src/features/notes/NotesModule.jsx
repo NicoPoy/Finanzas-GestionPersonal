@@ -14,7 +14,6 @@ import {
   Plus,
   Store,
   Trash2,
-  X,
 } from "lucide-react";
 import { apiUrl } from "../../services/platform.js";
 import ThemeToggle from "../../components/common/ThemeToggle.jsx";
@@ -645,48 +644,63 @@ function StoreHeader({ onRemove, onRename, store }) {
 
   return (
     <div className="notes-selected-store">
-      {isEditing ? (
-        <label>
-          Nombre del local
-          <input
-            autoComplete="off"
-            value={draftName}
-            onChange={(event) => setDraftName(event.target.value)}
-          />
-        </label>
-      ) : (
-        <div>
-          <p>Local seleccionado</p>
-          <h2>{store.name}</h2>
-        </div>
-      )}
+      <div>
+        <p>Local seleccionado</p>
+        <h2>{store.name}</h2>
+      </div>
 
       <div className="notes-row-actions">
-        {isEditing ? (
-          <>
-            <button onClick={saveName} title="Guardar local" type="button">
-              <Check size={16} />
-            </button>
-            <button
-              onClick={() => {
-                setDraftName(store.name);
-                setIsEditing(false);
-              }}
-              title="Cancelar edicion"
-              type="button"
-            >
-              <X size={16} />
-            </button>
-          </>
-        ) : (
-          <button onClick={() => setIsEditing(true)} title="Editar local" type="button">
-            <Pencil size={16} />
-          </button>
-        )}
+        <button onClick={() => setIsEditing(true)} title="Editar local" type="button">
+          <Pencil size={16} />
+        </button>
         <button className="danger" onClick={onRemove} title="Eliminar local" type="button">
           <Trash2 size={16} />
         </button>
       </div>
+
+      {isEditing ? (
+        <div className="confirm-backdrop" role="presentation">
+          <section
+            aria-labelledby="store-edit-title"
+            aria-modal="true"
+            className="confirm-modal record-edit-modal"
+            role="dialog"
+          >
+            <h2 id="store-edit-title">Editar local</h2>
+            <form
+              className="record-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveName();
+              }}
+            >
+              <label>
+                Nombre del local
+                <input
+                  autoComplete="off"
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                />
+              </label>
+              <div className="confirm-actions">
+                <button
+                  className="confirm-button confirm-button-secondary"
+                  onClick={() => {
+                    setDraftName(store.name);
+                    setIsEditing(false);
+                  }}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!draftName.trim()} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -795,6 +809,40 @@ function ProductList({ onDuplicate, onRemove, onUpdate, products, selectedStoreI
     unit: "unidad",
   });
   const [copyTargetByProduct, setCopyTargetByProduct] = useState({});
+  const editingProduct = products.find((product) => product.id === editingId);
+
+  function closeEditModal() {
+    setEditingId("");
+    setDraft({ category: "general", name: "", needed: false, note: "", quantity: "", unit: "unidad" });
+  }
+
+  function startEdit(product) {
+    setEditingId(product.id);
+    setDraft({
+      category: product.category ?? "general",
+      name: product.name,
+      needed: Boolean(product.needed),
+      note: product.note ?? "",
+      quantity: product.quantity ?? "",
+      unit: product.unit ?? "unidad",
+    });
+  }
+
+  function saveEdit() {
+    if (!editingProduct || !draft.name.trim()) {
+      return;
+    }
+
+    onUpdate(editingProduct.id, {
+      category: draft.category,
+      name: draft.name.trim(),
+      needed: draft.needed,
+      note: draft.note.trim(),
+      quantity: draft.quantity.trim(),
+      unit: draft.unit,
+    });
+    closeEditModal();
+  }
 
   if (!products.length) {
     return (
@@ -808,69 +856,9 @@ function ProductList({ onDuplicate, onRemove, onUpdate, products, selectedStoreI
 
   return (
     <div className="notes-products-list">
-      {products.map((product) => {
-        const isEditing = editingId === product.id;
-
-        return (
+      {products.map((product) => (
           <div className="notes-product-row" key={product.id}>
-            {isEditing ? (
-              <div className="notes-product-edit-grid">
-                <input
-                  aria-label="Producto"
-                  autoComplete="off"
-                  value={draft.name}
-                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, name: event.target.value }))}
-                />
-                <input
-                  aria-label="Cantidad"
-                  autoComplete="off"
-                  inputMode="decimal"
-                  value={draft.quantity}
-                  onChange={(event) =>
-                    setDraft((currentDraft) => ({ ...currentDraft, quantity: event.target.value }))
-                  }
-                />
-                <select
-                  aria-label="Unidad o peso"
-                  value={draft.unit}
-                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, unit: event.target.value }))}
-                >
-                  {UNIT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Categoria"
-                  value={draft.category}
-                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, category: event.target.value }))}
-                >
-                  {CATEGORY_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {formatLabel(option)}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  aria-label="Nota"
-                  autoComplete="off"
-                  value={draft.note}
-                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, note: event.target.value }))}
-                />
-                <label className={`notes-check-field ${draft.needed ? "active" : ""}`}>
-                  <input
-                    checked={draft.needed}
-                    type="checkbox"
-                    onChange={(event) =>
-                      setDraft((currentDraft) => ({ ...currentDraft, needed: event.target.checked }))
-                    }
-                  />
-                  En compra
-                </label>
-              </div>
-            ) : (
-              <div className="notes-product-copy">
+            <div className="notes-product-copy">
                 <div className="notes-product-title-line">
                   <button
                     aria-label={product.checked ? `Desmarcar ${product.name}` : `Marcar ${product.name} comprado`}
@@ -923,69 +911,109 @@ function ProductList({ onDuplicate, onRemove, onUpdate, products, selectedStoreI
                   </div>
                 ) : null}
               </div>
-            )}
 
             <div className="notes-row-actions">
-              {isEditing ? (
-                <>
-                  <button
-                    onClick={() => {
-                      if (!draft.name.trim()) {
-                        return;
-                      }
-
-                      onUpdate(product.id, {
-                        category: draft.category,
-                        name: draft.name.trim(),
-                        needed: draft.needed,
-                        note: draft.note.trim(),
-                        quantity: draft.quantity.trim(),
-                        unit: draft.unit,
-                      });
-                      setEditingId("");
-                    }}
-                    title="Guardar producto"
-                    type="button"
-                  >
-                    <Check size={16} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingId("");
-                      setDraft({ category: "general", name: "", needed: false, note: "", quantity: "", unit: "unidad" });
-                    }}
-                    title="Cancelar edicion"
-                    type="button"
-                  >
-                    <X size={16} />
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => {
-                    setEditingId(product.id);
-                    setDraft({
-                      category: product.category ?? "general",
-                      name: product.name,
-                      needed: Boolean(product.needed),
-                      note: product.note ?? "",
-                      quantity: product.quantity ?? "",
-                      unit: product.unit ?? "unidad",
-                    });
-                  }}
-                  title="Editar producto"
-                  type="button"
-                >
-                  <Pencil size={16} />
-                </button>
-              )}
+              <button onClick={() => startEdit(product)} title="Editar producto" type="button">
+                <Pencil size={16} />
+              </button>
               <button className="danger" onClick={() => onRemove(product.id)} title="Eliminar producto" type="button">
                 <Trash2 size={16} />
               </button>
             </div>
           </div>
-        );
-      })}
+        ))}
+
+      {editingProduct ? (
+        <div className="confirm-backdrop" role="presentation">
+          <section
+            aria-labelledby="product-edit-title"
+            aria-modal="true"
+            className="confirm-modal record-edit-modal"
+            role="dialog"
+          >
+            <h2 id="product-edit-title">Editar producto</h2>
+            <form
+              className="record-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveEdit();
+              }}
+            >
+              <label>
+                Producto
+                <input
+                  autoComplete="off"
+                  value={draft.name}
+                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, name: event.target.value }))}
+                />
+              </label>
+              <label>
+                Cantidad
+                <input
+                  autoComplete="off"
+                  inputMode="decimal"
+                  value={draft.quantity}
+                  onChange={(event) =>
+                    setDraft((currentDraft) => ({ ...currentDraft, quantity: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Unidad o peso
+                <select
+                  value={draft.unit}
+                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, unit: event.target.value }))}
+                >
+                  {UNIT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Categoria
+                <select
+                  value={draft.category}
+                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, category: event.target.value }))}
+                >
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {formatLabel(option)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Nota
+                <input
+                  autoComplete="off"
+                  value={draft.note}
+                  onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, note: event.target.value }))}
+                />
+              </label>
+              <label className={`notes-check-field ${draft.needed ? "active" : ""}`}>
+                <input
+                  checked={draft.needed}
+                  type="checkbox"
+                  onChange={(event) =>
+                    setDraft((currentDraft) => ({ ...currentDraft, needed: event.target.checked }))
+                  }
+                />
+                En compra
+              </label>
+              <div className="confirm-actions">
+                <button className="confirm-button confirm-button-secondary" onClick={closeEditModal} type="button">
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!draft.name.trim()} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

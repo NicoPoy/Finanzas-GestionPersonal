@@ -1,8 +1,14 @@
 import { DEFAULT_CARD_FIXED_CATEGORIES } from "../data/initialData.js";
 
-// Devuelve el ahorro aplicable a una cuota. Nunca puede ser mayor que el monto de esa cuota.
+export function getExpenseSavingsLimit(expense) {
+  const amount = Number(expense.amount) || 0;
+
+  return isSharedHalf(expense) ? amount / 2 : amount;
+}
+
+// Devuelve el ahorro aplicable a una cuota. Nunca puede ser mayor que la parte propia de esa cuota.
 export function getExpenseSavings(expense) {
-  return Math.min(Number(expense.savings) || 0, Number(expense.amount) || 0);
+  return Math.min(Number(expense.savings) || 0, getExpenseSavingsLimit(expense));
 }
 
 // Monto real que impacta el mes: cuota menos ahorro guardado para esa cuota.
@@ -27,9 +33,10 @@ export function getOwnExpenseAmount(expense) {
     return 0;
   }
 
-  const netAmount = getNetExpenseAmount(expense);
+  const amount = Number(expense.amount) || 0;
+  const savings = getExpenseSavings(expense);
 
-  return isSharedHalf(expense) ? netAmount / 2 : netAmount;
+  return isSharedHalf(expense) ? Math.max(amount / 2 - savings, 0) : Math.max(amount - savings, 0);
 }
 
 export function getCardSummarySavings(card) {

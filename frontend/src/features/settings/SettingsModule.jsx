@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Pencil, Plus, Settings, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
 import SalaryForm from "./SalaryForm.jsx";
@@ -169,109 +169,120 @@ function OtherIncomeForm({ onSubmit }) {
 function OtherIncomeList({ incomes, onRemove, onUpdate }) {
   const [editingId, setEditingId] = useState("");
   const [draft, setDraft] = useState({ amount: "", origin: "" });
+  const editingIncome = incomes.find((income) => income.id === editingId);
+  const parsedDraftAmount = Number(draft.amount);
+  const canSaveEdit = Boolean(editingIncome) && draft.origin.trim() && parsedDraftAmount > 0;
+
+  function closeEditModal() {
+    setEditingId("");
+    setDraft({ amount: "", origin: "" });
+  }
+
+  function startEdit(income) {
+    setEditingId(income.id);
+    setDraft({
+      amount: String(income.amount),
+      origin: income.origin,
+    });
+  }
+
+  function saveEdit() {
+    if (!editingIncome || !canSaveEdit) {
+      return;
+    }
+
+    onUpdate(editingIncome.id, {
+      amount: parsedDraftAmount,
+      origin: draft.origin.trim(),
+    });
+    closeEditModal();
+  }
 
   if (!incomes.length) {
     return <p className="panel-empty settings-empty">Todavia no cargaste otros ingresos.</p>;
   }
 
   return (
-    <div className="expense-table other-income-table">
-      <div className="table-header other-income-row">
-        <span>Origen</span>
-        <span>Monto</span>
-        <span aria-label="Acciones" />
-      </div>
-      {incomes.map((income) => {
-        const isEditing = editingId === income.id;
-
-        return (
+    <>
+      <div className="expense-table other-income-table">
+        <div className="table-header other-income-row">
+          <span>Origen</span>
+          <span>Monto</span>
+          <span aria-label="Acciones" />
+        </div>
+        {incomes.map((income) => (
           <div className="table-row other-income-row" key={income.id}>
-            <strong>
-              {isEditing ? (
+            <strong>{income.origin}</strong>
+            <span>
+              <strong className="amount-emphasis">{currency.format(income.amount)}</strong>
+            </span>
+            <div className="row-actions">
+              <button
+                className="icon-button icon-button-neutral"
+                onClick={() => startEdit(income)}
+                title="Editar ingreso"
+                type="button"
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                aria-label={`Eliminar ${income.origin}`}
+                className="icon-button"
+                onClick={() => onRemove(income.id)}
+                title="Eliminar ingreso"
+                type="button"
+              >
+                <Trash2 size={17} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {editingIncome ? (
+        <div className="confirm-backdrop" role="presentation">
+          <section
+            aria-labelledby="other-income-edit-title"
+            aria-modal="true"
+            className="confirm-modal record-edit-modal"
+            role="dialog"
+          >
+            <h2 id="other-income-edit-title">Editar ingreso</h2>
+            <form
+              className="record-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveEdit();
+              }}
+            >
+              <label>
+                Origen
                 <input
-                  className="row-edit-input"
+                  autoComplete="off"
                   value={draft.origin}
                   onChange={(event) => setDraft((current) => ({ ...current, origin: event.target.value }))}
                 />
-              ) : (
-                income.origin
-              )}
-            </strong>
-            <span>
-              {isEditing ? (
+              </label>
+              <label>
+                Monto
                 <MoneyInput
-                  className="row-edit-input"
                   value={draft.amount}
                   onValueChange={(value) => setDraft((current) => ({ ...current, amount: value }))}
                 />
-              ) : (
-                <strong className="amount-emphasis">{currency.format(income.amount)}</strong>
-              )}
-            </span>
-            <div className="row-actions">
-              {isEditing ? (
-                <>
-                  <button
-                    className="icon-button icon-button-success"
-                    onClick={() => {
-                      const parsedAmount = Number(draft.amount);
-
-                      if (!draft.origin.trim() || parsedAmount <= 0) {
-                        return;
-                      }
-
-                      onUpdate(income.id, {
-                        amount: parsedAmount,
-                        origin: draft.origin.trim(),
-                      });
-                      setEditingId("");
-                    }}
-                    title="Guardar ingreso"
-                    type="button"
-                  >
-                    <Check size={17} />
-                  </button>
-                  <button
-                    className="icon-button icon-button-neutral"
-                    onClick={() => setEditingId("")}
-                    title="Cancelar"
-                    type="button"
-                  >
-                    <X size={17} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="icon-button icon-button-neutral"
-                    onClick={() => {
-                      setEditingId(income.id);
-                      setDraft({
-                        amount: String(income.amount),
-                        origin: income.origin,
-                      });
-                    }}
-                    title="Editar ingreso"
-                    type="button"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    aria-label={`Eliminar ${income.origin}`}
-                    className="icon-button"
-                    onClick={() => onRemove(income.id)}
-                    title="Eliminar ingreso"
-                    type="button"
-                  >
-                    <Trash2 size={17} />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+              </label>
+              <div className="confirm-actions">
+                <button className="confirm-button confirm-button-secondary" onClick={closeEditModal} type="button">
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!canSaveEdit} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -288,6 +299,7 @@ function ConfigurableOptionPanel({
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState("");
   const [draftName, setDraftName] = useState("");
+  const editingItem = items.find((item) => item.id === editingId);
 
   function submitNewItem(event) {
     event.preventDefault();
@@ -318,72 +330,33 @@ function ConfigurableOptionPanel({
       {items.length ? (
         <div className="settings-option-list">
           {items.map((item) => {
-            const isEditing = editingId === item.id;
             const canRemove = items.length > minItems;
 
             return (
               <div className="settings-option-row" key={item.id}>
-                {isEditing ? (
-                  <input
-                    autoFocus
-                    value={draftName}
-                    onChange={(event) => setDraftName(event.target.value)}
-                  />
-                ) : (
-                  <strong>{item.name}</strong>
-                )}
+                <strong>{item.name}</strong>
 
                 <div className="row-actions">
-                  {isEditing ? (
-                    <>
-                      <button
-                        className="icon-button icon-button-success"
-                        onClick={() => {
-                          if (!draftName.trim()) {
-                            return;
-                          }
-
-                          onUpdate(item.id, draftName.trim());
-                          setEditingId("");
-                        }}
-                        title="Guardar"
-                        type="button"
-                      >
-                        <Check size={16} />
-                      </button>
-                      <button
-                        className="icon-button icon-button-neutral"
-                        onClick={() => setEditingId("")}
-                        title="Cancelar"
-                        type="button"
-                      >
-                        <X size={16} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="icon-button icon-button-neutral"
-                        onClick={() => {
-                          setEditingId(item.id);
-                          setDraftName(item.name);
-                        }}
-                        title="Editar"
-                        type="button"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        className="icon-button"
-                        disabled={!canRemove}
-                        onClick={() => onRemove(item.id)}
-                        title={canRemove ? "Eliminar" : "Debe quedar al menos una seccion"}
-                        type="button"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="icon-button icon-button-neutral"
+                    onClick={() => {
+                      setEditingId(item.id);
+                      setDraftName(item.name);
+                    }}
+                    title="Editar"
+                    type="button"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    className="icon-button"
+                    disabled={!canRemove}
+                    onClick={() => onRemove(item.id)}
+                    title={canRemove ? "Eliminar" : "Debe quedar al menos una seccion"}
+                    type="button"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             );
@@ -392,6 +365,49 @@ function ConfigurableOptionPanel({
       ) : (
         <p className="panel-empty settings-empty">{emptyMessage}</p>
       )}
+
+      {editingItem ? (
+        <div className="confirm-backdrop" role="presentation">
+          <section
+            aria-labelledby="config-option-edit-title"
+            aria-modal="true"
+            className="confirm-modal record-edit-modal"
+            role="dialog"
+          >
+            <h2 id="config-option-edit-title">Editar opcion</h2>
+            <form
+              className="record-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+
+                if (!draftName.trim()) {
+                  return;
+                }
+
+                onUpdate(editingItem.id, draftName.trim());
+                setEditingId("");
+              }}
+            >
+              <label>
+                Nombre
+                <input
+                  autoComplete="off"
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                />
+              </label>
+              <div className="confirm-actions">
+                <button className="confirm-button confirm-button-secondary" onClick={() => setEditingId("")} type="button">
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!draftName.trim()} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

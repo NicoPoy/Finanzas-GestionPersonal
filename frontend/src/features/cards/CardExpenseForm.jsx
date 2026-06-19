@@ -22,6 +22,7 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
     const parsedInstallments = expenseType === "single" ? 1 : Number(installments);
     const parsedSavings = Number(savings) || 0;
     const isFixed = expenseType === "fixed";
+    const maxSavings = paymentShare === "half" ? parsedAmount / 2 : parsedAmount;
     const nextErrors = {};
 
     if (!origin.trim()) {
@@ -36,8 +37,8 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
       nextErrors.installments = "Completa las cuotas.";
     }
 
-    if (parsedSavings < 0 || parsedSavings > parsedAmount) {
-      nextErrors.savings = "El ahorro no puede superar el monto.";
+    if (parsedSavings < 0 || parsedSavings > maxSavings) {
+      nextErrors.savings = "El ahorro no puede superar tu parte a pagar.";
     }
 
     setValidationErrors(nextErrors);

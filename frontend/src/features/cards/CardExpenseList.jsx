@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Check, Pencil, PiggyBank, ReceiptText, Trash2, X } from "lucide-react";
+import { Check, Pencil, PiggyBank, ReceiptText, Split, Trash2, UserRound } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import {
   getExpenseSavings,
   getCardSummarySavings,
-  getNetExpenseAmount,
+  getExpenseSavingsLimit,
   getOwnExpenseAmount,
   isExpenseSaved,
   isFixedCardExpense,
@@ -19,7 +19,6 @@ export default function CardExpenseList({
   fixedCategories = [],
   onRemove,
   onUpdate,
-  onUpdateSavings,
   onUpdateSummarySavings,
 }) {
   const [editingExpenseId, setEditingExpenseId] = useState("");
@@ -65,12 +64,16 @@ export default function CardExpenseList({
     const parsedSavings = Number(draft.savings) || 0;
     const isFixed = draft.expenseType === "fixed";
     const parsedInstallments = draft.expenseType === "single" ? 1 : Number(draft.installments);
+    const savingsLimit = getExpenseSavingsLimit({
+      amount: parsedAmount,
+      isSharedHalf: !draft.isPaidByOther && draft.isSharedHalf,
+    });
 
     if (
       !draft.origin.trim() ||
       parsedAmount <= 0 ||
       parsedSavings < 0 ||
-      parsedSavings > parsedAmount ||
+      parsedSavings > savingsLimit ||
       (!isFixed && parsedInstallments <= 0)
     ) {
       return;
@@ -119,6 +122,24 @@ export default function CardExpenseList({
   const canSaveSummarySavings =
     parsedSummarySavingsDraft >= 0 && parsedSummarySavingsDraft !== summarySavings && Boolean(onUpdateSummarySavings);
   const sortedExpenses = [...card.expenses].sort(compareCardExpenses);
+  const editingExpense = draft ? card.expenses.find((expense) => expense.id === editingExpenseId) : null;
+  const parsedDraftSavings = Number(draft?.savings);
+  const draftSavingsLimit = draft
+    ? getExpenseSavingsLimit({
+        amount: Number(draft.amount),
+        isSharedHalf: !draft.isPaidByOther && draft.isSharedHalf,
+      })
+    : 0;
+  const parsedDraftAmount = Number(draft?.amount);
+  const parsedDraftInstallments = draft?.expenseType === "single" ? 1 : Number(draft?.installments);
+  const canSaveExpenseEdit =
+    Boolean(editingExpense) &&
+    Boolean(draft?.origin.trim()) &&
+    parsedDraftAmount > 0 &&
+    !Number.isNaN(parsedDraftSavings) &&
+    parsedDraftSavings >= 0 &&
+    parsedDraftSavings <= draftSavingsLimit &&
+    (draft?.expenseType === "fixed" || parsedDraftInstallments > 0);
 
   return (
     <>
@@ -147,10 +168,6 @@ export default function CardExpenseList({
               (isPaidByOther(expense)
                 ? 0
                 : (isHalfShared ? expense.amount / 2 : expense.amount) * Math.max(expense.installments - 1, 0));
-          const isEditingSavings = editingExpenseId === expense.id;
-          const parsedDraft = Number(draft?.savings);
-          const canSaveSavings =
-            isEditingSavings && !Number.isNaN(parsedDraft) && parsedDraft >= 0 && parsedDraft <= Number(draft?.amount);
 
           return (
             <div
@@ -158,51 +175,24 @@ export default function CardExpenseList({
               key={expense.id}
             >
               <strong className="origin-cell" data-label="Origen">
-                {isEditingSavings ? (
-                  <input
-                    className="row-edit-input"
-                    value={draft.origin}
-                    onChange={(event) => updateDraft("origin", event.target.value)}
-                  />
-                ) : (
-                  <>
-                    <span className="expense-origin-line">
-                      {expense.origin}
-                      {isFinalPayment ? <small className="last-payment-note">Ultima</small> : null}
-                      {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
-                      {isFixedCardExpense(expense) ? (
-                        <small className="fixed-expense-note">Fijo - {fixedCategoryName}</small>
-                      ) : null}
-                      {isHalfShared ? <small className="shared-half-note">A medias</small> : null}
-                    </span>
-                    {isPaidByOther(expense) ? <small>Lo paga otra persona</small> : null}
-                    {isHalfShared ? <small>Pago la mitad</small> : null}
-                  </>
-                )}
+                <>
+                  <span className="expense-origin-line">
+                    {expense.origin}
+                    {isFinalPayment ? <small className="last-payment-note">Ultima</small> : null}
+                    {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
+                    {isFixedCardExpense(expense) ? (
+                      <small className="fixed-expense-note">Fijo - {fixedCategoryName}</small>
+                    ) : null}
+                    {isHalfShared ? <small className="shared-half-note">A medias</small> : null}
+                  </span>
+                  {isPaidByOther(expense) ? <small>Lo paga otra persona</small> : null}
+                </>
               </strong>
               <span className="money-cell monthly-cell" data-label="Por mes">
-                {isEditingSavings ? (
-                  <MoneyInput
-                    className="row-edit-input"
-                    value={draft.amount}
-                    onValueChange={(value) => updateDraft("amount", value)}
-                  />
-                ) : (
-                  currency.format(expense.amount)
-                )}
+                {currency.format(expense.amount)}
               </span>
               <span className="installments-cell" data-label="Cuotas">
-                {isEditingSavings ? (
-                  <select
-                    className="row-edit-input"
-                    value={draft.expenseType}
-                    onChange={(event) => updateDraft("expenseType", event.target.value)}
-                  >
-                    <option value="installments">Cuotas</option>
-                    <option value="single">Unica</option>
-                    <option value="fixed">Fijo</option>
-                  </select>
-                ) : isFixedCardExpense(expense) ? (
+                {isFixedCardExpense(expense) ? (
                   <span className="installment-pill installment-pill-fixed">Fijo</span>
                 ) : expense.installments === 1 ? (
                   <span className="installment-pill">Unica</span>
@@ -211,16 +201,7 @@ export default function CardExpenseList({
                 )}
               </span>
               <span className={`money-cell savings-cell ${savings === 0 ? "zero-value-cell" : ""}`} data-label="Ahorro">
-                {isEditingSavings ? (
-                  <MoneyInput
-                    aria-label={`Ahorro de ${expense.origin}`}
-                    className="savings-input"
-                    value={draft.savings}
-                    onValueChange={(value) => updateDraft("savings", value)}
-                  />
-                ) : (
-                  formatTableAmount(savings)
-                )}
+                {formatTableAmount(savings)}
               </span>
               <span className={`amount-emphasis money-cell net-cell ${ownAmount === 0 ? "zero-value-cell" : ""}`} data-label="Neto">
                 {formatTableAmount(ownAmount)}
@@ -228,136 +209,166 @@ export default function CardExpenseList({
               <span className={`pending-amount money-cell pending-cell ${!isFixedCardExpense(expense) && pendingValue === 0 ? "zero-value-cell" : ""}`} data-label="Pendiente">
                 {isFixedCardExpense(expense) ? "Mensual" : formatTableAmount(pendingValue)}
               </span>
-              <div className={`row-actions card-row-actions ${isEditingSavings ? "card-row-actions-editing" : ""}`}>
-                {isEditingSavings ? (
-                  <>
-                    <button
-                      aria-label={`Guardar ahorro de ${expense.origin}`}
-                      className="card-row-action card-row-action-save"
-                      disabled={!canSaveSavings}
-                      onClick={() => saveSavingsEdit(expense)}
-                      title="Guardar ahorro"
-                      type="button"
-                    >
-                      <Check size={17} />
-                      <span>Guardar</span>
-                    </button>
-                    <button
-                      aria-label={`Cancelar edicion de ahorro de ${expense.origin}`}
-                      className="card-row-action card-row-action-cancel"
-                      onClick={cancelSavingsEdit}
-                      title="Cancelar"
-                      type="button"
-                    >
-                      <X size={17} />
-                      <span>Cancelar</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
-                      className={`card-row-action card-row-action-saved ${isSaved ? "active" : ""}`}
-                      onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
-                      title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
-                      type="button"
-                    >
-                      <PiggyBank size={16} />
-                      <span>{isSaved ? "Quitar" : "Ahorrar"}</span>
-                    </button>
-                    <button
-                      aria-label={`Editar ${expense.origin}`}
-                      className="card-row-action card-row-action-edit"
-                      onClick={() => startSavingsEdit(expense)}
-                      title="Editar gasto"
-                      type="button"
-                    >
-                      <Pencil size={16} />
-                      <span>Editar</span>
-                    </button>
-                    <button
-                      aria-label={`Eliminar ${expense.origin}`}
-                      className="card-row-action card-row-action-delete"
-                      onClick={() => onRemove(expense.id)}
-                      title="Eliminar gasto"
-                      type="button"
-                    >
-                      <Trash2 size={17} />
-                      <span>Borrar</span>
-                    </button>
-                  </>
-                )}
+              <div className="row-actions card-row-actions">
+                <button
+                  aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
+                  className={`card-row-action card-row-action-saved ${isSaved ? "active" : ""}`}
+                  onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
+                  title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
+                  type="button"
+                >
+                  <PiggyBank size={16} />
+                  <span>{isSaved ? "Quitar" : "Ahorrar"}</span>
+                </button>
+                <button
+                  aria-label={`Editar ${expense.origin}`}
+                  className="card-row-action card-row-action-edit"
+                  onClick={() => startSavingsEdit(expense)}
+                  title="Editar gasto"
+                  type="button"
+                >
+                  <Pencil size={16} />
+                  <span>Editar</span>
+                </button>
+                <button
+                  aria-label={`Eliminar ${expense.origin}`}
+                  className="card-row-action card-row-action-delete"
+                  onClick={() => onRemove(expense.id)}
+                  title="Eliminar gasto"
+                  type="button"
+                >
+                  <Trash2 size={17} />
+                  <span>Borrar</span>
+                </button>
               </div>
-              {isEditingSavings && draft.expenseType === "installments" ? (
-                <div className="row-edit-extra">
-                  <label>
-                    Cuotas
-                    <input
-                      min="1"
-                      type="number"
-                      value={draft.installments}
-                      onChange={(event) => updateDraft("installments", event.target.value)}
-                    />
-                  </label>
-                </div>
-              ) : null}
-              {isEditingSavings && draft.expenseType === "fixed" ? (
-                <div className="row-edit-extra">
-                  <label>
-                    Seccion
-                    <select
-                      value={draft.fixedCategory}
-                      onChange={(event) => updateDraft("fixedCategory", event.target.value)}
-                    >
-                      {fixedCategories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              ) : null}
-              {isEditingSavings ? (
-                <div className="row-edit-extra">
-                  <label className="checkbox-field inline-checkbox-field">
-                    <input
-                      checked={draft.isPaidByOther}
-                      type="checkbox"
-                      onChange={(event) =>
-                        setDraft((current) => ({
-                          ...current,
-                          isPaidByOther: event.target.checked,
-                          isSharedHalf: event.target.checked ? false : current.isSharedHalf,
-                        }))
-                      }
-                    />
-                    Lo paga otra persona
-                  </label>
-                </div>
-              ) : null}
-              {isEditingSavings ? (
-                <div className="row-edit-extra">
-                  <label className="checkbox-field inline-checkbox-field">
-                    <input
-                      checked={draft.isSharedHalf}
-                      type="checkbox"
-                      onChange={(event) =>
-                        setDraft((current) => ({
-                          ...current,
-                          isPaidByOther: event.target.checked ? false : current.isPaidByOther,
-                          isSharedHalf: event.target.checked,
-                        }))
-                      }
-                    />
-                    A medias
-                  </label>
-                </div>
-              ) : null}
             </div>
           );
         })}
       </div>
+
+      {editingExpense && draft ? (
+        <div className="confirm-backdrop" role="presentation">
+          <section
+            aria-labelledby="card-expense-edit-title"
+            aria-modal="true"
+            className="confirm-modal card-expense-edit-modal"
+            role="dialog"
+          >
+            <h2 id="card-expense-edit-title">Editar gasto</h2>
+            <form
+              className="card-expense-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveSavingsEdit(editingExpense);
+              }}
+            >
+              <label>
+                Origen
+                <input
+                  autoComplete="off"
+                  value={draft.origin}
+                  onChange={(event) => updateDraft("origin", event.target.value)}
+                />
+              </label>
+              <label>
+                Monto cuota
+                <MoneyInput value={draft.amount} onValueChange={(value) => updateDraft("amount", value)} />
+              </label>
+              <label>
+                Tipo
+                <select
+                  value={draft.expenseType}
+                  onChange={(event) => updateDraft("expenseType", event.target.value)}
+                >
+                  <option value="installments">Cuotas</option>
+                  <option value="single">Unica</option>
+                  <option value="fixed">Fijo</option>
+                </select>
+              </label>
+              {draft.expenseType === "installments" ? (
+                <label>
+                  Cuotas
+                  <input
+                    min="1"
+                    type="number"
+                    value={draft.installments}
+                    onChange={(event) => updateDraft("installments", event.target.value)}
+                  />
+                </label>
+              ) : null}
+              {draft.expenseType === "fixed" ? (
+                <label>
+                  Seccion
+                  <select
+                    value={draft.fixedCategory}
+                    onChange={(event) => updateDraft("fixedCategory", event.target.value)}
+                  >
+                    {fixedCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <label>
+                Ahorro
+                <MoneyInput value={draft.savings} onValueChange={(value) => updateDraft("savings", value)} />
+              </label>
+              <div className="card-expense-edit-flags">
+                <button
+                  aria-pressed={draft.isPaidByOther}
+                  className={`paid-by-other-field ${draft.isPaidByOther ? "active" : ""}`}
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      isPaidByOther: !current.isPaidByOther,
+                      isSharedHalf: !current.isPaidByOther ? false : current.isSharedHalf,
+                    }))
+                  }
+                  type="button"
+                >
+                  <span className="paid-by-other-check">
+                    {draft.isPaidByOther ? <Check size={14} /> : <UserRound size={15} />}
+                  </span>
+                  <span>
+                    <strong>Otra persona</strong>
+                    <small>No lo pago yo</small>
+                  </span>
+                </button>
+                <button
+                  aria-pressed={draft.isSharedHalf}
+                  className={`paid-by-other-field shared-half-field ${draft.isSharedHalf ? "active" : ""}`}
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      isPaidByOther: current.isSharedHalf ? current.isPaidByOther : false,
+                      isSharedHalf: !current.isSharedHalf,
+                    }))
+                  }
+                  type="button"
+                >
+                  <span className="paid-by-other-check">
+                    {draft.isSharedHalf ? <Check size={14} /> : <Split size={15} />}
+                  </span>
+                  <span>
+                    <strong>A medias</strong>
+                    <small>Pago la mitad</small>
+                  </span>
+                </button>
+              </div>
+              <div className="confirm-actions">
+                <button className="confirm-button confirm-button-secondary" onClick={cancelSavingsEdit} type="button">
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!canSaveExpenseEdit} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
 
       <form className="summary-savings-form" onSubmit={saveSummarySavings}>
         <label>
@@ -493,8 +504,8 @@ function getNextMonthNetAmount(expense) {
   }
 
   if (isFixedCardExpense(expense)) {
-    return getNetExpenseAmount(expense);
+    return getOwnExpenseAmount(expense);
   }
 
-  return Number(expense.installments) > 1 ? getNetExpenseAmount(expense) : 0;
+  return Number(expense.installments) > 1 ? getOwnExpenseAmount(expense) : 0;
 }

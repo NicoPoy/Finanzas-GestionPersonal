@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Building2, Check, CreditCard, Landmark, Pencil, ReceiptText, Trash2, X } from "lucide-react";
+import { Building2, CreditCard, Landmark, Pencil, ReceiptText, Trash2 } from "lucide-react";
 import AddInlineForm from "../../components/forms/AddInlineForm.jsx";
 import { currency } from "../../utils/formatters.js";
 import CardExpenseForm from "./CardExpenseForm.jsx";
@@ -28,7 +28,6 @@ export default function CardsModule({
   updateBank,
   updateCard,
   updateExpense,
-  updateExpenseSavings,
 }) {
   return (
     <section className="workspace">
@@ -156,7 +155,6 @@ export default function CardsModule({
               fixedCategories={fixedCategories}
               onRemove={removeExpense}
               onUpdate={updateExpense}
-              onUpdateSavings={updateExpenseSavings}
               onUpdateSummarySavings={(summarySavings) => updateCard(selectedCard.id, { summarySavings })}
             />
           </>
@@ -175,9 +173,7 @@ function EditableTab({ className, countLabel, icon, name, onDelete, onSave, onSe
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(name);
 
-  function handleSave(event) {
-    event.stopPropagation();
-
+  function handleSave() {
     if (!draft.trim()) {
       return;
     }
@@ -186,8 +182,7 @@ function EditableTab({ className, countLabel, icon, name, onDelete, onSave, onSe
     setIsEditing(false);
   }
 
-  function handleCancel(event) {
-    event.stopPropagation();
+  function handleCancel() {
     setDraft(name);
     setIsEditing(false);
   }
@@ -201,48 +196,69 @@ function EditableTab({ className, countLabel, icon, name, onDelete, onSave, onSe
     <div className={className} onClick={onSelect} role="button" style={style} tabIndex={0}>
       {icon}
       <span>
-        {isEditing ? (
-          <input
-            autoFocus
-            className="tab-edit-input"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onClick={(event) => event.stopPropagation()}
-          />
-        ) : (
-          <strong>{name}</strong>
-        )}
+        <strong>{name}</strong>
         <small>{countLabel}</small>
       </span>
       <div className="tab-actions">
-        {isEditing ? (
-          <>
-            <button className="mini-icon-button" onClick={handleSave} title="Guardar" type="button">
-              <Check size={14} />
-            </button>
-            <button className="mini-icon-button" onClick={handleCancel} title="Cancelar" type="button">
-              <X size={14} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="mini-icon-button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsEditing(true);
-              }}
-              title="Editar"
-              type="button"
-            >
-              <Pencil size={14} />
-            </button>
-            <button className="mini-icon-button danger" onClick={handleDelete} title="Eliminar" type="button">
-              <Trash2 size={14} />
-            </button>
-          </>
-        )}
+        <button
+          className="mini-icon-button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsEditing(true);
+          }}
+          title="Editar"
+          type="button"
+        >
+          <Pencil size={14} />
+        </button>
+        <button className="mini-icon-button danger" onClick={handleDelete} title="Eliminar" type="button">
+          <Trash2 size={14} />
+        </button>
       </div>
+      {isEditing ? (
+        <div className="confirm-backdrop" role="presentation" onClick={(event) => event.stopPropagation()}>
+          <section
+            aria-labelledby="tab-edit-title"
+            aria-modal="true"
+            className="confirm-modal record-edit-modal"
+            role="dialog"
+          >
+            <h2 id="tab-edit-title">Editar nombre</h2>
+            <form
+              className="record-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handleSave();
+              }}
+            >
+              <label>
+                Nombre
+                <input
+                  autoComplete="off"
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                />
+              </label>
+              <div className="confirm-actions">
+                <button
+                  className="confirm-button confirm-button-secondary"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleCancel();
+                  }}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+                <button className="confirm-button confirm-button-primary" disabled={!draft.trim()} type="submit">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

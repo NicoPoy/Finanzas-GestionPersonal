@@ -30,6 +30,7 @@ import {
   buildRegistryServices,
   getCalendarMonth,
   countCards,
+  getExpenseSavingsLimit,
   getOwnExpenseAmount,
   getPaymentKey,
   getPaymentPeriod,
@@ -441,37 +442,15 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
 
             const nextAmount = updates.amount ?? expense.amount;
             const nextSavings = Object.hasOwn(updates, "savings") ? updates.savings : expense.savings;
+            const nextExpense = { ...expense, ...updates, amount: nextAmount };
 
             return {
-              ...expense,
-              ...updates,
-              savings: Math.min(Math.max(Number(nextSavings) || 0, 0), Number(nextAmount) || 0),
+              ...nextExpense,
+              savings: Math.min(Math.max(Number(nextSavings) || 0, 0), getExpenseSavingsLimit(nextExpense)),
             };
           }),
         })),
       title: "Modificar gasto",
-    });
-  }
-
-  function updateExpenseSavings(expenseId, savings) {
-    requestConfirmation({
-      confirmLabel: "Guardar cambios",
-      message: "Se va a modificar el ahorro de este gasto.",
-      onConfirm: () =>
-        setData((current) => ({
-          ...current,
-          expenses: current.expenses.map((expense) => {
-            if (expense.id !== expenseId) {
-              return expense;
-            }
-
-            return {
-              ...expense,
-              savings: Math.min(Math.max(savings, 0), expense.amount),
-            };
-          }),
-        })),
-      title: "Modificar ahorro",
     });
   }
 
@@ -1255,7 +1234,6 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
           updateBank={updateBank}
           updateCard={updateCard}
           updateExpense={updateExpense}
-          updateExpenseSavings={updateExpenseSavings}
         />
       ) : activeModule === "settings" ? (
         <SettingsModule
