@@ -50,18 +50,134 @@ import SettingsModule from "../settings/SettingsModule.jsx";
 import ExtraordinariosModule from "../extraordinary/ExtraordinariosModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 
+const DEMO_PROFILE = {
+  ...INITIAL_DATA,
+  monthZeroDate: "2026-06-01T00:00:00.000Z",
+  registrationDate: "2026-06-01T00:00:00.000Z",
+  salary: 1250000,
+  otherIncomes: [
+    {
+      id: "demo-income-freelance",
+      origin: "Trabajo freelance",
+      amount: 180000,
+    },
+  ],
+  cardFixedCategories: [
+    { id: "department", name: "Departamento" },
+    { id: "subscriptions", name: "Suscripciones" },
+    { id: "activities", name: "Actividades" },
+    { id: "extras", name: "Extras" },
+  ],
+  debitCards: ["Cuenta sueldo", "MercadoPago"],
+  banks: [
+    {
+      id: "demo-bank-galicia",
+      name: "Banco Galicia",
+      cards: [
+        {
+          id: "demo-card-visa",
+          name: "Visa Gold",
+          accent: "#2563eb",
+          dueDay: 10,
+          summarySavings: 25000,
+        },
+      ],
+    },
+  ],
+  expenses: [
+    {
+      id: "demo-expense-notebook",
+      cardId: "demo-card-visa",
+      origin: "Notebook",
+      amount: 85000,
+      savings: 10000,
+      fixedCategory: "",
+      installments: 6,
+      isFixed: false,
+      isPaidByOther: false,
+      isSharedHalf: false,
+    },
+    {
+      id: "demo-expense-netflix",
+      cardId: "demo-card-visa",
+      origin: "Netflix",
+      amount: 9500,
+      savings: 0,
+      fixedCategory: "subscriptions",
+      installments: 0,
+      isFixed: true,
+      isPaidByOther: false,
+      isSharedHalf: false,
+    },
+  ],
+  departmentExpenses: [
+    {
+      id: "demo-department-rent",
+      name: "Alquiler",
+      amount: 420000,
+      dueDay: 5,
+      paymentCard: "Cuenta sueldo",
+    },
+    {
+      id: "demo-department-electricity",
+      name: "Luz",
+      amount: 38000,
+      dueDay: 12,
+      paymentCard: "MercadoPago",
+    },
+  ],
+  subscriptionExpenses: [
+    {
+      id: "demo-subscription-internet",
+      name: "Internet",
+      amount: 32000,
+      dueDay: 18,
+      paymentCard: "Cuenta sueldo",
+    },
+  ],
+  activityExpenses: [
+    {
+      id: "demo-activity-gym",
+      name: "Gimnasio",
+      amount: 28000,
+      dueDay: 8,
+      paymentCard: "MercadoPago",
+    },
+  ],
+  extraExpenses: [
+    {
+      id: "demo-extra-food",
+      name: "Salida a cenar",
+      amount: 45000,
+      dueDay: 20,
+      paymentCard: "",
+    },
+  ],
+};
+
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
-export default function FinanceApp({ accessToken, onBackToHome, onLogout, onToggleTheme, theme }) {
+export default function FinanceApp({ accessToken, isDemoMode = false, onBackToHome, onLogout, onToggleTheme, theme }) {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState("dashboard");
   const [selectedBankId, setSelectedBankId] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(!isDemoMode);
   const [profileError, setProfileError] = useState("");
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
 
   useEffect(() => {
+    if (isDemoMode) {
+      const demoProfile = normalizeData(DEMO_PROFILE);
+      setData(demoProfile);
+      setSelectedBankId(demoProfile.banks[0]?.id ?? "");
+      setSelectedCardId(demoProfile.banks[0]?.cards[0]?.id ?? "");
+      setHasLoadedProfile(true);
+      setIsLoadingProfile(false);
+      setProfileError("");
+      return;
+    }
+
     async function loadProfile() {
       setIsLoadingProfile(true);
       setProfileError("");
@@ -90,10 +206,10 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
     }
 
     loadProfile();
-  }, [accessToken]);
+  }, [accessToken, isDemoMode]);
 
   useEffect(() => {
-    if (!hasLoadedProfile) {
+    if (!hasLoadedProfile || isDemoMode) {
       return;
     }
 
@@ -113,7 +229,7 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
     }
 
     saveProfile();
-  }, [accessToken, data, hasLoadedProfile]);
+  }, [accessToken, data, hasLoadedProfile, isDemoMode]);
 
   const banksWithTotals = useMemo(() => buildBanksWithTotals(data), [data]);
 
@@ -1025,9 +1141,12 @@ export default function FinanceApp({ accessToken, onBackToHome, onLogout, onTogg
             <img alt="" src="/logo_app_finanzas.png" />
             <p>Finanzas personales</p>
           </div>
+          {isDemoMode ? <span className="demo-pill demo-pill-on-dark">Modo demo</span> : null}
           <h1>Administrador mensual</h1>
           <p className="summary-month-note">
-            Sueldo de {upcomingCardPaymentMonth.title} · tarjetas del resumen de {currentPaymentMonth.title}
+            {isDemoMode
+              ? "Los cambios de esta prueba no se guardan en la base de datos."
+              : `Sueldo de ${upcomingCardPaymentMonth.title} · tarjetas del resumen de ${currentPaymentMonth.title}`}
           </p>
         </div>
 

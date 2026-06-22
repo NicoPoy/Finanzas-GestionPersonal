@@ -27,14 +27,99 @@ const INITIAL_NOTES_DATA = {
   productStores: [],
 };
 
-export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, theme }) {
+const DEMO_NOTES_DATA = {
+  departmentNeeds: [
+    {
+      id: "demo-need-curtains",
+      name: "Comprar cortinas blackout",
+      category: "decoracion",
+      note: "Medir ventana del dormitorio antes de comprar.",
+      priority: "media",
+      done: false,
+    },
+    {
+      id: "demo-need-kitchen",
+      name: "Revisar perdida de la canilla",
+      category: "cocina",
+      note: "Pedir presupuesto si sigue goteando.",
+      priority: "alta",
+      done: false,
+    },
+  ],
+  productStores: [
+    {
+      id: "demo-store-market",
+      name: "Supermercado",
+      products: [
+        {
+          id: "demo-product-rice",
+          name: "Arroz",
+          quantity: "1",
+          unit: "kg",
+          category: "comida",
+          note: "Comprar si esta en oferta.",
+          needed: true,
+          checked: false,
+        },
+        {
+          id: "demo-product-detergent",
+          name: "Detergente",
+          quantity: "1",
+          unit: "unidad",
+          category: "limpieza",
+          note: "",
+          needed: true,
+          checked: false,
+        },
+        {
+          id: "demo-product-shampoo",
+          name: "Shampoo",
+          quantity: "1",
+          unit: "unidad",
+          category: "higiene",
+          note: "",
+          needed: false,
+          checked: false,
+        },
+      ],
+    },
+    {
+      id: "demo-store-pharmacy",
+      name: "Farmacia",
+      products: [
+        {
+          id: "demo-product-toothpaste",
+          name: "Pasta dental",
+          quantity: "1",
+          unit: "unidad",
+          category: "higiene",
+          note: "",
+          needed: true,
+          checked: false,
+        },
+      ],
+    },
+  ],
+};
+
+export default function NotesModule({ accessToken, isDemoMode = false, onBackToHome, onToggleTheme, theme }) {
   const [data, setData] = useState(INITIAL_NOTES_DATA);
   const [selectedStoreId, setSelectedStoreId] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isDemoMode);
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (isDemoMode) {
+      const demoNotes = normalizeNotesData(DEMO_NOTES_DATA);
+      setData(demoNotes);
+      setSelectedStoreId(demoNotes.productStores[0]?.id ?? "");
+      setHasLoadedProfile(true);
+      setIsLoading(false);
+      setError("");
+      return;
+    }
+
     async function loadProfile() {
       setIsLoading(true);
       setError("");
@@ -62,10 +147,10 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
     }
 
     loadProfile();
-  }, [accessToken]);
+  }, [accessToken, isDemoMode]);
 
   useEffect(() => {
-    if (!hasLoadedProfile) {
+    if (!hasLoadedProfile || isDemoMode) {
       return;
     }
 
@@ -85,7 +170,7 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
     }
 
     saveProfile();
-  }, [accessToken, data, hasLoadedProfile]);
+  }, [accessToken, data, hasLoadedProfile, isDemoMode]);
 
   const selectedStore = useMemo(
     () => data.productStores.find((store) => store.id === selectedStoreId) ?? data.productStores[0],
@@ -286,6 +371,10 @@ export default function NotesModule({ accessToken, onBackToHome, onToggleTheme, 
             </span>
           </div>
         </section>
+
+        {isDemoMode ? (
+          <p className="demo-banner">Modo demo: podes probar notas sin guardar datos en la base.</p>
+        ) : null}
 
         {error ? <p className="notes-alert">{error}</p> : null}
 

@@ -2,7 +2,7 @@ import React from "react";
 import { LogOut, NotebookPen, Wallet } from "lucide-react";
 import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 
-export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout, onToggleTheme, theme }) {
+export default function HomeScreen({ isDemoMode = false, onOpenFinanzas, onOpenNotas, onLogout, onToggleTheme, theme }) {
   return (
     <main className="home-shell">
       <section className="home-panel" aria-label="Inicio">
@@ -14,10 +14,10 @@ export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout, onTo
           <div className="home-header-actions">
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             <button
-              aria-label="Cerrar sesion"
+              aria-label={isDemoMode ? "Salir del modo demo" : "Cerrar sesion"}
               className="header-action-button home-logout"
               onClick={onLogout}
-              title="Cerrar sesion"
+              title={isDemoMode ? "Salir del modo demo" : "Cerrar sesion"}
               type="button"
             >
               <LogOut size={16} />
@@ -26,8 +26,13 @@ export default function HomeScreen({ onOpenFinanzas, onOpenNotas, onLogout, onTo
         </header>
 
         <div className="home-copy">
+          {isDemoMode ? <span className="demo-pill">Modo demo</span> : null}
           <h1>Inicio</h1>
-          <p>Elegi que queres abrir.</p>
+          <p>
+            {isDemoMode
+              ? "Explora la app con datos de prueba. Nada se guarda en la base de datos."
+              : "Elegi que queres abrir."}
+          </p>
         </div>
 
         <div className="home-options">

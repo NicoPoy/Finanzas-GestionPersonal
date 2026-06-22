@@ -17,6 +17,7 @@ import "./styles.css";
 // El token queda en localStorage y expira a las 24 horas.
 export default function App() {
   const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(Boolean(accessToken));
   const [activeSection, setActiveSection] = useState("home");
   const [theme, setTheme] = useState(() => {
@@ -47,6 +48,7 @@ export default function App() {
   function closeSession() {
     clearStoredAccessToken();
     setAccessToken("");
+    setIsDemoMode(false);
     setIsCheckingSession(false);
     setActiveSection("home");
   }
@@ -128,17 +130,33 @@ export default function App() {
 
     const session = await response.json();
     storeAccessToken(session.access_token);
+    setIsDemoMode(false);
     setTheme(session.dark_mode ? "dark" : "light");
     setActiveSection("home");
     setAccessToken(session.access_token);
+  }
+
+  function handleStartDemo() {
+    clearStoredAccessToken();
+    setAccessToken("");
+    setIsDemoMode(true);
+    setIsCheckingSession(false);
+    setActiveSection("home");
   }
 
   function handleLogout() {
     closeSession();
   }
 
-  if (!accessToken) {
-    return <LoginScreen onLogin={handleLogin} theme={theme} onToggleTheme={toggleTheme} />;
+  if (!accessToken && !isDemoMode) {
+    return (
+      <LoginScreen
+        onLogin={handleLogin}
+        onStartDemo={handleStartDemo}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
   }
 
   if (isCheckingSession) {
@@ -155,6 +173,7 @@ export default function App() {
     return (
       <FinanceApp
         accessToken={accessToken}
+        isDemoMode={isDemoMode}
         onBackToHome={() => setActiveSection("home")}
         onLogout={handleLogout}
         theme={theme}
@@ -167,6 +186,7 @@ export default function App() {
     return (
       <NotesModule
         accessToken={accessToken}
+        isDemoMode={isDemoMode}
         onBackToHome={() => setActiveSection("home")}
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -176,6 +196,7 @@ export default function App() {
 
   return (
     <HomeScreen
+      isDemoMode={isDemoMode}
       onLogout={handleLogout}
       onOpenFinanzas={() => setActiveSection("finanzas")}
       onOpenNotas={() => setActiveSection("notas")}
