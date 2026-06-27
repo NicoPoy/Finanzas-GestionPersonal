@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Building2, CreditCard, Landmark, Pencil, ReceiptText, Trash2 } from "lucide-react";
+import { Building2, CalendarDays, CreditCard, Landmark, Pencil, ReceiptText, Trash2 } from "lucide-react";
 import AddInlineForm from "../../components/forms/AddInlineForm.jsx";
 import { currency } from "../../utils/formatters.js";
 import CardExpenseForm from "./CardExpenseForm.jsx";
@@ -29,6 +29,8 @@ export default function CardsModule({
   updateCard,
   updateExpense,
 }) {
+  const [showNextMonthTable, setShowNextMonthTable] = useState(false);
+
   return (
     <section className="workspace">
       <aside className="cards-panel" aria-label="Bancos y tarjetas">
@@ -137,6 +139,14 @@ export default function CardsModule({
                   <ReceiptText size={18} />
                   {isSelectedCardPaidForPaymentMonth ? "Pago registrado" : `Registrar pago (${paymentMonthTitle})`}
                 </button>
+                <button
+                  className={`payment-preview-button ${showNextMonthTable ? "active" : ""}`}
+                  onClick={() => setShowNextMonthTable((current) => !current)}
+                  type="button"
+                >
+                  <CalendarDays size={18} />
+                  {showNextMonthTable ? "Ver mes actual" : "Ver mes siguiente"}
+                </button>
                 <CreditCard size={34} strokeWidth={1.7} />
               </div>
             </div>
@@ -156,6 +166,7 @@ export default function CardsModule({
               onRemove={removeExpense}
               onUpdate={updateExpense}
               onUpdateSummarySavings={(summarySavings) => updateCard(selectedCard.id, { summarySavings })}
+              showNextMonthTable={showNextMonthTable}
             />
           </>
         ) : (

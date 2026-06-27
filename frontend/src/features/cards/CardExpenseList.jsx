@@ -20,12 +20,15 @@ export default function CardExpenseList({
   onRemove,
   onUpdate,
   onUpdateSummarySavings,
+  showNextMonthTable = false,
 }) {
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [draft, setDraft] = useState(null);
   const [showNextMonthSummary, setShowNextMonthSummary] = useState(false);
   const summarySavings = getCardSummarySavings(card);
   const [summarySavingsDraft, setSummarySavingsDraft] = useState(summarySavings ? String(summarySavings) : "");
+  const previewCard = showNextMonthTable ? buildCardAfterPayment(card) : card;
+  const previewSummarySavings = showNextMonthTable ? Math.min(summarySavings, getPreviewSummarySavingsLimit(previewCard)) : summarySavings;
 
   useEffect(() => {
     setSummarySavingsDraft(summarySavings ? String(summarySavings) : "");
@@ -118,10 +121,14 @@ export default function CardExpenseList({
     card.expenses.reduce((sum, expense) => sum + getNextMonthNetAmount(expense), 0) - summarySavings,
     0,
   );
+  const previewNetTotal = Math.max(
+    previewCard.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0) - previewSummarySavings,
+    0,
+  );
   const parsedSummarySavingsDraft = Number(summarySavingsDraft) || 0;
   const canSaveSummarySavings =
     parsedSummarySavingsDraft >= 0 && parsedSummarySavingsDraft !== summarySavings && Boolean(onUpdateSummarySavings);
-  const sortedExpenses = [...card.expenses].sort(compareCardExpenses);
+  const sortedExpenses = [...previewCard.expenses].sort(compareCardExpenses);
   const editingExpense = draft ? card.expenses.find((expense) => expense.id === editingExpenseId) : null;
   const parsedDraftSavings = Number(draft?.savings);
   const draftSavingsLimit = draft
@@ -143,6 +150,16 @@ export default function CardExpenseList({
 
   return (
     <>
+      {showNextMonthTable ? (
+        <section className="payment-preview-banner" aria-live="polite">
+          <div>
+            <strong>Vista del mes siguiente</strong>
+            <span>Asi quedaria la tabla despues de registrar el pago: baja una cuota y desaparecen las finalizadas.</span>
+          </div>
+          <strong>{currency.format(previewNetTotal)}</strong>
+        </section>
+      ) : null}
+
       <div className="expense-table card-expense-table" style={{ "--card-accent": card.accent || "#2563eb" }}>
         <div className="table-header">
           <span>Origen</span>
@@ -154,7 +171,7 @@ export default function CardExpenseList({
           <span aria-label="Acciones" />
         </div>
 
-        {sortedExpenses.map((expense) => {
+        {sortedExpenses.length ? sortedExpenses.map((expense) => {
           const savings = getExpenseSavings(expense);
           const ownAmount = getOwnExpenseAmount(expense);
           const isSaved = Boolean(expense.isSaved);
@@ -210,43 +227,63 @@ export default function CardExpenseList({
                 {isFixedCardExpense(expense) ? "Mensual" : formatTableAmount(pendingValue)}
               </span>
               <div className="row-actions card-row-actions">
-                <button
-                  aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
-                  className={`card-row-action card-row-action-saved ${isSaved ? "active" : ""}`}
-                  onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
-                  title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
-                  type="button"
-                >
-                  <PiggyBank size={16} />
-                  <span>{isSaved ? "Quitar" : "Ahorrar"}</span>
-                </button>
-                <button
-                  aria-label={`Editar ${expense.origin}`}
-                  className="card-row-action card-row-action-edit"
-                  onClick={() => startSavingsEdit(expense)}
-                  title="Editar gasto"
-                  type="button"
-                >
-                  <Pencil size={16} />
-                  <span>Editar</span>
-                </button>
-                <button
-                  aria-label={`Eliminar ${expense.origin}`}
-                  className="card-row-action card-row-action-delete"
-                  onClick={() => onRemove(expense.id)}
-                  title="Eliminar gasto"
-                  type="button"
-                >
-                  <Trash2 size={17} />
-                  <span>Borrar</span>
-                </button>
+                {showNextMonthTable ? (
+                  <span className="preview-only-pill">Vista</span>
+                ) : (
+                  <>
+                    <button
+                      aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
+                      className={`card-row-action card-row-action-saved ${isSaved ? "active" : ""}`}
+                      onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
+                      title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
+                      type="button"
+                    >
+                      <PiggyBank size={16} />
+                      <span>{isSaved ? "Quitar" : "Ahorrar"}</span>
+                    </button>
+                    <button
+                      aria-label={`Editar ${expense.origin}`}
+                      className="card-row-action card-row-action-edit"
+                      onClick={() => startSavingsEdit(expense)}
+                      title="Editar gasto"
+                      type="button"
+                    >
+                      <Pencil size={16} />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      aria-label={`Eliminar ${expense.origin}`}
+                      className="card-row-action card-row-action-delete"
+                      onClick={() => onRemove(expense.id)}
+                      title="Eliminar gasto"
+                      type="button"
+                    >
+                      <Trash2 size={17} />
+                      <span>Borrar</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           );
-        })}
+        }) : (
+          <div className="table-row payment-preview-empty">
+            <strong className="origin-cell" data-label="Origen">
+              No quedarian consumos pendientes para el mes siguiente.
+            </strong>
+            <span className="money-cell monthly-cell" data-label="Por mes">-</span>
+            <span className="installments-cell" data-label="Cuotas">-</span>
+            <span className="money-cell savings-cell" data-label="Ahorro">-</span>
+            <span className="amount-emphasis money-cell net-cell" data-label="Neto">-</span>
+            <span className="pending-amount money-cell pending-cell" data-label="Pendiente">-</span>
+            <div className="row-actions card-row-actions">
+              <span className="preview-only-pill">Vista</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {editingExpense && draft ? (
+      {!showNextMonthTable && editingExpense && draft ? (
         <div className="confirm-backdrop" role="presentation">
           <section
             aria-labelledby="card-expense-edit-title"
@@ -370,18 +407,20 @@ export default function CardExpenseList({
         </div>
       ) : null}
 
-      <form className="summary-savings-form" onSubmit={saveSummarySavings}>
-        <label>
-          Ahorros
-          <MoneyInput
-            value={summarySavingsDraft}
-            onValueChange={setSummarySavingsDraft}
-          />
-        </label>
-        <button disabled={!canSaveSummarySavings} type="submit">
-          Guardar
-        </button>
-      </form>
+      {!showNextMonthTable ? (
+        <form className="summary-savings-form" onSubmit={saveSummarySavings}>
+          <label>
+            Ahorros
+            <MoneyInput
+              value={summarySavingsDraft}
+              onValueChange={setSummarySavingsDraft}
+            />
+          </label>
+          <button disabled={!canSaveSummarySavings} type="submit">
+            Guardar
+          </button>
+        </form>
+      ) : null}
 
       <section className="card-summary-breakdown">
         <div className="card-summary-heading">
@@ -417,6 +456,28 @@ export default function CardExpenseList({
       </section>
     </>
   );
+}
+
+function buildCardAfterPayment(card) {
+  return {
+    ...card,
+    expenses: card.expenses
+      .map((expense) => {
+        if (isFixedCardExpense(expense)) {
+          return expense;
+        }
+
+        return {
+          ...expense,
+          installments: Math.max((Number(expense.installments) || 1) - 1, 0),
+        };
+      })
+      .filter((expense) => isFixedCardExpense(expense) || expense.installments > 0),
+  };
+}
+
+function getPreviewSummarySavingsLimit(card) {
+  return card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
 }
 
 function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, title, variant }) {
