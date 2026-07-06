@@ -32,6 +32,7 @@ export default function App() {
 
   function closeSession() {
     clearStoredAccessToken();
+    localStorage.removeItem("last-activity");
     setAccessToken("");
     setIsDemoMode(false);
     setIsCheckingSession(false);
@@ -98,6 +99,57 @@ export default function App() {
     return () => window.clearTimeout(timeoutId);
   }, [accessToken]);
 
+  useEffect(() => {
+    if (!accessToken && !isDemoMode) {
+      return;
+    }
+
+    const INACTIVITY_LIMIT = 4 * 60 * 60 * 1000; // 4 hours in ms
+
+    // Check inactivity on mount/change
+    const lastActivity = localStorage.getItem("last-activity");
+    if (lastActivity) {
+      const elapsed = Date.now() - parseInt(lastActivity, 10);
+      if (elapsed >= INACTIVITY_LIMIT) {
+        closeSession();
+        return;
+      }
+    } else {
+      localStorage.setItem("last-activity", String(Date.now()));
+    }
+
+    let lastSaved = Date.now();
+    const updateActivity = () => {
+      const now = Date.now();
+      if (now - lastSaved > 5000) {
+        localStorage.setItem("last-activity", String(now));
+        lastSaved = now;
+      }
+    };
+
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+    events.forEach((event) => {
+      window.addEventListener(event, updateActivity, { passive: true });
+    });
+
+    const intervalId = window.setInterval(() => {
+      const last = localStorage.getItem("last-activity");
+      if (last) {
+        const elapsed = Date.now() - parseInt(last, 10);
+        if (elapsed >= INACTIVITY_LIMIT) {
+          closeSession();
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, updateActivity);
+      });
+      window.clearInterval(intervalId);
+    };
+  }, [accessToken, isDemoMode]);
+
   async function handleLogin(credentials) {
     const response = await fetch(apiUrl("/api/auth/login"), {
       method: "POST",
@@ -117,6 +169,7 @@ export default function App() {
     setIsDemoMode(false);
     setTheme("dark");
     window.history.replaceState({}, "", "/finanzas");
+    localStorage.setItem("last-activity", String(Date.now()));
     setAccessToken(session.access_token);
   }
 
@@ -125,6 +178,7 @@ export default function App() {
     setAccessToken("");
     setIsDemoMode(true);
     setIsCheckingSession(false);
+    localStorage.setItem("last-activity", String(Date.now()));
     window.history.replaceState({}, "", "/finanzas");
   }
 
