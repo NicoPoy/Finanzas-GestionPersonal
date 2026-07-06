@@ -658,32 +658,232 @@
   padding-left: 10px;
 }
 
-.summary-savings-form {
-  align-items: end;
+.card-summary-breakdown {
+  background:
+    radial-gradient(circle at 6% 0%, rgba(214, 168, 79, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(35, 54, 64, 0.94), rgba(22, 38, 46, 0.98));
+  border: 1px solid rgba(93, 182, 198, 0.28);
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(5, 14, 20, 0.22);
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto;
-  margin: 14px 0;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
 }
 
-.card-summary-breakdown {
-  margin-top: 16px;
-  padding: 16px;
+.card-summary-heading-rich {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.card-summary-heading-rich > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.card-summary-heading-rich span,
+.card-summary-preview-title span {
+  color: var(--primary-strong);
+  font-size: 0.72rem;
+  font-weight: 1000;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.card-summary-heading-rich h3,
+.card-summary-preview-title h3 {
+  color: var(--ink-strong);
+  font-size: 1.18rem;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.card-summary-heading-rich p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.card-summary-toggle {
+  border-color: rgba(93, 182, 198, 0.36) !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+.summary-savings-form {
+  align-items: center;
+  background: rgba(13, 27, 34, 0.48);
+  border: 1px solid rgba(93, 182, 198, 0.2);
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(260px, 1fr) minmax(210px, 280px) auto;
+  margin: 0;
+  padding: 14px;
+}
+
+.summary-savings-copy {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+}
+
+.summary-savings-icon {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(214, 168, 79, 0.22), rgba(93, 182, 198, 0.14));
+  border: 1px solid rgba(214, 168, 79, 0.34);
+  border-radius: 12px;
+  color: var(--card-gold-strong);
+  display: inline-flex;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.summary-savings-copy strong {
+  color: var(--ink-strong);
+  display: block;
+  font-size: 1rem;
+}
+
+.summary-savings-copy small,
+.summary-savings-form label span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.summary-savings-form label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.summary-savings-form input {
+  background: rgba(10, 23, 30, 0.58);
+  border-color: rgba(93, 182, 198, 0.28);
+  color: var(--ink-strong);
+  font-size: 1.05rem;
+  font-weight: 1000;
+  min-height: 44px;
+}
+
+.summary-savings-form button {
+  min-height: 44px;
+  white-space: nowrap;
 }
 
 .card-summary-groups {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.card-summary-preview {
+  background: rgba(14, 29, 37, 0.66);
+  border: 1px solid rgba(93, 182, 198, 0.22);
+  border-radius: 13px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.card-summary-preview-current {
+  border-color: rgba(111, 204, 154, 0.32);
+}
+
+.card-summary-preview-next {
+  border-color: rgba(214, 168, 79, 0.34);
+}
+
+.card-summary-preview-title {
+  display: grid;
+  gap: 4px;
+}
+
+.card-summary-mini-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-summary-mini-card {
+  background: rgba(32, 51, 61, 0.72);
+  border: 1px solid rgba(93, 182, 198, 0.2);
+  border-radius: 10px;
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.card-summary-mini-card span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.card-summary-mini-card strong {
+  color: var(--ink-strong);
+  font-size: 1.12rem;
+}
+
+.card-summary-mini-card-saving strong {
+  color: var(--card-gold-strong);
 }
 
 .summary-net-row {
   align-items: center;
-  background: var(--mint-soft);
-  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(76, 153, 111, 0.24), rgba(44, 94, 75, 0.62));
+  border: 1px solid rgba(111, 204, 154, 0.35);
+  border-radius: 11px;
   display: flex;
+  gap: 14px;
   justify-content: space-between;
-  margin-top: 10px;
-  padding: 10px;
+  padding: 13px 14px;
+}
+
+.summary-net-row span {
+  color: rgba(234, 246, 244, 0.92);
+  font-weight: 900;
+}
+
+.summary-net-row strong {
+  color: #eafff3;
+  font-size: 1.16rem;
+}
+
+@media (max-width: 900px) {
+  .card-summary-heading-rich,
+  .summary-savings-form {
+    grid-template-columns: 1fr;
+  }
+
+  .card-summary-heading-rich {
+    align-items: stretch;
+  }
+
+  .card-summary-toggle,
+  .summary-savings-form button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .card-summary-breakdown {
+    padding: 14px;
+  }
+
+  .card-summary-mini-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1100px) {

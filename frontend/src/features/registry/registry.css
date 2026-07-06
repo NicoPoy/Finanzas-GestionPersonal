@@ -1,29 +1,56 @@
+.registry-workspace .detail-panel {
+  background:
+    linear-gradient(180deg, rgba(93, 182, 198, 0.05), transparent 240px),
+    rgba(34, 51, 61, 0.94);
+}
+
+.registry-workspace .section-heading {
+  background:
+    linear-gradient(135deg, rgba(93, 182, 198, 0.12), rgba(117, 199, 154, 0.05)),
+    rgba(16, 26, 34, 0.22);
+  border: 1px solid rgba(73, 104, 116, 0.48);
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.registry-workspace .section-heading svg {
+  color: var(--primary-strong);
+}
+
+.registry-workspace .section-desc {
+  display: block;
+  max-width: 720px;
+}
+
 /* Registry Toolbar & Header Row */
 .registry-header-row {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  background: rgba(16, 26, 34, 0.22);
+  border: 1px solid rgba(73, 104, 116, 0.45);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: auto minmax(0, 1fr);
   margin-bottom: 24px;
-  flex-wrap: wrap;
+  padding: 14px;
 }
 
 /* Premium Year Selector */
 .registry-year-selector {
-  display: flex;
   align-items: center;
-  background: rgba(34, 51, 61, 0.45);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 6px;
+  background: rgba(34, 51, 61, 0.72);
+  border: 1px solid rgba(73, 104, 116, 0.56);
+  border-radius: var(--radius);
+  display: flex;
   gap: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+  padding: 6px;
 }
 
 .year-nav-btn {
   background: var(--surface-soft);
   border: 1px solid rgba(73, 104, 116, 0.35);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--ink);
   width: 36px;
   height: 36px;
@@ -72,26 +99,27 @@
 
 /* Summary Grid & KPI Cards */
 .registry-summary-grid {
-  display: flex;
+  display: grid;
   gap: 12px;
-  margin-bottom: 0;
-  flex-grow: 1;
-  justify-content: flex-end;
+  grid-template-columns: repeat(2, minmax(190px, 1fr));
+  justify-self: end;
+  max-width: 450px;
+  width: 100%;
 }
 
 .registry-stat-card {
-  background: rgba(34, 51, 61, 0.45);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  display: flex;
   align-items: center;
-  justify-content: space-between;
+  background: rgba(34, 51, 61, 0.72);
+  border: 1px solid rgba(73, 104, 116, 0.58);
+  border-radius: var(--radius);
+  display: flex;
   gap: 16px;
-  padding: 10px 18px;
-  min-width: 190px;
-  transition: all 0.22s ease;
-  position: relative;
+  justify-content: space-between;
+  min-width: 0;
   overflow: hidden;
+  padding: 12px 14px;
+  position: relative;
+  transition: all 0.22s ease;
 }
 
 .registry-stat-card:hover {
@@ -150,21 +178,24 @@
 
 /* Month Selector Strip & Month Cards */
 .registry-month-strip {
-  display: grid;
+  display: flex;
   gap: 8px;
-  grid-template-columns: repeat(12, 1fr);
   margin-bottom: 22px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-gutter: stable;
 }
 
 .registry-month-card {
   background: rgba(34, 51, 61, 0.25);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
   color: var(--ink);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  flex: 1 0 118px;
   gap: 4px;
   min-height: 84px;
+  min-width: 118px;
   padding: 10px 8px;
   text-align: left;
   cursor: pointer;
@@ -219,7 +250,9 @@
 }
 
 .registry-month-card.selected {
-  background: var(--primary-soft);
+  background:
+    linear-gradient(180deg, rgba(93, 182, 198, 0.16), rgba(31, 70, 80, 0.74)),
+    var(--primary-soft);
   border-color: var(--primary);
   box-shadow: 0 0 12px rgba(93, 182, 198, 0.15);
 }
@@ -271,25 +304,27 @@
 /* Service Card List */
 .registry-service-list {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .registry-service-card {
-  background: rgba(29, 44, 53, 0.45);
-  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(34, 51, 61, 0.86), rgba(29, 44, 53, 0.72)),
+    var(--surface-soft);
+  border: 1px solid rgba(73, 104, 116, 0.58);
   border-left: 5px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius);
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 14px;
+  padding: 18px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.22s ease;
 }
 
 .registry-service-card:hover {
-  transform: translateY(-1px);
   border-color: var(--left-border, var(--line-strong));
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
 }
 
 .registry-service-paid,
@@ -309,10 +344,10 @@
 }
 
 .registry-service-main {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
+  align-items: start;
+  display: grid;
   gap: 20px;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 /* Category Badge */
@@ -332,7 +367,7 @@
 
 .registry-service-card h3 {
   color: var(--ink-strong);
-  font-size: 1.25rem;
+  font-size: 1.14rem;
   font-weight: 900;
   line-height: 1.2;
   margin: 0;
@@ -342,8 +377,9 @@
   color: var(--muted);
   font-size: 0.88rem;
   margin: 6px 0 0;
-  display: flex;
   align-items: center;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -356,15 +392,15 @@
 /* Status Badge */
 .registry-saved-badge {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-end;
   gap: 4px;
   min-height: 58px;
-  min-width: 190px;
-  padding: 10px 18px;
+  min-width: 170px;
+  padding: 10px 14px;
   transition: all 0.2s ease;
 }
 
@@ -409,15 +445,16 @@
 /* Metadata List */
 .registry-service-meta {
   align-items: center;
+  background: rgba(16, 26, 34, 0.24);
+  border: 1px solid rgba(73, 104, 116, 0.38);
+  border-radius: var(--radius-sm);
   color: var(--muted);
   display: flex;
   flex-wrap: wrap;
   font-size: 0.76rem;
   font-weight: 750;
   gap: 8px 18px;
-  border-top: 1px solid rgba(73, 104, 116, 0.15);
-  padding-top: 12px;
-  margin-top: 4px;
+  padding: 10px 12px;
 }
 
 .registry-service-meta span {
@@ -432,12 +469,12 @@
 
 /* Status Controls (Segmented Control style) */
 .registry-status-group {
-  background: rgba(16, 26, 34, 0.4);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 5px;
+  background: rgba(16, 26, 34, 0.36);
+  border: 1px solid rgba(73, 104, 116, 0.55);
+  border-radius: var(--radius);
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  padding: 6px;
 }
 
 .registry-status-group-two > button {
@@ -453,9 +490,10 @@
   border: 0;
   border-radius: var(--radius-sm);
   color: var(--muted);
-  font-weight: 900;
-  min-height: 36px;
   font-size: 0.84rem;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -469,21 +507,21 @@
 }
 
 .registry-status-button.active.success {
-  background: var(--mint);
+  background: rgba(117, 199, 154, 0.86);
   border-color: transparent;
   color: #123023;
   box-shadow: 0 4px 12px rgba(117, 199, 154, 0.2);
 }
 
 .registry-status-button.active.warning {
-  background: var(--amber);
+  background: rgba(224, 184, 106, 0.9);
   border-color: transparent;
   color: #2e230f;
   box-shadow: 0 4px 12px rgba(224, 184, 106, 0.2);
 }
 
 .registry-status-button.active.pending {
-  background: var(--danger);
+  background: rgba(224, 122, 122, 0.88);
   border-color: transparent;
   color: #3d1b1e;
   box-shadow: 0 4px 12px rgba(224, 122, 122, 0.2);
@@ -491,38 +529,31 @@
 
 /* Responsive Styles */
 @media (max-width: 1100px) {
-  .registry-month-strip {
-    grid-template-columns: repeat(6, 1fr);
+  .registry-header-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .registry-summary-grid {
+    justify-self: stretch;
+    max-width: none;
   }
 }
 
 @media (max-width: 760px) {
-  .registry-header-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .registry-year-selector {
     justify-content: center;
   }
 
   .registry-summary-grid {
     grid-template-columns: 1fr;
-    max-width: none;
-    margin-top: 10px;
   }
 
   .registry-stat-card {
     min-width: 0;
   }
 
-  .registry-month-strip {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
   .registry-service-main {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
   }
 
@@ -533,11 +564,5 @@
 
   .registry-status-group {
     flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .registry-month-strip {
-    grid-template-columns: repeat(3, 1fr);
   }
 }

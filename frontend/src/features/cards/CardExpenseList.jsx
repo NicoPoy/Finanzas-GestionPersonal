@@ -412,38 +412,53 @@ export default function CardExpenseList({
         </div>
       ) : null}
 
-      {!showNextMonthTable ? (
-        <form className="summary-savings-form" onSubmit={saveSummarySavings}>
-          <label>
-            Ahorros
-            <MoneyInput
-              value={summarySavingsDraft}
-              onValueChange={setSummarySavingsDraft}
-            />
-          </label>
-          <button disabled={!canSaveSummarySavings} type="submit">
-            Guardar
-          </button>
-        </form>
-      ) : null}
-
       <section className="card-summary-breakdown">
-        <div className="card-summary-heading">
-          <span>Resumen</span>
+        <div className="card-summary-heading card-summary-heading-rich">
+          <div>
+            <span>Resumen</span>
+            <h3>Balance de la tarjeta</h3>
+            <p>Controla el neto del resumen, el ahorro aplicado y la proyeccion del proximo mes.</p>
+          </div>
           <button
-            className="summary-toggle-button"
+            className={`summary-toggle-button card-summary-toggle ${showNextMonthSummary ? "active" : ""}`}
             onClick={() => setShowNextMonthSummary((current) => !current)}
             type="button"
           >
             {showNextMonthSummary ? "Ocultar proximo mes" : "Mostrar proximo mes"}
           </button>
         </div>
+
+        {!showNextMonthTable ? (
+          <form className="summary-savings-form" onSubmit={saveSummarySavings}>
+            <div className="summary-savings-copy">
+              <span className="summary-savings-icon">
+                <PiggyBank size={18} />
+              </span>
+              <div>
+                <strong>Ahorro aplicado</strong>
+                <small>Se descuenta del neto final de este resumen.</small>
+              </div>
+            </div>
+            <label>
+              <span>Monto</span>
+              <MoneyInput
+                value={summarySavingsDraft}
+                onValueChange={setSummarySavingsDraft}
+              />
+            </label>
+            <button disabled={!canSaveSummarySavings} type="submit">
+              Guardar ahorro
+            </button>
+          </form>
+        ) : null}
+
         <div className="card-summary-groups">
           <SummaryGroup
             variant="current"
             title="Resumen de este mes"
             grossLabel="Neto sin ahorros"
             grossTotal={currentMonthGrossTotal}
+            savingsTotal={summarySavings}
             netLabel="Neto con ahorros"
             netTotal={currentMonthNetTotal}
           />
@@ -453,6 +468,7 @@ export default function CardExpenseList({
               title="Resumen del proximo mes"
               grossLabel="Neto sin ahorros"
               grossTotal={nextMonthGrossTotal}
+              savingsTotal={summarySavings}
               netLabel="Neto con ahorros"
               netTotal={nextMonthNetTotal}
             />
@@ -485,13 +501,22 @@ function getPreviewSummarySavingsLimit(card) {
   return card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
 }
 
-function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, title, variant }) {
+function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, savingsTotal = 0, title, variant }) {
   return (
-    <article className={`card-summary-group card-summary-group-${variant}`}>
-      <h3>{title}</h3>
-      <div>
-        <span>{grossLabel}</span>
-        <strong>{currency.format(grossTotal)}</strong>
+    <article className={`card-summary-preview card-summary-preview-${variant}`}>
+      <div className="card-summary-preview-title">
+        <span>{variant === "next" ? "Proyeccion" : "Actual"}</span>
+        <h3>{title}</h3>
+      </div>
+      <div className="card-summary-mini-grid">
+        <div className="card-summary-mini-card">
+          <span>{grossLabel}</span>
+          <strong>{currency.format(grossTotal)}</strong>
+        </div>
+        <div className="card-summary-mini-card card-summary-mini-card-saving">
+          <span>Ahorros aplicados</span>
+          <strong>-{currency.format(savingsTotal)}</strong>
+        </div>
       </div>
       <div className="summary-net-row">
         <span>{netLabel}</span>
