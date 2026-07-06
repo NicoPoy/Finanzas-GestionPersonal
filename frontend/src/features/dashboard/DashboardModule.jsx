@@ -85,9 +85,9 @@ export default function DashboardModule({
           value={currency.format(nextMonthSummary.cardExpenses)}
         />
         <DashboardMetric
-          detail={`Departamento, suscripciones, actividades y extras: ${fixedPercent}% del ingreso.`}
+          detail={`Fijos + compras mensuales: ${fixedPercent}% del ingreso.`}
           icon={<Home size={21} />}
-          label="Gastos fijos"
+          label="Gastos obligatorios"
           tone="fixed"
           value={currency.format(nextMonthSummary.fixedExpenses)}
         />
@@ -170,7 +170,7 @@ export default function DashboardModule({
 
           <div className="dashboard-mini-breakdown">
             <BreakdownRow label="Tarjetas" value={nextMonthSummary.cardExpenses} />
-            <BreakdownRow label="Gastos fijos" value={nextMonthSummary.fixedExpenses} />
+            <BreakdownRow label="Gastos obligatorios" value={nextMonthSummary.fixedExpenses} />
             <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} />
           </div>
         </article>

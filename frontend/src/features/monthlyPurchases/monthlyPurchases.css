@@ -1,0 +1,232 @@
+.monthly-purchases-view {
+  display: grid;
+  gap: 18px;
+}
+
+.monthly-purchases-hero,
+.monthly-purchases-panel,
+.monthly-summary-card {
+  background: rgba(34, 51, 61, 0.94);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+.monthly-purchases-hero {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 22px;
+}
+
+.monthly-purchases-hero span,
+.monthly-purchases-heading span,
+.monthly-summary-card span {
+  color: var(--primary-strong);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.monthly-purchases-hero h2,
+.monthly-purchases-heading h3 {
+  color: var(--ink-strong);
+  margin: 5px 0 0;
+}
+
+.monthly-purchases-hero p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 8px 0 0;
+  max-width: 780px;
+}
+
+.monthly-purchases-hero svg,
+.monthly-purchases-heading svg {
+  color: var(--primary-strong);
+}
+
+.monthly-purchases-summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.monthly-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.monthly-summary-card strong {
+  color: var(--ink-strong);
+  font-size: 1.35rem;
+}
+
+.monthly-summary-success strong {
+  color: var(--mint);
+}
+
+.monthly-summary-warning strong {
+  color: var(--amber);
+}
+
+.monthly-purchases-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.monthly-purchases-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.monthly-purchase-form {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 1.7fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(120px, 0.8fr) minmax(160px, 1.2fr) auto;
+  align-items: end;
+}
+
+.monthly-purchase-form button,
+.monthly-primary-button {
+  align-items: center;
+  background: var(--primary);
+  border-radius: var(--radius);
+  color: #10242b;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.monthly-purchase-form button:hover,
+.monthly-primary-button:hover {
+  background: var(--primary-strong);
+}
+
+.monthly-secondary-button {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.monthly-purchases-list {
+  display: grid;
+  gap: 10px;
+}
+
+.monthly-purchase-row {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid rgba(73, 104, 116, 0.62);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  padding: 13px;
+}
+
+.monthly-purchase-row.purchased {
+  border-left-color: var(--mint);
+  opacity: 0.76;
+}
+
+.monthly-check-button {
+  align-items: center;
+  background: rgba(93, 182, 198, 0.1);
+  border: 1px solid rgba(93, 182, 198, 0.28);
+  border-radius: var(--radius-sm);
+  color: var(--mint);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.monthly-row-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.monthly-row-copy strong {
+  color: var(--ink-strong);
+}
+
+.monthly-row-copy small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.monthly-purchase-row b {
+  color: var(--mint);
+  white-space: nowrap;
+}
+
+.monthly-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.monthly-purchase-row.editing {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.monthly-edit-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1.5fr 1fr 1fr 0.8fr 1.2fr;
+}
+
+.monthly-purchases-empty {
+  align-items: center;
+  background: #1a2932;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .monthly-purchases-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monthly-purchase-form,
+  .monthly-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .monthly-purchases-hero,
+  .monthly-purchases-heading,
+  .monthly-purchase-row,
+  .monthly-purchase-row.editing {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .monthly-purchases-summary,
+  .monthly-purchase-form,
+  .monthly-edit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -63,6 +63,16 @@ class OtherIncome(BaseModel):
     amount: float
 
 
+class MonthlyPurchase(BaseModel):
+    id: str
+    name: str
+    amount: float
+    category: str = "alimentos"
+    priority: str = "media"
+    note: str = ""
+    purchased: bool = False
+
+
 class CardFixedCategory(BaseModel):
     id: str
     name: str
@@ -170,6 +180,7 @@ class FrontendFinanceProfile(BaseModel):
     registrationDate: str = ""
     salary: float = 0
     otherIncomes: list[OtherIncome] = Field(default_factory=list)
+    monthlyPurchases: list[MonthlyPurchase] = Field(default_factory=list)
     cardFixedCategories: list[CardFixedCategory] = Field(default_factory=list)
     debitCards: list[str] = Field(default_factory=list)
     paymentDetails: dict[str, PaymentDetail] = Field(default_factory=dict)

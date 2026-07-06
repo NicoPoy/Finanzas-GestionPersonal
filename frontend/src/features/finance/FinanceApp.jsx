@@ -14,8 +14,8 @@ import {
   Settings,
   Sparkles,
   Star,
-  NotebookPen,
   Menu,
+  ShoppingBasket,
 } from "lucide-react";
 import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
@@ -47,7 +47,7 @@ import RegistryModule from "../registry/RegistryModule.jsx";
 import SettingsModule from "../settings/SettingsModule.jsx";
 import ExtraordinariosModule from "../extraordinary/ExtraordinariosModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
-import NotesModule from "../notes/NotesModule.jsx";
+import MonthlyPurchasesModule from "../monthlyPurchases/MonthlyPurchasesModule.jsx";
 import "../../styles/shell.css";
 
 const MODULE_ROUTES = {
@@ -55,7 +55,7 @@ const MODULE_ROUTES = {
   "/finanzas": "dashboard",
   "/finanzas/dashboard": "dashboard",
   "/finanzas/registro": "registry",
-  "/finanzas/notas": "notes",
+  "/finanzas/compras-mensuales": "monthlyPurchases",
   "/finanzas/departamento": "department",
   "/finanzas/suscripciones": "subscriptions",
   "/finanzas/actividades": "activities",
@@ -296,9 +296,10 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const subscriptionsTotal = data.subscriptionExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const activitiesTotal = data.activityExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const extrasTotal = data.extraExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const monthlyPurchasesTotal = data.monthlyPurchases.reduce((sum, purchase) => sum + purchase.amount, 0);
   const otherIncomesTotal = buildOtherIncomesTotal(data);
   const incomeTotal = data.salary + otherIncomesTotal;
-  const fixedExpensesTotal = departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal;
+  const fixedExpensesTotal = departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal + monthlyPurchasesTotal;
   const currentPaymentMonthTotal = currentPaymentCardTotal + fixedExpensesTotal;
   const remainingTotal = incomeTotal - currentPaymentMonthTotal;
   const currentPaymentMonth = getCalendarMonth(0);
@@ -749,6 +750,44 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         },
         ...current[storageKey],
       ],
+    }));
+  }
+
+  function addMonthlyPurchase(purchase) {
+    setData((current) => ({
+      ...current,
+      monthlyPurchases: [
+        {
+          ...purchase,
+          id: crypto.randomUUID(),
+        },
+        ...current.monthlyPurchases,
+      ],
+    }));
+  }
+
+  function updateMonthlyPurchase(purchaseId, updates) {
+    setData((current) => ({
+      ...current,
+      monthlyPurchases: current.monthlyPurchases.map((purchase) =>
+        purchase.id === purchaseId ? { ...purchase, ...updates } : purchase,
+      ),
+    }));
+  }
+
+  function toggleMonthlyPurchase(purchaseId) {
+    setData((current) => ({
+      ...current,
+      monthlyPurchases: current.monthlyPurchases.map((purchase) =>
+        purchase.id === purchaseId ? { ...purchase, purchased: !purchase.purchased } : purchase,
+      ),
+    }));
+  }
+
+  function removeMonthlyPurchase(purchaseId) {
+    setData((current) => ({
+      ...current,
+      monthlyPurchases: current.monthlyPurchases.filter((purchase) => purchase.id !== purchaseId),
     }));
   }
 
@@ -1226,7 +1265,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     extraordinary: "Gastos Extraordinarios",
     extras: "Extras",
     history: "Historial de Pagos",
-    notes: "Notas de Compras",
+    monthlyPurchases: "Compras Mensuales",
     registry: "Registro de Pagos",
     settings: "Configuracion",
     subscriptions: "Suscripciones",
@@ -1238,7 +1277,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       items: [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "registry", label: "Registro de Pagos", icon: ListChecks },
-        { id: "notes", label: "Notas de Compras", icon: NotebookPen },
+        { id: "monthlyPurchases", label: "Compras Mensuales", icon: ShoppingBasket },
       ],
     },
     {
@@ -1423,8 +1462,14 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           services={registryServices}
           onSetPaymentStatus={setPaymentStatus}
         />
-      ) : activeModule === "notes" ? (
-        <NotesModule />
+      ) : activeModule === "monthlyPurchases" ? (
+        <MonthlyPurchasesModule
+          onAdd={addMonthlyPurchase}
+          onRemove={removeMonthlyPurchase}
+          onTogglePurchased={toggleMonthlyPurchase}
+          onUpdate={updateMonthlyPurchase}
+          purchases={data.monthlyPurchases}
+        />
       ) : activeModule === "history" ? (
         <HistoryModule history={data.paymentHistory} />
       ) : activeModule === "extraordinary" ? (
@@ -1601,9 +1646,22 @@ function buildTopDashboardExpenses(banks, data) {
     ...mapTopSimpleExpenses(data.activityExpenses, "Actividades"),
     ...mapTopSimpleExpenses(data.extraExpenses, "Extras"),
     ...mapTopSimpleExpenses(data.extraordinaryExpenses, "Extraordinarios"),
+    ...mapTopMonthlyPurchases(data.monthlyPurchases),
   ];
 
   return [...cardExpenses, ...simpleExpenses].sort((a, b) => b.amount - a.amount).slice(0, 15);
+}
+
+function mapTopMonthlyPurchases(purchases) {
+  return (purchases ?? [])
+    .map((purchase) => ({
+      amount: Number(purchase.amount) || 0,
+      category: "Compras mensuales",
+      id: `monthly-${purchase.id}`,
+      name: purchase.name || "Compra sin nombre",
+      source: purchase.category || "Compra obligatoria",
+    }))
+    .filter((purchase) => purchase.amount > 0);
 }
 
 function mapTopSimpleExpenses(expenses, category) {

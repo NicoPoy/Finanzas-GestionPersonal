@@ -9,6 +9,7 @@ export function normalizeData(data) {
     registrationDate: normalizeRegistrationDate(data.registrationDate ?? INITIAL_DATA.registrationDate),
     salary: Number(data.salary) || 0,
     otherIncomes: normalizeOtherIncomes(data.otherIncomes ?? INITIAL_DATA.otherIncomes),
+    monthlyPurchases: normalizeMonthlyPurchases(data.monthlyPurchases ?? INITIAL_DATA.monthlyPurchases),
     cardFixedCategories: normalizeCardFixedCategories(data.cardFixedCategories ?? INITIAL_DATA.cardFixedCategories),
     debitCards: normalizeDebitCards(data.debitCards ?? INITIAL_DATA.debitCards),
     paymentDetails: normalizePaymentDetails(data.paymentDetails ?? INITIAL_DATA.paymentDetails),
@@ -96,6 +97,19 @@ function normalizeOtherIncomes(incomes) {
     id: String(income.id ?? crypto.randomUUID()),
     origin: String(income.origin ?? "").trim(),
   }));
+}
+
+function normalizeMonthlyPurchases(purchases) {
+  return (Array.isArray(purchases) ? purchases : []).map((purchase) => ({
+    ...purchase,
+    amount: Number(purchase.amount) || 0,
+    category: String(purchase.category ?? "alimentos"),
+    id: String(purchase.id ?? crypto.randomUUID()),
+    name: String(purchase.name ?? "").trim(),
+    note: String(purchase.note ?? ""),
+    priority: String(purchase.priority ?? "media"),
+    purchased: Boolean(purchase.purchased),
+  })).filter((purchase) => purchase.name);
 }
 
 function normalizeAguinaldo(aguinaldo) {
