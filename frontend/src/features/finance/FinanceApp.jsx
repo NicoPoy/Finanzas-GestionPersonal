@@ -368,6 +368,23 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     () => buildUpcomingCardExpenseSummary(banksWithTotals, data.paymentHistory, currentPaymentPeriod),
     [banksWithTotals, currentPaymentPeriod, data.paymentHistory],
   );
+  const topDashboardExpenses = useMemo(
+    () => buildTopDashboardExpenses(banksWithTotals, data),
+    [banksWithTotals, data],
+  );
+  const disappearingCardExpenses = useMemo(
+    () => buildDisappearingCardExpenses(banksWithTotals),
+    [banksWithTotals],
+  );
+  const accountFlow = useMemo(
+    () =>
+      buildAccountFlow({
+        debitTransfers: currentDebitTransfers,
+        incomeTotal,
+        nextMonthSummary,
+      }),
+    [currentDebitTransfers, incomeTotal, nextMonthSummary],
+  );
   const cardFixedExpensesByCategory = useMemo(
     () => buildCardFixedExpensesByCategory(banksWithTotals, data.cardFixedCategories),
     [banksWithTotals, data.cardFixedCategories],
@@ -1332,12 +1349,15 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         <section className="dashboard-viewport">
           {activeModule === "dashboard" ? (
         <DashboardModule
+          accountFlow={accountFlow}
           currentMonthSummary={currentMonthSummary}
           debitTransfers={currentDebitTransfers}
+          disappearingExpenses={disappearingCardExpenses}
           dueItems={currentDueItems}
           history={data.paymentHistory}
           monthZeroDate={data.monthZeroDate}
           nextMonthSummary={nextMonthSummary}
+          topExpenses={topDashboardExpenses}
           upcomingCardExpenses={upcomingCardExpenses}
         />
       ) : activeModule === "cards" ? (
@@ -1559,5 +1579,81 @@ function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod
       };
     }),
   );
+}
+
+function buildTopDashboardExpenses(banks, data) {
+  const cardExpenses = banks.flatMap((bank) =>
+    bank.cards.flatMap((card) =>
+      card.expenses
+        .map((expense) => ({
+          amount: getExpenseAmountForStatementOffset(expense, 0),
+          category: "Tarjetas",
+          id: `card-${expense.id}`,
+          name: expense.origin,
+          source: `${card.name} - ${bank.name}`,
+        }))
+        .filter((expense) => expense.amount > 0),
+    ),
+  );
+  const simpleExpenses = [
+    ...mapTopSimpleExpenses(data.departmentExpenses, "Departamento"),
+    ...mapTopSimpleExpenses(data.subscriptionExpenses, "Suscripciones"),
+    ...mapTopSimpleExpenses(data.activityExpenses, "Actividades"),
+    ...mapTopSimpleExpenses(data.extraExpenses, "Extras"),
+    ...mapTopSimpleExpenses(data.extraordinaryExpenses, "Extraordinarios"),
+  ];
+
+  return [...cardExpenses, ...simpleExpenses].sort((a, b) => b.amount - a.amount).slice(0, 15);
+}
+
+function mapTopSimpleExpenses(expenses, category) {
+  return (expenses ?? [])
+    .map((expense) => ({
+      amount: Number(expense.amount) || 0,
+      category,
+      id: `${category}-${expense.id}`,
+      name: expense.name || expense.origin || "Gasto sin nombre",
+      source: expense.paymentCard ? `Debita de ${expense.paymentCard}` : category,
+    }))
+    .filter((expense) => expense.amount > 0);
+}
+
+function buildDisappearingCardExpenses(banks) {
+  return banks
+    .flatMap((bank) =>
+      bank.cards.flatMap((card) =>
+        card.expenses
+          .filter((expense) => !expense.isFixed)
+          .map((expense) => ({
+            amount: getExpenseAmountForStatementOffset(expense, 0),
+            card: `${card.name} - ${bank.name}`,
+            id: expense.id,
+            installments: Number(expense.installments) || 0,
+            name: expense.origin,
+          }))
+          .filter((expense) => expense.amount > 0 && expense.installments <= 1),
+      ),
+    )
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function buildAccountFlow({ debitTransfers, incomeTotal, nextMonthSummary }) {
+  const transferTotal = debitTransfers.reduce((sum, account) => sum + account.pendingTransfer, 0);
+  const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
+
+  return {
+    availableAfterPlannedExpenses: nextMonthSummary.remaining,
+    incomeTotal,
+    pendingDebitTotal,
+    transferTotal,
+    afterTransfers: incomeTotal - transferTotal,
+    accounts: debitTransfers.map((account) => ({
+      account: account.account,
+      debited: account.debited,
+      pendingDebit: account.pendingDebit,
+      pendingTransfer: account.pendingTransfer,
+      total: account.total,
+    })),
+  };
 }
 

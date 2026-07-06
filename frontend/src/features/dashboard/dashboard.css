@@ -202,6 +202,205 @@
   grid-template-columns: minmax(0, 1fr) minmax(330px, 0.72fr);
 }
 
+.dashboard-insights-grid {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.top-expenses-panel {
+  grid-column: 1 / -1;
+}
+
+.dashboard-health-panel {
+  gap: 16px;
+}
+
+.health-light {
+  background: rgba(16, 26, 34, 0.44);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+}
+
+.health-light strong {
+  color: var(--ink-strong);
+  font-size: 1.35rem;
+}
+
+.health-light span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.health-light-success {
+  border-color: rgba(117, 199, 154, 0.35);
+}
+
+.health-light-success strong {
+  color: var(--mint);
+}
+
+.health-light-warning {
+  border-color: rgba(224, 184, 106, 0.38);
+}
+
+.health-light-warning strong {
+  color: var(--amber);
+}
+
+.health-light-danger {
+  border-color: rgba(224, 122, 122, 0.4);
+}
+
+.health-light-danger strong {
+  color: var(--danger);
+}
+
+.insight-total-line {
+  align-items: center;
+  background: rgba(16, 26, 34, 0.36);
+  border: 1px solid rgba(73, 104, 116, 0.56);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.insight-total-line span,
+.flow-stat span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.insight-total-line strong {
+  color: var(--primary-strong);
+  white-space: nowrap;
+}
+
+.insight-list,
+.flow-account-list {
+  display: grid;
+  gap: 9px;
+}
+
+.top-expenses-list {
+  grid-auto-flow: column;
+  grid-template-rows: repeat(5, minmax(0, auto));
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.top-expenses-list .insight-row {
+  display: grid;
+  grid-template-columns: 34px minmax(190px, 1fr) 62px 118px;
+  min-width: 470px;
+}
+
+.insight-row,
+.flow-account-row {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid rgba(73, 104, 116, 0.58);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.insight-row em {
+  align-items: center;
+  background: var(--primary-soft);
+  border-radius: 999px;
+  color: var(--primary-strong);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+  height: 28px;
+  justify-content: center;
+  min-width: 28px;
+  padding: 0 8px;
+}
+
+.insight-row span,
+.flow-account-row span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.insight-row strong,
+.flow-account-row strong {
+  color: var(--ink-strong);
+  font-size: 0.9rem;
+}
+
+.insight-row small,
+.flow-account-row small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.insight-row b,
+.flow-account-row b {
+  color: var(--mint);
+  white-space: nowrap;
+}
+
+.insight-percent {
+  background: rgba(93, 182, 198, 0.1);
+  border: 1px solid rgba(93, 182, 198, 0.22);
+  border-radius: 999px;
+  color: var(--primary-strong);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 950;
+  justify-self: end;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.flow-summary-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.flow-stat {
+  background: rgba(16, 26, 34, 0.36);
+  border: 1px solid rgba(73, 104, 116, 0.56);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 5px;
+  min-height: 78px;
+  padding: 10px;
+}
+
+.flow-stat strong {
+  color: var(--ink-strong);
+  font-size: 1rem;
+}
+
+.flow-stat-success strong {
+  color: var(--mint);
+}
+
+.flow-stat-warning strong {
+  color: var(--amber);
+}
+
 .dashboard-current-section {
   background:
     linear-gradient(180deg, rgba(93, 182, 198, 0.08), rgba(34, 51, 61, 0.42)),
@@ -939,6 +1138,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .dashboard-insights-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .dashboard-current-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -962,6 +1165,8 @@
   .dashboard-formula,
   .dashboard-current-header,
   .card-payment-row,
+  .insight-row,
+  .flow-account-row,
   .settled-expense-row,
   .upcoming-card-header,
   .upcoming-expense-row,
@@ -1000,5 +1205,24 @@
 
   .due-status-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .top-expenses-list {
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    overflow-x: visible;
+  }
+
+  .top-expenses-list .insight-row {
+    display: flex;
+    min-width: 0;
+  }
+
+  .insight-percent {
+    justify-self: auto;
   }
 }

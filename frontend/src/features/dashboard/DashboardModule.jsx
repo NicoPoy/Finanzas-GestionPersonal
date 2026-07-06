@@ -18,12 +18,15 @@ import { currency } from "../../utils/formatters.js";
 import "./dashboard.css";
 
 export default function DashboardModule({
+  accountFlow,
   currentMonthSummary,
   debitTransfers = [],
+  disappearingExpenses = [],
   dueItems,
   history,
   monthZeroDate,
   nextMonthSummary,
+  topExpenses = [],
   upcomingCardExpenses = [],
 }) {
   const currentMonthPeriod = getSummaryPeriod(currentMonthSummary);
@@ -41,6 +44,8 @@ export default function DashboardModule({
   const totalPercent = getPercent(nextMonthSummary.totalExpenses, totalIncome);
   const transferTotal = debitTransfers.reduce((sum, account) => sum + account.pendingTransfer, 0);
   const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
+  const topExpensesTotal = topExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const disappearingTotal = disappearingExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
     <section className="dashboard-view">
@@ -140,13 +145,18 @@ export default function DashboardModule({
           </div>
         </article>
 
-        <article className="dashboard-panel">
+        <article className="dashboard-panel dashboard-health-panel">
           <div className="dashboard-panel-heading">
             <div>
-              <span className="dashboard-panel-kicker">Presion del mes</span>
-              <h3>Uso del sueldo</h3>
+              <span className="dashboard-panel-kicker">Semaforo financiero</span>
+              <h3>{health.label}</h3>
             </div>
             <TrendingDown size={22} />
+          </div>
+
+          <div className={`health-light health-light-${health.tone}`}>
+            <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+            <span>{health.description}</span>
           </div>
 
           <div className="salary-meter" aria-label={`Uso del sueldo: ${totalPercent}%`}>
@@ -163,6 +173,104 @@ export default function DashboardModule({
             <BreakdownRow label="Gastos fijos" value={nextMonthSummary.fixedExpenses} />
             <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} />
           </div>
+        </article>
+      </section>
+
+      <section className="dashboard-insights-grid">
+        <article className="dashboard-panel top-expenses-panel">
+          <div className="dashboard-panel-heading">
+            <div>
+              <span className="dashboard-panel-kicker">Top gastos</span>
+              <h3>Lo que mas pesa</h3>
+            </div>
+            <FileText size={22} />
+          </div>
+          <div className="insight-total-line">
+            <span>Top 15 del proximo resumen</span>
+            <strong>{currency.format(topExpensesTotal)}</strong>
+          </div>
+          {topExpenses.length ? (
+            <div className="insight-list top-expenses-list">
+              {topExpenses.map((expense, index) => (
+                <div className="insight-row" key={expense.id}>
+                  <em>{index + 1}</em>
+                  <span>
+                    <strong>{expense.name}</strong>
+                    <small>
+                      {expense.category} - {expense.source}
+                    </small>
+                  </span>
+                  <i className="insight-percent">{getPercent(expense.amount, totalIncome)}%</i>
+                  <b>{currency.format(expense.amount)}</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="panel-empty">No hay gastos para ordenar todavia.</p>
+          )}
+        </article>
+
+        <article className="dashboard-panel account-flow-panel">
+          <div className="dashboard-panel-heading">
+            <div>
+              <span className="dashboard-panel-kicker">Flujo por cuenta</span>
+              <h3>Ruta del dinero</h3>
+            </div>
+            <WalletCards size={22} />
+          </div>
+          <div className="flow-summary-grid">
+            <FlowStat label="Ingresos" value={accountFlow?.incomeTotal ?? 0} />
+            <FlowStat label="A transferir" value={accountFlow?.transferTotal ?? 0} tone="warning" />
+            <FlowStat label="Despues de transferir" value={accountFlow?.afterTransfers ?? 0} tone="success" />
+          </div>
+          {accountFlow?.accounts?.length ? (
+            <div className="flow-account-list">
+              {accountFlow.accounts.map((account) => (
+                <div className="flow-account-row" key={account.account}>
+                  <span>
+                    <strong>{account.account}</strong>
+                    <small>
+                      Transferir {currency.format(account.pendingTransfer)} - pendiente debito{" "}
+                      {currency.format(account.pendingDebit)}
+                    </small>
+                  </span>
+                  <b>{currency.format(account.total)}</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="panel-empty">No hay cuentas con transferencias pendientes.</p>
+          )}
+        </article>
+
+        <article className="dashboard-panel disappearing-panel">
+          <div className="dashboard-panel-heading">
+            <div>
+              <span className="dashboard-panel-kicker">Se liberan</span>
+              <h3>Gastos que desaparecen</h3>
+            </div>
+            <CreditCard size={22} />
+          </div>
+          <div className="insight-total-line">
+            <span>Alivio estimado siguiente resumen</span>
+            <strong>{currency.format(disappearingTotal)}</strong>
+          </div>
+          {disappearingExpenses.length ? (
+            <div className="insight-list">
+              {disappearingExpenses.slice(0, 6).map((expense) => (
+                <div className="insight-row" key={expense.id}>
+                  <em>OK</em>
+                  <span>
+                    <strong>{expense.name}</strong>
+                    <small>{expense.card} - ultima cuota o compra unica</small>
+                  </span>
+                  <b>{currency.format(expense.amount)}</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="panel-empty">No hay cuotas que desaparezcan en el proximo pago.</p>
+          )}
         </article>
       </section>
 
@@ -392,6 +500,15 @@ function StatusTile({ label, tone = "neutral", value }) {
     <div className={`status-tile status-tile-${tone}`}>
       <strong>{value}</strong>
       <span>{label}</span>
+    </div>
+  );
+}
+
+function FlowStat({ label, tone = "neutral", value }) {
+  return (
+    <div className={`flow-stat flow-stat-${tone}`}>
+      <span>{label}</span>
+      <strong>{currency.format(value)}</strong>
     </div>
   );
 }
