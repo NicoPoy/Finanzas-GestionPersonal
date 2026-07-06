@@ -14,34 +14,20 @@ import "./styles/components.css";
 const FinanceApp = React.lazy(() => import("./features/finance/FinanceApp.jsx"));
 
 // App decide si mostrar login o la aplicacion autenticada.
-// El token queda en localStorage y expira a las 24 horas.
+// En esta app solo se utiliza el "dark mode".
 export default function App() {
   const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(Boolean(accessToken));
-  const [theme, setTheme] = useState(() => {
-    const storedTheme = window.localStorage.getItem("finanzas-theme");
-
-    if (storedTheme === "dark" || storedTheme === "light") {
-      return storedTheme;
-    }
-
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+  const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("finanzas-theme", theme);
-  }, [theme]);
+    document.documentElement.dataset.theme = "dark";
+    window.localStorage.setItem("finanzas-theme", "dark");
+  }, []);
 
   function toggleTheme() {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-
-    setTheme(nextTheme);
-
-    if (accessToken) {
-      saveThemePreference(accessToken, nextTheme);
-    }
+    // Solo se utiliza el modo oscuro (no-op)
   }
 
   function closeSession() {
@@ -74,8 +60,8 @@ export default function App() {
           throw new Error("Sesion invalida");
         }
 
-        const user = await response.json();
-        setTheme(user.dark_mode ? "dark" : "light");
+        await response.json();
+        setTheme("dark");
       } catch {
         closeSession();
       } finally {
@@ -129,7 +115,7 @@ export default function App() {
     const session = await response.json();
     storeAccessToken(session.access_token);
     setIsDemoMode(false);
-    setTheme(session.dark_mode ? "dark" : "light");
+    setTheme("dark");
     window.history.replaceState({}, "", "/finanzas");
     setAccessToken(session.access_token);
   }
@@ -186,21 +172,6 @@ export default function App() {
       />
     </Suspense>
   );
-}
-
-async function saveThemePreference(accessToken, theme) {
-  try {
-    await fetch(apiUrl("/api/auth/theme"), {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ dark_mode: theme === "dark" }),
-    });
-  } catch {
-    // La preferencia local queda aplicada aunque falle el guardado remoto.
-  }
 }
 
 async function getApiErrorMessage(response) {

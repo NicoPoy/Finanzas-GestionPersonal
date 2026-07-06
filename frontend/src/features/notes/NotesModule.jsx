@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { apiUrl } from "../../services/platform.js";
 import "./notes.css";
-import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 
 const UNIT_OPTIONS = ["unidad", "kg", "g", "lt", "ml", "pack"];
 const CATEGORY_OPTIONS = ["general", "comida", "limpieza", "higiene", "mascota", "farmacia"];
@@ -340,7 +339,6 @@ export default function NotesModule({ accessToken, isDemoMode = false, onBackToH
             >
               <ArrowLeft size={16} />
             </button>
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           </div>
           <div className="notes-title">
             <NotebookPen size={22} />

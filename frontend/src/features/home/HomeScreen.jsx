@@ -1,6 +1,5 @@
 import React from "react";
 import { LogOut, NotebookPen, Wallet } from "lucide-react";
-import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 
 export default function HomeScreen({ isDemoMode = false, onOpenFinanzas, onOpenNotas, onLogout, onToggleTheme, theme }) {
   return (
@@ -12,7 +11,6 @@ export default function HomeScreen({ isDemoMode = false, onOpenFinanzas, onOpenN
             <p>Finanzas personales</p>
           </div>
           <div className="home-header-actions">
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
             <button
               aria-label={isDemoMode ? "Salir del modo demo" : "Cerrar sesion"}
               className="header-action-button home-logout"
