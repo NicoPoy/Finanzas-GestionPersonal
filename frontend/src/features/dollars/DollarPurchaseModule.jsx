@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Banknote, Plus, RefreshCw } from "lucide-react";
 import { currency } from "../../utils/formatters.js";
+import "./dollars.css";
 
 const DOLLAR_API_URL = "https://dolarapi.com/v1/dolares";
 

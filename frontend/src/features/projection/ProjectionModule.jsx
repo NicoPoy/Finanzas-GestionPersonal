@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { BarChart3, ReceiptText } from "lucide-react";
 import {
   buildCardMonthlyTotalForPaymentMonth,
@@ -7,29 +7,38 @@ import {
   getStatementOffsetForPaymentMonth,
 } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
+import "./projection.css";
 
 // Pantalla de proyeccion: calcula cuanto se pagara en tarjetas por mes de sueldo.
 export default function ProjectionModule({ banks }) {
-  const months = getProjectionMonths(7);
-  const projectionRows = banks.flatMap((bank) =>
-    bank.cards
-      .filter((card) => card.expenses.length)
-      .map((card) => ({
-        id: `${bank.id}-${card.id}`,
-        bankName: bank.name,
-        cardName: card.name,
-        months: months.map((month) => {
-          const statementOffset = getStatementOffsetForPaymentMonth(month.paymentMonthOffset);
+  const months = useMemo(() => getProjectionMonths(7), []);
+  const projectionRows = useMemo(
+    () =>
+      banks.flatMap((bank) =>
+        bank.cards
+          .filter((card) => card.expenses.length)
+          .map((card) => ({
+            id: `${bank.id}-${card.id}`,
+            bankName: bank.name,
+            cardName: card.name,
+            months: months.map((month) => {
+              const statementOffset = getStatementOffsetForPaymentMonth(month.paymentMonthOffset);
 
-          return card.expenses.reduce(
-            (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
-            0,
-          );
-        }),
-      })),
+              return card.expenses.reduce(
+                (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+                0,
+              );
+            }),
+          })),
+      ),
+    [banks, months],
   );
 
-  const monthlyTotals = months.map((month) => buildCardMonthlyTotalForPaymentMonth(banks, month.paymentMonthOffset));
+  const monthlyTotals = useMemo(
+    () => months.map((month) => buildCardMonthlyTotalForPaymentMonth(banks, month.paymentMonthOffset)),
+    [banks, months],
+  );
+  const projectionStats = useMemo(() => buildProjectionStats(months, monthlyTotals), [monthlyTotals, months]);
   const currentSalaryTotal = monthlyTotals[0] ?? 0;
   const nextSalaryTotal = monthlyTotals[1] ?? 0;
 
@@ -59,6 +68,17 @@ export default function ProjectionModule({ banks }) {
             note="Proximo mes"
             tone="next"
             value={currency.format(nextSalaryTotal)}
+          />
+          <ProjectionSummaryCard
+            label="Pico proyectado"
+            note={projectionStats.peakLabel}
+            tone="peak"
+            value={currency.format(projectionStats.peakAmount)}
+          />
+          <ProjectionSummaryCard
+            label="Promedio"
+            note={`${projectionStats.activeMonths} meses con consumos`}
+            value={currency.format(projectionStats.averageAmount)}
           />
         </div>
 
@@ -112,6 +132,21 @@ export default function ProjectionModule({ banks }) {
       </section>
     </section>
   );
+}
+
+function buildProjectionStats(months, monthlyTotals) {
+  const activeTotals = monthlyTotals.filter((amount) => amount > 0);
+  const peakAmount = Math.max(0, ...monthlyTotals);
+  const peakIndex = monthlyTotals.findIndex((amount) => amount === peakAmount);
+
+  return {
+    activeMonths: activeTotals.length,
+    averageAmount: activeTotals.length
+      ? activeTotals.reduce((sum, amount) => sum + amount, 0) / activeTotals.length
+      : 0,
+    peakAmount,
+    peakLabel: peakIndex >= 0 ? `Sueldo ${months[peakIndex].salaryLabel}` : "Sin consumos proyectados",
+  };
 }
 
 function ProjectionSummaryCard({ label, note, tone = "", value }) {

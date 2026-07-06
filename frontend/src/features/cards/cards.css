@@ -1,0 +1,1018 @@
+.cards-workspace {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 100%;
+  min-width: 0;
+  --card-gold: #d6a84f;
+  --card-gold-strong: #f2d182;
+  --card-gold-soft: rgba(214, 168, 79, 0.18);
+  --accent: var(--card-gold) !important;
+  --card-accent: var(--card-gold) !important;
+}
+
+.cards-panel {
+  align-self: start;
+  align-items: stretch;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.35fr);
+  max-height: none;
+  min-width: 0;
+  overflow: auto;
+  position: static;
+  background: rgba(34, 51, 61, 0.25);
+  border: 1px solid rgba(73, 104, 116, 0.25);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.selector-section-card {
+  border-bottom: 0;
+  border-left: 1px solid rgba(73, 104, 116, 0.25);
+  margin-bottom: 0;
+  padding-bottom: 0;
+  padding-left: 24px;
+}
+
+.selector-section {
+  min-width: 0;
+}
+
+.card-detail-panel {
+  background:
+    linear-gradient(180deg, rgba(214, 168, 79, 0.08), transparent 240px),
+    rgba(34, 51, 61, 0.94);
+  min-width: 0;
+}
+
+.panel-title > span,
+.card-form-heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.panel-title strong {
+  color: var(--ink-strong);
+}
+
+.selector-section + .selector-section {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.selector-section-card.selector-section {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.selector-section .inline-form {
+  grid-template-columns: minmax(150px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.selector-section .inline-form label {
+  min-width: 0;
+}
+
+.selector-section .inline-form input {
+  min-height: 36px !important;
+  height: 36px !important;
+  font-size: 0.88rem !important;
+  border-radius: 8px !important;
+  padding: 0 10px !important;
+}
+
+.selector-section .inline-form button {
+  min-height: 36px !important;
+  height: 36px !important;
+  font-size: 0.85rem !important;
+  border-radius: 8px !important;
+  padding: 0 12px !important;
+  min-width: 90px !important;
+  margin-bottom: 0 !important;
+}
+
+.bank-list,
+.card-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+}
+
+.bank-tab,
+.card-tab {
+  align-items: center;
+  border-radius: 10px;
+  color: var(--ink);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 12px 14px;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.bank-tab {
+  background: rgba(34, 51, 61, 0.2);
+  border: 1px solid rgba(73, 104, 116, 0.2);
+  min-width: 230px;
+}
+
+.bank-tab:hover {
+  border-color: rgba(93, 182, 198, 0.35);
+  background: rgba(34, 51, 61, 0.4);
+  transform: translateY(-1px);
+}
+
+.bank-tab.active {
+  background: rgba(93, 182, 198, 0.08);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px rgba(93, 182, 198, 0.15);
+  color: var(--ink-strong);
+}
+
+.card-tab {
+  background: rgba(29, 44, 53, 0.22);
+  border: 1px solid rgba(73, 104, 116, 0.22);
+  border-left: 4px solid var(--accent, var(--line-strong));
+  min-height: 72px;
+  min-width: 240px;
+  overflow: hidden;
+  position: relative;
+  --accent: var(--card-gold) !important;
+}
+
+.card-tab:hover {
+  border-color: rgba(73, 104, 116, 0.45);
+  background: rgba(34, 51, 61, 0.35);
+  transform: translateY(-1px);
+}
+
+.card-tab.active {
+  border-color: var(--accent);
+  border-left: 4px solid var(--accent);
+  background: radial-gradient(circle at 90% 10%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 60%), rgba(29, 44, 53, 0.5);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent);
+  transform: translateY(-1px);
+}
+
+/* Miniature active dot indicator */
+.card-tab.active::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Tab action buttons styling */
+.tab-actions {
+  opacity: 0;
+  transform: translateX(4px);
+  pointer-events: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.bank-tab:hover .tab-actions,
+.card-tab:hover .tab-actions {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.tab-actions .mini-icon-button {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border-radius: 6px !important;
+  padding: 0 !important;
+  font-size: 0.8rem;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+.tab-actions .mini-icon-button svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.bank-tab span,
+.card-tab span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bank-tab strong,
+.card-tab strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bank-tab small,
+.card-tab small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.card-tab small,
+.card-tab strong {
+  color: var(--ink-strong);
+}
+
+.card-main-heading {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 0 0, rgba(214, 168, 79, 0.28), transparent 34%),
+    linear-gradient(135deg, rgba(42, 62, 73, 0.98), rgba(24, 37, 45, 0.98));
+  border: 1px solid rgba(214, 168, 79, 0.32);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 18px;
+  padding: 20px;
+  --card-accent: var(--card-gold) !important;
+}
+
+.card-main-heading > div:first-child {
+  display: grid;
+  gap: 8px;
+  min-width: min(100%, 520px);
+}
+
+.card-main-heading h2 {
+  font-size: clamp(1.55rem, 2.5vw, 2.15rem);
+}
+
+.card-statement-note {
+  max-width: 680px;
+}
+
+.card-hero-stats {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(130px, 1fr));
+  margin-top: 8px;
+}
+
+.card-hero-stat {
+  background: rgba(16, 26, 34, 0.62);
+  border: 1px solid rgba(214, 168, 79, 0.18);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.card-hero-stat span,
+.card-form-heading span,
+.card-table-toolbar span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.card-hero-stat strong {
+  color: var(--ink-strong);
+  font-size: 1.08rem;
+  line-height: 1.1;
+}
+
+.card-hero-stat:first-child strong {
+  color: var(--card-gold-strong);
+}
+
+.card-hero-stat:last-child strong {
+  color: var(--mint);
+}
+
+.card-heading-actions {
+  align-content: start;
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(90px, 104px) minmax(220px, 1fr) minmax(170px, 0.7fr);
+  justify-content: end;
+}
+
+.card-heading-actions > svg {
+  display: none;
+}
+
+.due-control {
+  min-width: 92px;
+}
+
+.due-control span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.due-control input {
+  font-weight: 950;
+  text-align: center;
+}
+
+.expense-entry-panel {
+  background: rgba(29, 44, 53, 0.86);
+  border: 1px solid rgba(214, 168, 79, 0.18);
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.card-form-heading {
+  align-items: start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-form-heading strong {
+  color: var(--ink-strong);
+  font-size: 1rem;
+}
+
+.card-form-heading small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.card-expense-form {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.card-expense-form label,
+.card-expense-form .expense-kind-field {
+  align-self: stretch;
+}
+
+.card-expense-form .expense-kind-field {
+  display: grid;
+  gap: 6px;
+}
+
+.card-expense-form .segmented-control {
+  min-height: 42px;
+}
+
+.card-expense-form .card-origin-field {
+  grid-column: span 5;
+}
+
+.card-expense-form .expense-kind-field {
+  grid-column: span 3;
+}
+
+.card-expense-form .card-installments-field {
+  grid-column: span 2;
+}
+
+.card-expense-form .card-amount-field {
+  grid-column: span 2;
+}
+
+.card-expense-form .card-savings-field {
+  grid-column: span 3;
+}
+
+.card-expense-form .paid-by-other-field {
+  grid-column: span 3;
+  align-self: end;
+}
+
+.card-expense-form .shared-half-field {
+  grid-column: span 3;
+  align-self: end;
+}
+
+.card-expense-form .card-submit-button {
+  grid-column: span 3;
+  align-self: end;
+}
+
+.card-expense-form .paid-by-other-field > span:last-child,
+.card-expense-edit-form .paid-by-other-field > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.card-expense-form .paid-by-other-field small,
+.card-expense-edit-form .paid-by-other-field small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.card-expense-edit-flags {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 761px) {
+  .card-expense-table .table-header,
+  .card-expense-table .table-row {
+    grid-template-columns: minmax(260px, 1.6fr) minmax(112px, 0.72fr) minmax(88px, 0.5fr) minmax(104px, 0.66fr) minmax(112px, 0.68fr) minmax(124px, 0.72fr) minmax(230px, auto);
+  }
+
+  .card-expense-table .monthly-header,
+  .card-expense-table .monthly-cell,
+  .card-expense-table .savings-header,
+  .card-expense-table .savings-cell,
+  .card-expense-table .net-header,
+  .card-expense-table .net-cell,
+  .card-expense-table .pending-header,
+  .card-expense-table .pending-cell,
+  .card-expense-table .installments-header,
+  .card-expense-table .installments-cell {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .card-expense-table .table-header {
+    background:
+      linear-gradient(90deg, rgba(214, 168, 79, 0.12), transparent),
+      #18252d;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .card-expense-table .table-row {
+    background: rgba(21, 35, 43, 0.94);
+    border-left: 4px solid var(--row-accent, rgba(134, 212, 223, 0.32));
+    min-height: 60px;
+    position: relative;
+  }
+
+  .card-expense-table .table-row:hover {
+    background: rgba(33, 51, 60, 0.98);
+  }
+
+  .card-expense-row::before {
+    background: var(--row-accent, transparent);
+    border-radius: 999px;
+    content: "";
+    height: 8px;
+    left: 10px;
+    opacity: 0.82;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+  }
+}
+
+.card-expense-table {
+  border-color: rgba(134, 212, 223, 0.18);
+}
+
+.card-row-tag-normal {
+  --row-accent: rgba(147, 171, 183, 0.28);
+  --tag-bg: rgba(147, 171, 183, 0.08);
+  --tag-color: var(--muted);
+}
+
+.card-row-tag-final {
+  --row-accent: var(--amber);
+  --tag-bg: rgba(224, 184, 106, 0.15);
+  --tag-color: var(--amber);
+}
+
+.card-row-tag-shared {
+  --row-accent: var(--primary);
+  --tag-bg: rgba(93, 182, 198, 0.15);
+  --tag-color: var(--primary-strong);
+}
+
+.card-row-tag-fixed {
+  --row-accent: var(--violet);
+  --tag-bg: rgba(170, 162, 242, 0.15);
+  --tag-color: var(--violet);
+}
+
+.card-row-tag-other {
+  --row-accent: #f97316;
+  --tag-bg: rgba(249, 115, 22, 0.15);
+  --tag-color: #fb923c;
+}
+
+.card-row-tag-saved {
+  --row-accent: var(--mint);
+  --tag-bg: rgba(117, 199, 154, 0.15);
+  --tag-color: var(--mint);
+}
+
+.card-table-toolbar {
+  align-items: center;
+  background: rgba(16, 26, 34, 0.54);
+  border: 1px solid rgba(214, 168, 79, 0.2);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin: 0 0 10px;
+  padding: 12px 14px;
+}
+
+.card-table-toolbar > div {
+  display: grid;
+  gap: 4px;
+}
+
+.card-table-toolbar > div:last-child {
+  text-align: right;
+}
+
+.card-table-toolbar strong {
+  color: var(--ink-strong);
+  font-size: 1rem;
+}
+
+.paid-by-other-row,
+.final-payment-row,
+.saved-expense-row,
+.shared-half-row,
+.fixed-card-row {
+  background: rgba(21, 35, 43, 0.94);
+}
+
+.card-row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.card-row-action {
+  align-items: center;
+  justify-content: center;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+/* PiggyBank (Ahorrar) button */
+.card-row-action-saved {
+  background: rgba(117, 199, 154, 0.08);
+  border: 1px solid rgba(117, 199, 154, 0.25);
+  color: rgba(117, 199, 154, 0.65);
+}
+
+.card-row-action-saved:hover {
+  background: rgba(117, 199, 154, 0.2);
+  border-color: rgba(117, 199, 154, 0.6);
+  color: var(--mint);
+  transform: translateY(-1px) scale(1.06);
+}
+
+.card-row-action-saved.active {
+  background: var(--mint-soft) !important;
+  border: 1px solid rgba(117, 199, 154, 0.7) !important;
+  color: var(--mint) !important;
+}
+
+.card-row-action-saved.active:hover {
+  background: rgba(117, 199, 154, 0.35) !important;
+  border-color: rgba(117, 199, 154, 0.9) !important;
+  color: #8fe0b2 !important;
+  transform: translateY(-1px) scale(1.06);
+}
+
+/* Pencil (Editar) button */
+.card-row-action-edit {
+  background: rgba(93, 182, 198, 0.08);
+  border: 1px solid rgba(93, 182, 198, 0.25);
+  color: rgba(134, 212, 223, 0.7);
+}
+
+.card-row-action-edit:hover {
+  background: rgba(93, 182, 198, 0.2);
+  border-color: rgba(93, 182, 198, 0.6);
+  color: var(--primary-strong);
+  transform: translateY(-1px) scale(1.06);
+}
+
+/* Trash (Borrar) button */
+.card-row-action-delete {
+  background: rgba(224, 122, 122, 0.08);
+  border: 1px solid rgba(224, 122, 122, 0.25);
+  color: rgba(224, 122, 122, 0.7);
+}
+
+.card-row-action-delete:hover {
+  background: rgba(224, 122, 122, 0.2);
+  border-color: rgba(224, 122, 122, 0.6);
+  color: var(--danger);
+  transform: translateY(-1px) scale(1.06);
+}
+
+.card-expense-row .installment-pill,
+.card-expense-row .last-payment-note,
+.card-expense-row .saved-expense-note,
+.card-expense-row .fixed-expense-note,
+.card-expense-row .shared-half-note {
+  background: var(--tag-bg);
+  color: var(--tag-color);
+}
+
+.card-expense-row .origin-cell {
+  padding-left: 10px;
+}
+
+.summary-savings-form {
+  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  margin: 14px 0;
+}
+
+.card-summary-breakdown {
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.card-summary-groups {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.summary-net-row {
+  align-items: center;
+  background: var(--mint-soft);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+@media (max-width: 1100px) {
+  .cards-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .selector-section {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+  }
+
+  .selector-section-card {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .card-main-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .card-heading-actions {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+
+  .card-expense-form {
+    grid-template-columns: 1fr;
+  }
+
+  .card-expense-form .card-origin-field,
+  .card-expense-form .expense-kind-field,
+  .card-expense-form .card-installments-field,
+  .card-expense-form .card-amount-field,
+  .card-expense-form .card-savings-field,
+  .card-expense-form .paid-by-other-field,
+  .card-expense-form .shared-half-field,
+  .card-expense-form .card-submit-button {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 1320px) {
+  .cards-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-main-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-heading-actions {
+    justify-content: stretch;
+  }
+
+  .cards-panel {
+    grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .selector-section + .selector-section {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .cards-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .card-hero-stats,
+  .card-table-toolbar,
+  .card-form-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .card-hero-stats {
+    display: grid;
+  }
+
+  .card-table-toolbar,
+  .card-form-heading {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .card-form-heading small,
+  .card-table-toolbar > div:last-child {
+    text-align: left;
+  }
+
+  .card-row-actions {
+    justify-content: stretch;
+  }
+
+  .card-row-action {
+    flex: 1;
+    width: auto;
+    justify-content: center;
+  }
+}
+
+/* Card List Layout Redesign for credit card expenses */
+.card-expense-card-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.card-expense-card {
+  background: rgba(29, 44, 53, 0.45);
+  border: 1px solid rgba(73, 104, 116, 0.25);
+  border-left: 4px solid var(--row-accent, var(--line-strong));
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.card-expense-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--row-accent) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18), 0 0 10px rgba(214, 168, 79, 0.06);
+  background: rgba(34, 51, 61, 0.45);
+}
+
+.card-expense-card.paid-by-other-row {
+  opacity: 0.75;
+}
+
+.card-expense-card.saved-expense-row {
+  background: rgba(29, 44, 53, 0.25);
+}
+
+.expense-card-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.card-icon-box {
+  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--row-accent) !important;
+  background: var(--tag-bg) !important;
+}
+
+.expense-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.expense-title-line {
+  color: var(--ink-strong);
+  font-size: 1.08rem;
+  font-weight: 900;
+  margin: 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.expense-card-info p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.expense-card-info p .bullet {
+  opacity: 0.35;
+}
+
+.expense-card-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.expense-card-amount {
+  color: var(--mint);
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.expense-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Badge Tags next to title */
+.badge-tag {
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-tag.tag-final {
+  background: rgba(224, 184, 106, 0.12);
+  color: var(--amber);
+  border: 1px solid rgba(224, 184, 106, 0.22);
+}
+
+.badge-tag.tag-saved {
+  background: rgba(117, 199, 154, 0.12);
+  color: var(--mint);
+  border: 1px solid rgba(117, 199, 154, 0.22);
+}
+
+.badge-tag.tag-fixed {
+  background: rgba(170, 162, 242, 0.12);
+  color: var(--violet);
+  border: 1px solid rgba(170, 162, 242, 0.22);
+}
+
+.badge-tag.tag-shared {
+  background: rgba(93, 182, 198, 0.12);
+  color: var(--primary-strong);
+  border: 1px solid rgba(93, 182, 198, 0.22);
+}
+
+.badge-tag.tag-other {
+  background: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.22);
+}
+
+/* Premium Squircle Action Buttons in credit card list */
+.btn-save-action,
+.btn-edit-expense,
+.btn-delete-expense {
+  width: 36px;
+  height: 36px;
+  min-height: 36px !important;
+  min-width: 36px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-sizing: border-box;
+}
+
+.btn-save-action {
+  background: rgba(117, 199, 154, 0.06) !important;
+  border: 1px solid rgba(117, 199, 154, 0.22) !important;
+  color: var(--mint) !important;
+}
+
+.btn-save-action:hover {
+  background: var(--mint-soft) !important;
+  border-color: var(--mint) !important;
+  color: #123023 !important;
+  box-shadow: 0 4px 12px rgba(117, 199, 154, 0.25);
+  transform: translateY(-1px) scale(1.05);
+}
+
+.btn-save-action.active {
+  background: var(--mint) !important;
+  border-color: var(--mint) !important;
+  color: #123023 !important;
+}
+
+.btn-save-action.active:hover {
+  background: #64bc8c !important;
+  border-color: #64bc8c !important;
+}
+
+.btn-edit-expense {
+  background: rgba(93, 182, 198, 0.06) !important;
+  border: 1px solid rgba(93, 182, 198, 0.22) !important;
+  color: var(--primary-strong) !important;
+}
+
+.btn-edit-expense:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(93, 182, 198, 0.25);
+  transform: translateY(-1px) scale(1.05);
+}
+
+.btn-delete-expense {
+  background: rgba(224, 122, 122, 0.06) !important;
+  border: 1px solid rgba(224, 122, 122, 0.22) !important;
+  color: var(--danger) !important;
+}
+
+.btn-delete-expense:hover {
+  background: var(--danger-soft) !important;
+  border-color: var(--danger) !important;
+  box-shadow: 0 4px 12px rgba(224, 122, 122, 0.25);
+  transform: translateY(-1px) scale(1.05);
+}
+
+@media (max-width: 760px) {
+  .card-expense-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+  }
+  .card-expense-card .expense-card-right {
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid rgba(73, 104, 116, 0.15);
+    padding-top: 12px;
+  }
+}

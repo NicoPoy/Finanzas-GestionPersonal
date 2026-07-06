@@ -1,11 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
   AlertTriangle,
   Banknote,
-  CalendarDays,
   CreditCard,
-  Download,
   Dumbbell,
   History,
   Home,
@@ -17,8 +14,9 @@ import {
   Settings,
   Sparkles,
   Star,
+  NotebookPen,
+  Menu,
 } from "lucide-react";
-import Metric from "../../components/common/Metric.jsx";
 import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
   buildBanksWithTotals,
@@ -30,6 +28,7 @@ import {
   buildRegistryServices,
   getCalendarMonth,
   countCards,
+  getExpenseAmountForStatementOffset,
   getExpenseSavingsLimit,
   getOwnExpenseAmount,
   getPaymentKey,
@@ -38,7 +37,6 @@ import {
 import { normalizeData } from "../../domain/storage.js";
 import { apiUrl } from "../../services/platform.js";
 import { currency } from "../../utils/formatters.js";
-import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 import AguinaldoModule from "../aguinaldo/AguinaldoModule.jsx";
 import CardsModule from "../cards/CardsModule.jsx";
 import DashboardModule from "../dashboard/DashboardModule.jsx";
@@ -49,6 +47,34 @@ import RegistryModule from "../registry/RegistryModule.jsx";
 import SettingsModule from "../settings/SettingsModule.jsx";
 import ExtraordinariosModule from "../extraordinary/ExtraordinariosModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
+import NotesModule from "../notes/NotesModule.jsx";
+import "../../styles/shell.css";
+
+const MODULE_ROUTES = {
+  "/": "dashboard",
+  "/finanzas": "dashboard",
+  "/finanzas/dashboard": "dashboard",
+  "/finanzas/registro": "registry",
+  "/finanzas/notas": "notes",
+  "/finanzas/departamento": "department",
+  "/finanzas/suscripciones": "subscriptions",
+  "/finanzas/actividades": "activities",
+  "/finanzas/extras": "extras",
+  "/finanzas/tarjetas": "cards",
+  "/finanzas/extraordinarios": "extraordinary",
+  "/finanzas/dolares": "dollars",
+  "/finanzas/aguinaldo": "aguinaldo",
+  "/finanzas/historial": "history",
+  "/finanzas/configuracion": "settings",
+};
+
+const MODULE_PATHS = Object.fromEntries(
+  Object.entries(MODULE_ROUTES).map(([path, module]) => [module, path === "/" ? "/finanzas" : path]),
+);
+
+function getModuleFromPath(pathname) {
+  return MODULE_ROUTES[pathname] ?? "dashboard";
+}
 
 const DEMO_PROFILE = {
   ...INITIAL_DATA,
@@ -156,15 +182,39 @@ const DEMO_PROFILE = {
 };
 
 // Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
-export default function FinanceApp({ accessToken, isDemoMode = false, onBackToHome, onLogout, onToggleTheme, theme }) {
+export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, onToggleTheme, theme }) {
   const [data, setData] = useState(INITIAL_DATA);
-  const [activeModule, setActiveModule] = useState("dashboard");
+  const [activeModule, setActiveModule] = useState(() => getModuleFromPath(window.location.pathname));
   const [selectedBankId, setSelectedBankId] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(!isDemoMode);
   const [profileError, setProfileError] = useState("");
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    function handleRouteChange() {
+      setActiveModule(getModuleFromPath(window.location.pathname));
+      setIsSidebarOpen(false);
+    }
+
+    handleRouteChange();
+    window.addEventListener("popstate", handleRouteChange);
+
+    return () => window.removeEventListener("popstate", handleRouteChange);
+  }, []);
+
+  function openModule(module) {
+    const nextPath = MODULE_PATHS[module] ?? "/finanzas";
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+
+    setActiveModule(module);
+    setIsSidebarOpen(false);
+  }
 
   useEffect(() => {
     if (isDemoMode) {
@@ -301,6 +351,22 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onBackToHo
         year: currentPaymentMonth.year,
       }),
     [currentPaymentMonth, data.paymentDetails, data.paymentRegistry, registryServices],
+  );
+  const currentDebitTransfers = useMemo(
+    () =>
+      buildDebitTransferSummary({
+        monthIndex: currentPaymentMonth.monthIndex,
+        paymentDetails: data.paymentDetails,
+        paymentRegistry: data.paymentRegistry,
+        services: registryServices,
+        year: currentPaymentMonth.year,
+      }),
+    [currentPaymentMonth, data.paymentDetails, data.paymentRegistry, registryServices],
+  );
+  const currentPaymentPeriod = getPaymentPeriod(currentPaymentMonth.year, currentPaymentMonth.monthIndex);
+  const upcomingCardExpenses = useMemo(
+    () => buildUpcomingCardExpenseSummary(banksWithTotals, data.paymentHistory, currentPaymentPeriod),
+    [banksWithTotals, currentPaymentPeriod, data.paymentHistory],
   );
   const cardFixedExpensesByCategory = useMemo(
     () => buildCardFixedExpensesByCategory(banksWithTotals, data.cardFixedCategories),
@@ -1133,202 +1199,146 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onBackToHo
     );
   }
 
+  const moduleTitles = {
+    activities: "Actividades",
+    aguinaldo: "Calculo Aguinaldo",
+    cards: "Tarjetas de Credito",
+    dashboard: "Dashboard",
+    department: "Departamento",
+    dollars: "Compra de Dolares",
+    extraordinary: "Gastos Extraordinarios",
+    extras: "Extras",
+    history: "Historial de Pagos",
+    notes: "Notas de Compras",
+    registry: "Registro de Pagos",
+    settings: "Configuracion",
+    subscriptions: "Suscripciones",
+  };
+
+  const navGroups = [
+    {
+      title: "Principal",
+      items: [
+        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { id: "registry", label: "Registro de Pagos", icon: ListChecks },
+        { id: "notes", label: "Notas de Compras", icon: NotebookPen },
+      ],
+    },
+    {
+      title: "Gastos fijos",
+      items: [
+        { id: "department", label: "Departamento", icon: Home },
+        { id: "subscriptions", label: "Suscripciones", icon: Repeat },
+        { id: "activities", label: "Actividades", icon: Dumbbell },
+        { id: "extras", label: "Extras", icon: Sparkles },
+      ],
+    },
+    {
+      title: "Tarjetas y extraordinarios",
+      items: [
+        { id: "cards", label: "Tarjetas de Credito", icon: CreditCard },
+        { id: "extraordinary", label: "Gastos Extraordinarios", icon: Star },
+      ],
+    },
+    {
+      title: "Herramientas",
+      items: [
+        { id: "dollars", label: "Compra de Dolares", icon: Banknote },
+        { id: "aguinaldo", label: "Calculo Aguinaldo", icon: PiggyBank },
+        { id: "history", label: "Historial de Pagos", icon: History },
+        { id: "settings", label: "Configuracion", icon: Settings },
+      ],
+    },
+  ];
+
   return (
-    <main className="app-shell">
-      <section className="summary-band">
-        <div className="summary-copy">
-          <div className="brand-lockup brand-lockup-hero">
-            <img alt="" src="/logo_app_finanzas.png" />
-            <p>Finanzas personales</p>
+    <div className="dashboard-layout">
+      <aside className={`dashboard-sidebar ${isSidebarOpen ? "open" : ""}`}>
+        <div className="sidebar-brand">
+          <img alt="" src="/logo_app_finanzas.png" />
+          <div>
+            <h2>Finanzas</h2>
+            <p>Control Personal</p>
           </div>
-          {isDemoMode ? <span className="demo-pill demo-pill-on-dark">Modo demo</span> : null}
-          <h1>Administrador mensual</h1>
-          <p className="summary-month-note">
-            {isDemoMode
-              ? "Los cambios de esta prueba no se guardan en la base de datos."
-              : `Sueldo de ${upcomingCardPaymentMonth.title} · tarjetas del resumen de ${currentPaymentMonth.title}`}
-          </p>
         </div>
 
-        <div className="summary-side">
-          <div className="header-actions">
+        <nav className="sidebar-nav" aria-label="Secciones de finanzas">
+          {navGroups.map((group) => (
+            <section className="nav-group" key={group.title}>
+              <span className="nav-group-title">{group.title}</span>
+              {group.items.map(({ id, label, icon: Icon }) => (
+                <a
+                  aria-current={activeModule === id ? "page" : undefined}
+                  className={`nav-link ${activeModule === id ? "active" : ""}`}
+                  href={MODULE_PATHS[id]}
+                  key={id}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    openModule(id);
+                  }}
+                >
+                  <Icon size={18} />
+                  {label}
+                </a>
+              ))}
+            </section>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          {isDemoMode ? <span className="demo-badge">Modo demo</span> : <span />}
+          <button className="logout-btn" onClick={onLogout} type="button">
+            <LogOut size={16} />
+            Cerrar Sesion
+          </button>
+        </div>
+      </aside>
+
+      <main className="dashboard-main">
+        <header className="dashboard-header">
+          <div className="header-left">
             <button
-              aria-label="Volver al inicio"
-              className="header-action-button"
-              onClick={onBackToHome}
-              title="Volver al inicio"
+              aria-label="Abrir menu"
+              className="sidebar-toggle"
+              onClick={() => setIsSidebarOpen((current) => !current)}
               type="button"
             >
-              <ArrowLeft size={16} />
+              <Menu size={20} />
             </button>
-            <a
-              aria-label="Descargar APK"
-              className="header-action-button"
-              download="finanzas-debug.apk"
-              href="/finanzas-debug.apk"
-              title="Descargar APK"
-            >
-              <Download size={16} />
-            </a>
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-            <button
-              aria-label="Cerrar sesion"
-              className="header-action-button"
-              onClick={onLogout}
-              title="Cerrar sesion"
-              type="button"
-            >
-              <LogOut size={16} />
-            </button>
+            <h1>{moduleTitles[activeModule] ?? "Finanzas"}</h1>
           </div>
 
-          {shouldShowSpendingWarning ? (
-            <div className={`salary-warning ${salaryUsagePercent > 70 ? "critical" : ""}`} role="status">
-              <AlertTriangle size={17} />
-              <div>
-                <strong>Gastos altos</strong>
-                <span>Ya usaste {salaryUsagePercent}% de tus ingresos.</span>
+          <div className="header-right">
+            {shouldShowSpendingWarning ? (
+              <div className={`spending-alert ${salaryUsagePercent > 70 ? "critical" : ""}`} role="status">
+                <AlertTriangle size={17} />
+                <span>Gastos altos: {salaryUsagePercent}%</span>
+              </div>
+            ) : null}
+
+            <div className="quick-totals" aria-label="Resumen principal">
+              <div className="total-item">
+                <small>Restante</small>
+                <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+              </div>
+              <div className="total-item">
+                <small>Ingresos</small>
+                <strong>{currency.format(incomeTotal)}</strong>
               </div>
             </div>
-          ) : null}
-
-          <div className="summary-metrics" aria-label="Resumen de gastos">
-            <Metric
-              icon={<CalendarDays size={18} />}
-              label="Restante"
-              tone={nextMonthSummary.remaining < 0 ? "danger" : "success"}
-              value={currency.format(nextMonthSummary.remaining)}
-            />
-            <Metric icon={<Banknote size={18} />} label="Ingresos" tone="warning" value={currency.format(incomeTotal)} />
-            <Metric icon={<CalendarDays size={18} />} label="Gastos fijos" tone="expense" value={currency.format(fixedExpensesTotal)} />
-            <Metric
-              icon={<CreditCard size={18} />}
-              label="Tarjetas"
-              tone="expense"
-              value={currency.format(nextMonthSummary.cardExpenses)}
-            />
-            <Metric icon={<Home size={18} />} label="Departamento" value={currency.format(departmentTotal)} />
-            <Metric icon={<Repeat size={18} />} label="Suscripciones" value={currency.format(subscriptionsTotal)} />
-            <Metric icon={<Dumbbell size={18} />} label="Actividades" value={currency.format(activitiesTotal)} />
-            <Metric icon={<Sparkles size={18} />} label="Extras" value={currency.format(extrasTotal)} />
           </div>
-        </div>
-      </section>
+        </header>
 
-      <section className="module-bar" aria-label="Secciones de la aplicacion">
-        <div className="module-group">
-          <button
-            className={`module-tab primary-tab ${activeModule === "dashboard" ? "active" : ""}`}
-            onClick={() => setActiveModule("dashboard")}
-            type="button"
-          >
-            <LayoutDashboard size={18} />
-            Dashboard
-          </button>
-          <button
-            className={`module-tab primary-tab ${activeModule === "registry" ? "active" : ""}`}
-            onClick={() => setActiveModule("registry")}
-            type="button"
-          >
-            <ListChecks size={18} />
-            Registro
-          </button>
-        </div>
-
-        <div className="module-group module-group-main">
-          <button
-            className={`module-tab ${activeModule === "cards" ? "active" : ""}`}
-            onClick={() => setActiveModule("cards")}
-            type="button"
-          >
-            <CreditCard size={18} />
-            Tarjetas
-          </button>
-          <button
-            className={`module-tab ${activeModule === "department" ? "active" : ""}`}
-            onClick={() => setActiveModule("department")}
-            type="button"
-          >
-            <Home size={18} />
-            Departamento
-          </button>
-          <button
-            className={`module-tab ${activeModule === "subscriptions" ? "active" : ""}`}
-            onClick={() => setActiveModule("subscriptions")}
-            type="button"
-          >
-            <Repeat size={18} />
-            Suscripciones
-          </button>
-          <button
-            className={`module-tab ${activeModule === "activities" ? "active" : ""}`}
-            onClick={() => setActiveModule("activities")}
-            type="button"
-          >
-            <Dumbbell size={18} />
-            Actividades
-          </button>
-          <button
-            className={`module-tab ${activeModule === "extras" ? "active" : ""}`}
-            onClick={() => setActiveModule("extras")}
-            type="button"
-          >
-            <Sparkles size={18} />
-            Extras
-          </button>
-          <button
-            className={`module-tab ${activeModule === "extraordinary" ? "active" : ""}`}
-            onClick={() => setActiveModule("extraordinary")}
-            type="button"
-          >
-            <Star size={18} />
-            Extraordinarios
-          </button>
-        </div>
-
-        <div className="module-group module-group-tools">
-          <button
-            className={`module-tab tool-tab ${activeModule === "dollars" ? "active" : ""}`}
-            onClick={() => setActiveModule("dollars")}
-            type="button"
-          >
-            <Banknote size={18} />
-            Dolares
-          </button>
-          <button
-            className={`module-tab tool-tab ${activeModule === "aguinaldo" ? "active" : ""}`}
-            onClick={() => setActiveModule("aguinaldo")}
-            type="button"
-          >
-            <PiggyBank size={18} />
-            Aguinaldo
-          </button>
-          <button
-            className={`module-tab tool-tab ${activeModule === "history" ? "active" : ""}`}
-            onClick={() => setActiveModule("history")}
-            type="button"
-          >
-            <History size={18} />
-            Historial
-          </button>
-          <button
-            className={`module-tab tool-tab ${activeModule === "settings" ? "active" : ""}`}
-            onClick={() => setActiveModule("settings")}
-            type="button"
-          >
-            <Settings size={18} />
-            Configuracion
-          </button>
-        </div>
-      </section>
-
-      {activeModule === "dashboard" ? (
+        <section className="dashboard-viewport">
+          {activeModule === "dashboard" ? (
         <DashboardModule
           currentMonthSummary={currentMonthSummary}
+          debitTransfers={currentDebitTransfers}
           dueItems={currentDueItems}
           history={data.paymentHistory}
           monthZeroDate={data.monthZeroDate}
           nextMonthSummary={nextMonthSummary}
+          upcomingCardExpenses={upcomingCardExpenses}
         />
       ) : activeModule === "cards" ? (
         <CardsModule
@@ -1393,6 +1403,8 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onBackToHo
           services={registryServices}
           onSetPaymentStatus={setPaymentStatus}
         />
+      ) : activeModule === "notes" ? (
+        <NotesModule />
       ) : activeModule === "history" ? (
         <HistoryModule history={data.paymentHistory} />
       ) : activeModule === "extraordinary" ? (
@@ -1410,12 +1422,15 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onBackToHo
         />
       )}
 
+        </section>
+      </main>
+
       <ConfirmModal
         confirmation={confirmation}
         onCancel={closeConfirmation}
         onConfirm={confirmPendingAction}
       />
-    </main>
+    </div>
   );
 }
 
@@ -1456,3 +1471,93 @@ function replacePaymentCardName(expenses, previousName, nextName) {
     expense.paymentCard === previousName ? { ...expense, paymentCard: nextName } : expense,
   );
 }
+
+function buildDebitTransferSummary({ monthIndex, paymentDetails, paymentRegistry, services, year }) {
+  const byAccount = new Map();
+
+  services
+    .filter((service) => service.paymentCard)
+    .forEach((service) => {
+      const key = getPaymentKey(year, monthIndex, service.id);
+      const detail = paymentDetails[key] ?? {};
+      const amount = Number(detail.expectedAmount) || Number(service.amount) || 0;
+      const paidAmount = Number(detail.paidAmount) || amount;
+      const isDebitedOrPaid =
+        Boolean(paymentRegistry[key] || detail.paid) || detail.status === "debited" || detail.status === "paid";
+      const isTransferred = detail.status === "transferred" || detail.transferred;
+      const account =
+        byAccount.get(service.paymentCard) ?? {
+          account: service.paymentCard,
+          debited: 0,
+          items: [],
+          pendingDebit: 0,
+          pendingTransfer: 0,
+          total: 0,
+        };
+
+      account.total += amount;
+
+      if (isDebitedOrPaid) {
+        account.debited += paidAmount;
+      } else if (isTransferred) {
+        account.pendingDebit += paidAmount;
+      } else {
+        account.pendingTransfer += amount;
+      }
+
+      account.items.push({
+        amount,
+        category: service.category,
+        name: service.name,
+        status: isDebitedOrPaid ? "debited" : isTransferred ? "transferred" : "pending",
+      });
+
+      byAccount.set(service.paymentCard, account);
+    });
+
+  return Array.from(byAccount.values()).sort(
+    (a, b) => b.pendingTransfer - a.pendingTransfer || b.pendingDebit - a.pendingDebit || b.total - a.total,
+  );
+}
+
+function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod) {
+  return banks.flatMap((bank) =>
+    bank.cards.map((card) => {
+      const previousPayment = history.find(
+        (item) => item.period === previousStatementPeriod && item.serviceId === `card:${card.id}` && Array.isArray(item.items),
+      );
+      const previousExpenseIds = new Set((previousPayment?.items ?? []).map((item) => item.expenseId).filter(Boolean));
+      const hasPreviousStatementDetail = previousExpenseIds.size > 0;
+      const expenses = hasPreviousStatementDetail
+        ? card.expenses
+            .filter((expense) => !expense.isFixed)
+            .filter((expense) => !previousExpenseIds.has(expense.id))
+            .map((expense) => {
+              const amount = getExpenseAmountForStatementOffset(expense, 0);
+
+              return {
+                amount,
+                id: expense.id,
+                installments: Number(expense.installments) || 0,
+                isPaidByOther: Boolean(expense.isPaidByOther),
+                isSaved: Boolean(expense.isSaved),
+                isSharedHalf: Boolean(expense.isSharedHalf),
+                origin: expense.origin,
+              };
+            })
+            .filter((expense) => expense.amount > 0)
+        : [];
+
+      return {
+        bankName: bank.name,
+        cardId: card.id,
+        cardName: card.name,
+        expenses,
+        hasPreviousStatementDetail,
+        previousStatementPeriod,
+        total: expenses.reduce((sum, expense) => sum + expense.amount, 0),
+      };
+    }),
+  );
+}
+

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { History, ReceiptText } from "lucide-react";
 import { currency } from "../../utils/formatters.js";
+import "./history.css";
 
 const MONTHS = [
   { label: "Enero", value: "01" },

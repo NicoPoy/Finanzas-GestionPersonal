@@ -16,6 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { apiUrl } from "../../services/platform.js";
+import "./notes.css";
 import ThemeToggle from "../../components/common/ThemeToggle.jsx";
 
 const UNIT_OPTIONS = ["unidad", "kg", "g", "lt", "ml", "pack"];

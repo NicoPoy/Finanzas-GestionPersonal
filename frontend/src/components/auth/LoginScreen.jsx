@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AlertTriangle, Mail, X } from "lucide-react";
 import ThemeToggle from "../common/ThemeToggle.jsx";
+import "./auth.css";
 
 export default function LoginScreen({ onLogin, onStartDemo, onToggleTheme, theme }) {
   const [email, setEmail] = useState("");

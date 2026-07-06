@@ -1,0 +1,8 @@
+.dollar-quote-strip {
+  background: var(--primary-soft);
+  border-color: rgba(134, 212, 223, 0.25);
+}
+
+.dollar-purchase-form {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}

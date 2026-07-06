@@ -1,0 +1,73 @@
+.notes-products-layout {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.notes-store-list,
+.notes-products-list,
+.notes-department-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notes-store-tab,
+.notes-product-row,
+.notes-department-item {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.notes-store-tab.active {
+  background: var(--primary-soft);
+  border-color: rgba(134, 212, 223, 0.25);
+}
+
+.notes-product-title-line,
+.notes-product-left,
+.notes-selected-store {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.notes-product-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notes-product-check {
+  height: 24px;
+  min-width: 24px;
+  width: 24px;
+}
+
+.notes-product-copy.checked span,
+.notes-department-item.done strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.notes-copy-control {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.notes-copy-control input {
+  max-width: 90px;
+}
+
+.notes-department-note-field,
+.notes-product-note-field {
+  grid-column: 1 / -1;
+}

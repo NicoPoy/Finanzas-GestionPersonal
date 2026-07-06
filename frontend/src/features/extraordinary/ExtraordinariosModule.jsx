@@ -30,31 +30,35 @@ export default function ExtraordinariosModule({ expenses, onAdd, onMarkPaid }) {
         </div>
 
         {expenses.length ? (
-          <div className="expense-table extraordinarios-table">
-            <div className="table-header extraordinarios-table-row">
-              <span>Nombre</span>
-              <span>Monto</span>
-              <span aria-label="Acciones" />
-            </div>
-
+          <div className="expense-card-list">
             {expenses.map((expense) => (
-              <div className="table-row extraordinarios-table-row" key={expense.id}>
-                <strong>{expense.name}</strong>
-                <span>
-                  <strong className="amount-emphasis">{currency.format(expense.amount)}</strong>
-                </span>
-                <div className="row-actions">
-                  <button
-                    className="pay-row-button"
-                    onClick={() => onMarkPaid(expense.id)}
-                    title="Marcar como pagado"
-                    type="button"
-                  >
-                    <Check size={16} />
-                    Pagado
-                  </button>
+              <article className="expense-card item-active" key={expense.id}>
+                <div className="expense-card-left">
+                  <div className="expense-card-icon">
+                    <Star size={18} />
+                  </div>
+                  <div className="expense-card-info">
+                    <h4>{expense.name}</h4>
+                    <p>
+                      <span>Previsto para el próximo mes</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
+                <div className="expense-card-right">
+                  <span className="expense-card-amount">{currency.format(expense.amount)}</span>
+                  <div className="expense-card-actions">
+                    <button
+                      className="pay-row-button"
+                      onClick={() => onMarkPaid(expense.id)}
+                      title="Marcar como pagado"
+                      type="button"
+                    >
+                      <Check size={16} />
+                      Pagado
+                    </button>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
         ) : (

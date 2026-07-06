@@ -1,0 +1,25 @@
+.settings-options-grid,
+.balance-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.settings-option-row {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.balance-strip.positive {
+  background: var(--mint-soft);
+}
+
+.balance-strip.negative {
+  background: var(--danger-soft);
+}

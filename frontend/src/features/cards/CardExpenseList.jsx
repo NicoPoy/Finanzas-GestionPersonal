@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Check, Pencil, PiggyBank, ReceiptText, Split, Trash2, UserRound } from "lucide-react";
+import { CalendarDays, Check, CreditCard, Pencil, PiggyBank, ReceiptText, Split, Trash2, UserRound } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import {
   getExpenseSavings,
@@ -160,17 +160,7 @@ export default function CardExpenseList({
         </section>
       ) : null}
 
-      <div className="expense-table card-expense-table" style={{ "--card-accent": card.accent || "#2563eb" }}>
-        <div className="table-header">
-          <span>Origen</span>
-          <span>Por mes</span>
-          <span>Cuotas</span>
-          <span>Ahorro</span>
-          <span>Neto</span>
-          <span>Pendiente</span>
-          <span aria-label="Acciones" />
-        </div>
-
+      <div className="expense-card-list card-expense-card-list" style={{ "--card-accent": card.accent || "#2563eb" }}>
         {sortedExpenses.length ? sortedExpenses.map((expense) => {
           const savings = getExpenseSavings(expense);
           const ownAmount = getOwnExpenseAmount(expense);
@@ -179,6 +169,13 @@ export default function CardExpenseList({
           const fixedCategoryName =
             fixedCategories.find((category) => category.id === expense.fixedCategory)?.name || "Sin seccion";
           const isFinalPayment = !isFixedCardExpense(expense) && Number(expense.installments) === 1;
+          const visualTag = getExpenseVisualTag({
+            isFinalPayment,
+            isFixed: isFixedCardExpense(expense),
+            isHalfShared,
+            isPaidByOther: isPaidByOther(expense),
+            isSaved,
+          });
           const pendingValue = isFixedCardExpense(expense)
             ? null
             : ownAmount +
@@ -186,99 +183,107 @@ export default function CardExpenseList({
                 ? 0
                 : (isHalfShared ? expense.amount / 2 : expense.amount) * Math.max(expense.installments - 1, 0));
 
+          // Select icon based on tag
+          let IconComponent = CreditCard;
+          if (isSaved) IconComponent = PiggyBank;
+          else if (isPaidByOther(expense)) IconComponent = UserRound;
+          else if (isHalfShared) IconComponent = Split;
+          else if (isFixedCardExpense(expense)) IconComponent = ReceiptText;
+          else if (isFinalPayment) IconComponent = CalendarDays;
+
           return (
-            <div
-              className={`table-row ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isFixedCardExpense(expense) ? "fixed-card-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
+            <article
+              className={`expense-card card-expense-card card-row-tag-${visualTag} ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isFixedCardExpense(expense) ? "fixed-card-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
               key={expense.id}
             >
-              <strong className="origin-cell" data-label="Origen">
-                <>
-                  <span className="expense-origin-line">
+              <div className="expense-card-left">
+                <div className="expense-card-icon card-icon-box" style={{ color: "var(--card-accent)", background: getIconBgColor(card.accent) }}>
+                  <IconComponent size={18} />
+                </div>
+                <div className="expense-card-info">
+                  <h4 className="expense-title-line">
                     {expense.origin}
-                    {isFinalPayment ? <small className="last-payment-note">Ultima</small> : null}
-                    {isSaved ? <small className="saved-expense-note">Ahorrado</small> : null}
-                    {isFixedCardExpense(expense) ? (
-                      <small className="fixed-expense-note">Fijo - {fixedCategoryName}</small>
-                    ) : null}
-                    {isHalfShared ? <small className="shared-half-note">A medias</small> : null}
-                  </span>
-                  {isPaidByOther(expense) ? <small>Lo paga otra persona</small> : null}
-                </>
-              </strong>
-              <span className="money-cell monthly-cell" data-label="Por mes">
-                {currency.format(expense.amount)}
-              </span>
-              <span className="installments-cell" data-label="Cuotas">
-                {isFixedCardExpense(expense) ? (
-                  <span className="installment-pill installment-pill-fixed">Fijo</span>
-                ) : expense.installments === 1 ? (
-                  <span className="installment-pill">Unica</span>
-                ) : (
-                  <span className="installment-pill">{expense.installments}</span>
-                )}
-              </span>
-              <span className={`money-cell savings-cell ${savings === 0 ? "zero-value-cell" : ""}`} data-label="Ahorro">
-                {formatTableAmount(savings)}
-              </span>
-              <span className={`amount-emphasis money-cell net-cell ${ownAmount === 0 ? "zero-value-cell" : ""}`} data-label="Neto">
-                {formatTableAmount(ownAmount)}
-              </span>
-              <span className={`pending-amount money-cell pending-cell ${!isFixedCardExpense(expense) && pendingValue === 0 ? "zero-value-cell" : ""}`} data-label="Pendiente">
-                {isFixedCardExpense(expense) ? "Mensual" : formatTableAmount(pendingValue)}
-              </span>
-              <div className="row-actions card-row-actions">
-                {showNextMonthTable ? (
-                  <span className="preview-only-pill">Vista</span>
-                ) : (
-                  <>
-                    <button
-                      aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
-                      className={`card-row-action card-row-action-saved ${isSaved ? "active" : ""}`}
-                      onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
-                      title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
-                      type="button"
-                    >
-                      <PiggyBank size={16} />
-                      <span>{isSaved ? "Quitar" : "Ahorrar"}</span>
-                    </button>
-                    <button
-                      aria-label={`Editar ${expense.origin}`}
-                      className="card-row-action card-row-action-edit"
-                      onClick={() => startSavingsEdit(expense)}
-                      title="Editar gasto"
-                      type="button"
-                    >
-                      <Pencil size={16} />
-                      <span>Editar</span>
-                    </button>
-                    <button
-                      aria-label={`Eliminar ${expense.origin}`}
-                      className="card-row-action card-row-action-delete"
-                      onClick={() => onRemove(expense.id)}
-                      title="Eliminar gasto"
-                      type="button"
-                    >
-                      <Trash2 size={17} />
-                      <span>Borrar</span>
-                    </button>
-                  </>
-                )}
+                    {isFinalPayment && <span className="badge-tag tag-final">Última</span>}
+                    {isSaved && <span className="badge-tag tag-saved">Ahorrado</span>}
+                    {isFixedCardExpense(expense) && (
+                      <span className="badge-tag tag-fixed">Fijo • {fixedCategoryName}</span>
+                    )}
+                    {isHalfShared && <span className="badge-tag tag-shared">A medias</span>}
+                    {isPaidByOther(expense) && <span className="badge-tag tag-other">Paga otro</span>}
+                  </h4>
+                  <p>
+                    <span>Monto cuotas: {currency.format(expense.amount)}</span>
+                    <span className="bullet">•</span>
+                    <span>
+                      {isFixedCardExpense(expense) ? (
+                        <strong>Fijo</strong>
+                      ) : expense.installments === 1 ? (
+                        <strong>Compra única</strong>
+                      ) : (
+                        <strong>Restan {expense.installments} cuotas</strong>
+                      )}
+                    </span>
+                    {savings > 0 && (
+                      <>
+                        <span className="bullet">•</span>
+                        <span>Ahorro: -{currency.format(savings)}</span>
+                      </>
+                    )}
+                    {!isFixedCardExpense(expense) && pendingValue > 0 && (
+                      <>
+                        <span className="bullet">•</span>
+                        <span>Pendiente: {currency.format(pendingValue)}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
               </div>
-            </div>
+              <div className="expense-card-right">
+                <span className="expense-card-amount">
+                  {currency.format(ownAmount)}
+                </span>
+                <div className="expense-card-actions">
+                  {showNextMonthTable ? (
+                    <span className="preview-only-pill">Vista</span>
+                  ) : (
+                    <>
+                      <button
+                        aria-label={isSaved ? `Quitar ahorro de ${expense.origin}` : `Marcar ${expense.origin} como ahorrado`}
+                        className={`icon-button btn-save-action ${isSaved ? "active" : ""}`}
+                        onClick={() => onUpdate(expense.id, { isSaved: !isSaved })}
+                        title={isSaved ? "Quitar ahorrado" : "Marcar como ahorrado"}
+                        type="button"
+                      >
+                        <PiggyBank size={15} />
+                      </button>
+                      <button
+                        aria-label={`Editar ${expense.origin}`}
+                        className="icon-button btn-edit-expense"
+                        onClick={() => startSavingsEdit(expense)}
+                        title="Editar gasto"
+                        type="button"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        aria-label={`Eliminar ${expense.origin}`}
+                        className="icon-button btn-delete-expense"
+                        onClick={() => onRemove(expense.id)}
+                        title="Eliminar gasto"
+                        type="button"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </article>
           );
         }) : (
-          <div className="table-row payment-preview-empty">
-            <strong className="origin-cell" data-label="Origen">
-              No quedarian consumos pendientes para el mes siguiente.
-            </strong>
-            <span className="money-cell monthly-cell" data-label="Por mes">-</span>
-            <span className="installments-cell" data-label="Cuotas">-</span>
-            <span className="money-cell savings-cell" data-label="Ahorro">-</span>
-            <span className="amount-emphasis money-cell net-cell" data-label="Neto">-</span>
-            <span className="pending-amount money-cell pending-cell" data-label="Pendiente">-</span>
-            <div className="row-actions card-row-actions">
-              <span className="preview-only-pill">Vista</span>
-            </div>
+          <div className="empty-state">
+            <ReceiptText size={28} />
+            <p>No quedarían consumos pendientes para el mes siguiente.</p>
           </div>
         )}
       </div>
@@ -569,4 +574,35 @@ function getNextMonthNetAmount(expense) {
   }
 
   return Number(expense.installments) > 1 ? getOwnExpenseAmount(expense) : 0;
+}
+
+function getExpenseVisualTag({ isFinalPayment, isFixed, isHalfShared, isPaidByOther, isSaved }) {
+  if (isSaved) return "saved";
+  if (isPaidByOther) return "other";
+  if (isFixed) return "fixed";
+  if (isHalfShared) return "shared";
+  if (isFinalPayment) return "final";
+  return "normal";
+}
+
+function getIconBgColor(accent) {
+  if (accent && accent.startsWith("#")) {
+    const hex = accent.replace("#", "");
+    if (hex.length === 6) {
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        return `rgba(${r}, ${g}, ${b}, 0.1)`;
+      }
+    } else if (hex.length === 3) {
+      const r = parseInt(hex.substring(0, 1) + hex.substring(0, 1), 16);
+      const g = parseInt(hex.substring(1, 2) + hex.substring(1, 2), 16);
+      const b = parseInt(hex.substring(2, 3) + hex.substring(2, 3), 16);
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        return `rgba(${r}, ${g}, ${b}, 0.1)`;
+      }
+    }
+  }
+  return "rgba(93, 182, 198, 0.1)"; // default fallback color
 }

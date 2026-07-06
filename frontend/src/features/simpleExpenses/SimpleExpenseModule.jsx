@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
+import { Pencil, Plus, ReceiptText, Trash2, CreditCard } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
+import "./simpleExpenses.css";
 
 // Modulo generico para Departamento, Suscripciones, Actividades y Extras.
 // Recibe la configuracion de la seccion desde FinanceApp para evitar duplicar pantallas casi iguales.
@@ -30,7 +31,7 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
           <strong>{currency.format(module.total)}</strong>
         </div>
         {module.cardExpenses?.length ? (
-          <p className="total-note">Los gastos pagados con tarjeta se muestran abajo, pero ya estan incluidos en Tarjetas.</p>
+          <p className="total-note">Los gastos pagados con tarjeta se muestran abajo, pero ya están incluidos en Tarjetas.</p>
         ) : null}
 
         <FixedExpenseList
@@ -38,6 +39,7 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
           debitCards={module.debitCards}
           emptyMessage={module.emptyMessage}
           expenses={module.expenses}
+          icon={Icon}
           onRemove={(expenseId) => onRemove(module.storageKey, expenseId)}
           onUpdate={(expenseId, updates) => onUpdate(module.storageKey, expenseId, updates)}
         />
@@ -132,6 +134,7 @@ function FixedExpenseList({
   debitCards = [],
   emptyMessage = "Todavia no cargaste gastos fijos del departamento.",
   expenses,
+  icon: Icon,
   onRemove,
   onUpdate,
 }) {
@@ -181,36 +184,38 @@ function FixedExpenseList({
 
   return (
     <>
-      <div className="expense-table fixed-expense-table">
-        <div className="table-header fixed-table-row">
-          <span>Nombre</span>
-          <span>Monto</span>
-          <span>Vence</span>
-          <span>Debita de</span>
-          <span aria-label="Acciones" />
-        </div>
+      <div className="expense-card-list">
+        {expenses.map((expense) => (
+          <SimpleExpenseRow
+            expense={expense}
+            icon={Icon}
+            key={expense.id}
+            onDelete={() => onRemove(expense.id)}
+            onEdit={() => startEdit(expense)}
+          />
+        ))}
 
-      {expenses.map((expense) => (
-        <SimpleExpenseRow
-          expense={expense}
-          key={expense.id}
-          onDelete={() => onRemove(expense.id)}
-          onEdit={() => startEdit(expense)}
-        />
-      ))}
-
-      {cardExpenses.map((expense) => (
-        <div className="table-row fixed-table-row card-paid-row" key={`card-${expense.id}`}>
-          <strong>
-            {expense.name}
-            <small>Pagado con tarjeta {expense.source}</small>
-          </strong>
-          <span className="amount-emphasis">{currency.format(expense.amount)}</span>
-          <span>Dia {expense.dueDay ?? 10}</span>
-          <span>{expense.paymentCard || "Sin asociar"}</span>
-          <span className="card-paid-badge">Ya incluido en Tarjetas</span>
-        </div>
-      ))}
+        {cardExpenses.map((expense) => (
+          <article className="expense-card item-card-paid" key={`card-${expense.id}`}>
+            <div className="expense-card-left">
+              <div className="expense-card-icon card-icon-secondary">
+                <CreditCard size={18} />
+              </div>
+              <div className="expense-card-info">
+                <h4>{expense.name}</h4>
+                <p>
+                  <span>Vence: Día {expense.dueDay ?? 10}</span>
+                  <span className="bullet">•</span>
+                  <span>Tarjeta: {expense.source}</span>
+                </p>
+              </div>
+            </div>
+            <div className="expense-card-right">
+              <span className="expense-card-amount">{currency.format(expense.amount)}</span>
+              <span className="card-paid-badge">Incluido en Tarjetas</span>
+            </div>
+          </article>
+        ))}
       </div>
 
       {editingExpense ? (
@@ -284,29 +289,39 @@ function FixedExpenseList({
   );
 }
 
-function SimpleExpenseRow({ expense, onDelete, onEdit }) {
+function SimpleExpenseRow({ expense, icon: Icon, onDelete, onEdit }) {
   return (
-    <div className="table-row fixed-table-row" key={expense.id}>
-      <strong>{expense.name}</strong>
-      <span>
-        <strong className="amount-emphasis">{currency.format(expense.amount)}</strong>
-      </span>
-      <span>{`Dia ${expense.dueDay ?? 10}`}</span>
-      <span>{expense.paymentCard || "Sin asociar"}</span>
-      <div className="row-actions">
-        <button className="icon-button icon-button-neutral" onClick={onEdit} title="Editar gasto" type="button">
-          <Pencil size={16} />
-        </button>
-        <button
-          aria-label={`Eliminar ${expense.name}`}
-          className="icon-button"
-          onClick={onDelete}
-          title="Eliminar gasto"
-          type="button"
-        >
-          <Trash2 size={17} />
-        </button>
+    <article className="expense-card item-active" key={expense.id}>
+      <div className="expense-card-left">
+        <div className="expense-card-icon">
+          <Icon size={18} />
+        </div>
+        <div className="expense-card-info">
+          <h4>{expense.name}</h4>
+          <p>
+            <span>Vence: Día {expense.dueDay ?? 10}</span>
+            <span className="bullet">•</span>
+            <span>Debita de: {expense.paymentCard || "Sin asociar"}</span>
+          </p>
+        </div>
       </div>
-    </div>
+      <div className="expense-card-right">
+        <span className="expense-card-amount">{currency.format(expense.amount)}</span>
+        <div className="expense-card-actions">
+          <button className="icon-button btn-edit-expense" onClick={onEdit} title="Editar gasto" type="button">
+            <Pencil size={15} />
+          </button>
+          <button
+            aria-label={`Eliminar ${expense.name}`}
+            className="icon-button btn-delete-expense"
+            onClick={onDelete}
+            title="Eliminar gasto"
+            type="button"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }

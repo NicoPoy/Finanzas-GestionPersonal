@@ -4,6 +4,7 @@ import AddInlineForm from "../../components/forms/AddInlineForm.jsx";
 import { currency } from "../../utils/formatters.js";
 import CardExpenseForm from "./CardExpenseForm.jsx";
 import CardExpenseList from "./CardExpenseList.jsx";
+import "./cards.css";
 
 // Pantalla principal de tarjetas: bancos a la izquierda, detalle de tarjeta a la derecha.
 export default function CardsModule({
@@ -32,7 +33,7 @@ export default function CardsModule({
   const [showNextMonthTable, setShowNextMonthTable] = useState(false);
 
   return (
-    <section className="workspace">
+    <section className="workspace cards-workspace">
       <aside className="cards-panel" aria-label="Bancos y tarjetas">
         <section className="selector-section">
           <div className="panel-title selector-title">
@@ -99,10 +100,10 @@ export default function CardsModule({
         )}
       </aside>
 
-      <section className="detail-panel">
+      <section className="detail-panel card-detail-panel">
         {selectedBank && selectedCard ? (
           <>
-            <div className="section-heading">
+            <div className="section-heading card-main-heading" style={{ "--card-accent": selectedCard.accent || "#5db6c6" }}>
               <div>
                 <p>{selectedBank.name}</p>
                 <h2>{selectedCard.name}</h2>
@@ -110,8 +111,13 @@ export default function CardsModule({
                   Proximo resumen cierra en {statementMonthTitle} (dia {selectedCard.dueDay ?? 10}) · se paga con
                   sueldo de {paymentMonthTitle}
                 </small>
+                <div className="card-hero-stats" aria-label="Resumen de tarjeta">
+                  <CardHeroStat label="Este mes" value={currency.format(selectedCard.monthlyTotal)} />
+                  <CardHeroStat label="Deuda total" value={currency.format(selectedCard.totalDebt)} />
+                  <CardHeroStat label="Ahorrado" value={currency.format(selectedCard.savingsTotal)} />
+                </div>
               </div>
-              <div className="section-heading-actions">
+              <div className="section-heading-actions card-heading-actions">
                 <label className="due-control">
                   <span>Cierra dia</span>
                   <input
@@ -152,6 +158,13 @@ export default function CardsModule({
             </div>
 
             <div className="expense-entry-panel">
+              <div className="card-form-heading">
+                <div>
+                  <span>Nuevo consumo</span>
+                  <strong>Cargar gasto en {selectedCard.name}</strong>
+                </div>
+                <small>Cuotas, compra unica o gasto fijo recurrente.</small>
+              </div>
               <CardExpenseForm
                 key={selectedCard.id}
                 fixedCategories={fixedCategories}
@@ -177,6 +190,15 @@ export default function CardsModule({
         )}
       </section>
     </section>
+  );
+}
+
+function CardHeroStat({ label, value }) {
+  return (
+    <article className="card-hero-stat">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </article>
   );
 }
 

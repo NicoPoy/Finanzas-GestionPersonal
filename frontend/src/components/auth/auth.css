@@ -1,0 +1,152 @@
+.login-shell,
+.home-shell {
+  align-items: center;
+  background:
+    radial-gradient(circle at top left, rgba(93, 182, 198, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(16, 26, 34, 0.95), rgba(29, 44, 53, 0.92)),
+    var(--page);
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-panel,
+.home-panel {
+  background: rgba(34, 51, 61, 0.94);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin: 0 auto;
+  max-width: 440px;
+  padding: 28px;
+  width: 100%;
+}
+
+.login-header,
+.home-header,
+.brand-lockup,
+.brand-lockup-login {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.brand-lockup img {
+  border-radius: var(--radius);
+  height: 42px;
+  object-fit: cover;
+  width: 42px;
+}
+
+.login-copy h1,
+.home-copy h1 {
+  color: var(--ink-strong);
+  font-size: 1.8rem;
+  margin: 16px 0 18px;
+}
+
+.login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.login-divider {
+  align-items: center;
+  color: var(--muted);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto 1fr;
+  margin: 18px 0;
+}
+
+.login-divider span {
+  background: var(--line);
+  height: 1px;
+}
+
+.login-note {
+  color: var(--muted);
+  margin: 14px 0 0;
+}
+
+.login-contact-button,
+.login-service-alert {
+  position: fixed;
+  z-index: 20;
+}
+
+.login-contact-button {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  bottom: 20px;
+  box-shadow: var(--shadow-soft);
+  color: var(--ink);
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  left: 20px;
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.login-service-alert {
+  background: var(--nav-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  bottom: 20px;
+  box-shadow: var(--shadow);
+  color: var(--mint);
+  display: flex;
+  gap: 10px;
+  max-width: 360px;
+  padding: 13px;
+  right: 20px;
+}
+
+.login-service-alert p {
+  margin: 0;
+}
+
+.login-contact-modal header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.demo-pill,
+.demo-banner {
+  background: var(--amber-soft);
+  border: 1px solid rgba(224, 184, 106, 0.36);
+  border-radius: 999px;
+  color: var(--amber);
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 6px 10px;
+  width: fit-content;
+}
+
+.demo-banner {
+  border-radius: var(--radius);
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .login-contact-button,
+  .login-service-alert {
+    left: 12px;
+    max-width: none;
+    right: 12px;
+  }
+
+  .login-contact-button {
+    bottom: 132px;
+    justify-content: center;
+  }
+
+  .login-service-alert {
+    bottom: 12px;
+  }
+}

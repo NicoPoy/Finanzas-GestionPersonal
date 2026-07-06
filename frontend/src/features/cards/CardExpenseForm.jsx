@@ -115,6 +115,33 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
         {validationErrors.origin ? <small className="field-error-message">{validationErrors.origin}</small> : null}
       </label>
 
+      <div className="expense-kind-field" aria-label="Tipo de gasto">
+        <span>Tipo de gasto</span>
+        <div className="segmented-control">
+          <button
+            className={expenseType === "installments" ? "active" : ""}
+            onClick={() => setExpenseType("installments")}
+            type="button"
+          >
+            Cuotas
+          </button>
+          <button
+            className={expenseType === "single" ? "active" : ""}
+            onClick={() => setExpenseType("single")}
+            type="button"
+          >
+            Unica
+          </button>
+          <button
+            className={expenseType === "fixed" ? "active" : ""}
+            onClick={() => setExpenseType("fixed")}
+            type="button"
+          >
+            Fijo
+          </button>
+        </div>
+      </div>
+
       <label className={`card-installments-field ${validationErrors.installments ? "field-error" : ""}`}>
         Cuotas pendientes
         <input
@@ -145,81 +172,52 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
         {validationErrors.amount ? <small className="field-error-message">{validationErrors.amount}</small> : null}
       </label>
 
-      <div className="expense-kind-field" aria-label="Tipo de gasto">
-        <span>Tipo de gasto</span>
-        <div className="segmented-control">
-          <button
-            className={expenseType === "installments" ? "active" : ""}
-            onClick={() => setExpenseType("installments")}
-            type="button"
-          >
-            Cuotas
-          </button>
-          <button
-            className={expenseType === "single" ? "active" : ""}
-            onClick={() => setExpenseType("single")}
-            type="button"
-          >
-            Unica
-          </button>
-          <button
-            className={expenseType === "fixed" ? "active" : ""}
-            onClick={() => setExpenseType("fixed")}
-            type="button"
-          >
-            Fijo
-          </button>
-        </div>
-      </div>
+      <label className={`card-savings-field ${validationErrors.savings ? "field-error" : ""}`}>
+        Ahorro
+        <MoneyInput
+          value={savings}
+          onValueChange={(value) => {
+            setSavings(value);
+            setValidationErrors((current) => ({ ...current, savings: "" }));
+          }}
+        />
+        {validationErrors.savings ? <small className="field-error-message">{validationErrors.savings}</small> : null}
+      </label>
 
-      <div className="card-secondary-row">
-        <label className={`savings-field ${validationErrors.savings ? "field-error" : ""}`}>
-          Ahorro
-          <MoneyInput
-            value={savings}
-            onValueChange={(value) => {
-              setSavings(value);
-              setValidationErrors((current) => ({ ...current, savings: "" }));
-            }}
-          />
-          {validationErrors.savings ? <small className="field-error-message">{validationErrors.savings}</small> : null}
-        </label>
+      <button
+        aria-pressed={paymentShare === "other"}
+        className={`paid-by-other-field ${paymentShare === "other" ? "active" : ""}`}
+        onClick={() => setPaymentShare((current) => (current === "other" ? "self" : "other"))}
+        type="button"
+      >
+        <span className="paid-by-other-check">
+          {paymentShare === "other" ? <Check size={14} /> : <UserRound size={15} />}
+        </span>
+        <span>
+          <strong>Otra persona</strong>
+          <small>No lo pago yo</small>
+        </span>
+      </button>
 
-        <button
-          aria-pressed={paymentShare === "other"}
-          className={`paid-by-other-field ${paymentShare === "other" ? "active" : ""}`}
-          onClick={() => setPaymentShare((current) => (current === "other" ? "self" : "other"))}
-          type="button"
-        >
-          <span className="paid-by-other-check">
-            {paymentShare === "other" ? <Check size={14} /> : <UserRound size={15} />}
-          </span>
-          <span>
-            <strong>Otra persona</strong>
-            <small>No lo pago yo</small>
-          </span>
-        </button>
+      <button
+        aria-pressed={paymentShare === "half"}
+        className={`paid-by-other-field shared-half-field ${paymentShare === "half" ? "active" : ""}`}
+        onClick={() => setPaymentShare((current) => (current === "half" ? "self" : "half"))}
+        type="button"
+      >
+        <span className="paid-by-other-check">
+          {paymentShare === "half" ? <Check size={14} /> : <Split size={15} />}
+        </span>
+        <span>
+          <strong>A medias</strong>
+          <small>Pago la mitad</small>
+        </span>
+      </button>
 
-        <button
-          aria-pressed={paymentShare === "half"}
-          className={`paid-by-other-field shared-half-field ${paymentShare === "half" ? "active" : ""}`}
-          onClick={() => setPaymentShare((current) => (current === "half" ? "self" : "half"))}
-          type="button"
-        >
-          <span className="paid-by-other-check">
-            {paymentShare === "half" ? <Check size={14} /> : <Split size={15} />}
-          </span>
-          <span>
-            <strong>A medias</strong>
-            <small>Pago la mitad</small>
-          </span>
-        </button>
-
-        <button className="card-submit-button" type="submit">
-          <Plus size={18} />
-          Agregar
-        </button>
-      </div>
+      <button className="card-submit-button" type="submit">
+        <Plus size={18} />
+        Agregar
+      </button>
     </form>
     {pendingFixedExpense ? (
       <div className="confirm-backdrop" role="presentation">

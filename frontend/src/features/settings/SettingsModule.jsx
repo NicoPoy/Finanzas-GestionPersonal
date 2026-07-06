@@ -3,6 +3,7 @@ import { Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
 import SalaryForm from "./SalaryForm.jsx";
+import "./settings.css";
 
 // Pantalla de configuracion. Por ahora administra sueldo y resumen de restante.
 export default function SettingsModule({

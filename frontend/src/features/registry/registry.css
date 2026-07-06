@@ -1,0 +1,543 @@
+/* Registry Toolbar & Header Row */
+.registry-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* Premium Year Selector */
+.registry-year-selector {
+  display: flex;
+  align-items: center;
+  background: rgba(34, 51, 61, 0.45);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+}
+
+.year-nav-btn {
+  background: var(--surface-soft);
+  border: 1px solid rgba(73, 104, 116, 0.35);
+  border-radius: 8px;
+  color: var(--ink);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.year-nav-btn:hover:not(:disabled) {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-strong);
+  transform: scale(1.05);
+}
+
+.year-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.year-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+  min-width: 90px;
+}
+
+.year-subtitle {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.year-value {
+  color: var(--ink-strong);
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Summary Grid & KPI Cards */
+.registry-summary-grid {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 0;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+.registry-stat-card {
+  background: rgba(34, 51, 61, 0.45);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  min-width: 190px;
+  transition: all 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.registry-stat-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--stat-border, var(--line));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14), 0 0 8px var(--stat-glow, transparent);
+}
+
+.registry-stat-card .stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.registry-stat-card span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.registry-stat-card strong {
+  color: var(--ink-strong);
+  font-size: 1.18rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.registry-stat-card .stat-icon {
+  color: var(--stat-color, var(--muted));
+  background: var(--stat-bg, rgba(73, 104, 116, 0.12));
+  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* KPI Card Tones */
+.stat-tone-success {
+  --stat-color: var(--mint);
+  --stat-bg: rgba(117, 199, 154, 0.1);
+  --stat-border: rgba(117, 199, 154, 0.35);
+  --stat-glow: rgba(117, 199, 154, 0.06);
+}
+
+.stat-tone-info {
+  --stat-color: var(--primary);
+  --stat-bg: rgba(93, 182, 198, 0.1);
+  --stat-border: rgba(93, 182, 198, 0.35);
+  --stat-glow: rgba(93, 182, 198, 0.06);
+}
+
+/* Month Selector Strip & Month Cards */
+.registry-month-strip {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(12, 1fr);
+  margin-bottom: 22px;
+}
+
+.registry-month-card {
+  background: rgba(34, 51, 61, 0.25);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 84px;
+  padding: 10px 8px;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.registry-month-card:hover {
+  transform: translateY(-2px);
+  background: rgba(34, 51, 61, 0.5);
+  border-color: var(--line-strong);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.month-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.registry-month-card span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 16px);
+}
+
+.month-complete-check {
+  color: var(--mint);
+  flex-shrink: 0;
+}
+
+.registry-month-card strong {
+  color: var(--ink-strong);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.registry-month-card small {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.registry-month-card.selected {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  box-shadow: 0 0 12px rgba(93, 182, 198, 0.15);
+}
+
+.registry-month-card.selected span {
+  color: var(--primary-strong);
+}
+
+.registry-month-card.current {
+  border-color: rgba(224, 184, 106, 0.6);
+}
+
+.registry-month-card.complete {
+  background: rgba(117, 199, 154, 0.05);
+  border-color: rgba(117, 199, 154, 0.45);
+}
+
+.registry-month-card.complete.selected {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+/* Month Progress Bar */
+.month-progress-bar {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  height: 3px;
+  overflow: hidden;
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 2px;
+}
+
+.progress-fill {
+  background: var(--month-fill, var(--muted));
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.registry-month-card.complete .progress-fill {
+  --month-fill: var(--mint);
+}
+
+.registry-month-card.selected .progress-fill {
+  --month-fill: var(--primary);
+}
+
+/* Service Card List */
+.registry-service-list {
+  display: grid;
+  gap: 12px;
+}
+
+.registry-service-card {
+  background: rgba(29, 44, 53, 0.45);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--line-strong);
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.22s ease;
+}
+
+.registry-service-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--left-border, var(--line-strong));
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+.registry-service-paid,
+.registry-service-debited {
+  --left-border: var(--mint);
+  border-left-color: var(--mint);
+}
+
+.registry-service-transferred {
+  --left-border: var(--amber);
+  border-left-color: var(--amber);
+}
+
+.registry-service-none {
+  --left-border: var(--line-strong);
+  border-left-color: var(--faint);
+}
+
+.registry-service-main {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* Category Badge */
+.registry-category {
+  color: var(--primary-strong);
+  background: rgba(93, 182, 198, 0.1);
+  border: 1px solid rgba(93, 182, 198, 0.2);
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.registry-service-card h3 {
+  color: var(--ink-strong);
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.registry-service-card p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 6px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.registry-service-card p b {
+  color: var(--mint);
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+/* Status Badge */
+.registry-saved-badge {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 58px;
+  min-width: 190px;
+  padding: 10px 18px;
+  transition: all 0.2s ease;
+}
+
+.badge-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--badge-color, var(--ink-strong));
+}
+
+.badge-status-row strong {
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.badge-subtitle {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+/* Badge Tones */
+.badge-tone-success {
+  --badge-color: var(--mint);
+  background: rgba(117, 199, 154, 0.08) !important;
+  border-color: rgba(117, 199, 154, 0.35) !important;
+}
+
+.badge-tone-warning {
+  --badge-color: var(--amber);
+  background: rgba(224, 184, 106, 0.08) !important;
+  border-color: rgba(224, 184, 106, 0.35) !important;
+}
+
+.badge-tone-none {
+  --badge-color: var(--muted);
+  background: rgba(113, 135, 143, 0.06) !important;
+  border-color: var(--line) !important;
+}
+
+/* Metadata List */
+.registry-service-meta {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+  font-weight: 750;
+  gap: 8px 18px;
+  border-top: 1px solid rgba(73, 104, 116, 0.15);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.registry-service-meta span {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.registry-service-meta span svg {
+  opacity: 0.75;
+}
+
+/* Status Controls (Segmented Control style) */
+.registry-status-group {
+  background: rgba(16, 26, 34, 0.4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px;
+  display: flex;
+  gap: 4px;
+}
+
+.registry-status-group-two > button {
+  flex: 1;
+}
+
+.registry-status-group-three > button {
+  flex: 1;
+}
+
+.registry-status-button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-weight: 900;
+  min-height: 36px;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registry-status-button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-strong);
+}
+
+.registry-status-button.active.success {
+  background: var(--mint);
+  border-color: transparent;
+  color: #123023;
+  box-shadow: 0 4px 12px rgba(117, 199, 154, 0.2);
+}
+
+.registry-status-button.active.warning {
+  background: var(--amber);
+  border-color: transparent;
+  color: #2e230f;
+  box-shadow: 0 4px 12px rgba(224, 184, 106, 0.2);
+}
+
+.registry-status-button.active.pending {
+  background: var(--danger);
+  border-color: transparent;
+  color: #3d1b1e;
+  box-shadow: 0 4px 12px rgba(224, 122, 122, 0.2);
+}
+
+/* Responsive Styles */
+@media (max-width: 1100px) {
+  .registry-month-strip {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .registry-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .registry-year-selector {
+    justify-content: center;
+  }
+
+  .registry-summary-grid {
+    grid-template-columns: 1fr;
+    max-width: none;
+    margin-top: 10px;
+  }
+
+  .registry-stat-card {
+    min-width: 0;
+  }
+
+  .registry-month-strip {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .registry-service-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .registry-saved-badge {
+    min-width: 0;
+    align-items: flex-start;
+  }
+
+  .registry-status-group {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .registry-month-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

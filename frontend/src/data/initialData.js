@@ -26,7 +26,7 @@ export const INITIAL_DATA = {
 };
 
 // Paleta para tarjetas nuevas. El indice se calcula segun la cantidad total de tarjetas.
-export const CARD_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#ea580c", "#0f766e"];
+export const CARD_COLORS = ["#d6a84f", "#c1913f", "#b98332", "#e0b86a", "#a9792d", "#f2d182"];
 
 export const DEFAULT_DEBIT_CARDS = ["MercadoPago", "Lemon", "Astropay", "Brubank", "Uala", "Personal Pay"];
 

@@ -1,8 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import LoginScreen from "./components/auth/LoginScreen.jsx";
-import FinanceApp from "./features/finance/FinanceApp.jsx";
-import HomeScreen from "./features/home/HomeScreen.jsx";
-import NotesModule from "./features/notes/NotesModule.jsx";
 import { apiUrl } from "./services/platform.js";
 import {
   clearStoredAccessToken,
@@ -11,15 +8,17 @@ import {
   isTokenExpired,
   storeAccessToken,
 } from "./services/session.js";
-import "./styles.css";
+import "./styles/base.css";
+import "./styles/components.css";
 
-// App decide si mostrar login, home o cada modulo autenticado.
+const FinanceApp = React.lazy(() => import("./features/finance/FinanceApp.jsx"));
+
+// App decide si mostrar login o la aplicacion autenticada.
 // El token queda en localStorage y expira a las 24 horas.
 export default function App() {
   const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(Boolean(accessToken));
-  const [activeSection, setActiveSection] = useState("home");
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("finanzas-theme");
 
@@ -50,7 +49,6 @@ export default function App() {
     setAccessToken("");
     setIsDemoMode(false);
     setIsCheckingSession(false);
-    setActiveSection("home");
   }
 
   useEffect(() => {
@@ -132,7 +130,7 @@ export default function App() {
     storeAccessToken(session.access_token);
     setIsDemoMode(false);
     setTheme(session.dark_mode ? "dark" : "light");
-    setActiveSection("home");
+    window.history.replaceState({}, "", "/finanzas");
     setAccessToken(session.access_token);
   }
 
@@ -141,7 +139,7 @@ export default function App() {
     setAccessToken("");
     setIsDemoMode(true);
     setIsCheckingSession(false);
-    setActiveSection("home");
+    window.history.replaceState({}, "", "/finanzas");
   }
 
   function handleLogout() {
@@ -169,40 +167,24 @@ export default function App() {
     );
   }
 
-  if (activeSection === "finanzas") {
-    return (
+  return (
+    <Suspense
+      fallback={
+        <main className="app-shell">
+          <section className="loading-screen">
+            <strong>Cargando interfaz...</strong>
+          </section>
+        </main>
+      }
+    >
       <FinanceApp
         accessToken={accessToken}
         isDemoMode={isDemoMode}
-        onBackToHome={() => setActiveSection("home")}
         onLogout={handleLogout}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-    );
-  }
-
-  if (activeSection === "notas") {
-    return (
-      <NotesModule
-        accessToken={accessToken}
-        isDemoMode={isDemoMode}
-        onBackToHome={() => setActiveSection("home")}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
-    );
-  }
-
-  return (
-    <HomeScreen
-      isDemoMode={isDemoMode}
-      onLogout={handleLogout}
-      onOpenFinanzas={() => setActiveSection("finanzas")}
-      onOpenNotas={() => setActiveSection("notas")}
-      theme={theme}
-      onToggleTheme={toggleTheme}
-    />
+    </Suspense>
   );
 }
 

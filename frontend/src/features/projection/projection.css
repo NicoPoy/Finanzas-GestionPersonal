@@ -1,0 +1,30 @@
+.projection-summary-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.projection-next-month {
+  background: rgba(93, 182, 198, 0.1) !important;
+}
+
+.projection-summary-card-peak {
+  border-color: rgba(224, 184, 106, 0.42);
+}
+
+.projection-summary-card-peak strong {
+  color: var(--amber);
+}
+
+.projection-amount {
+  color: var(--primary-strong);
+}
+
+.projection-empty {
+  color: var(--faint);
+}
+
+.projection-total-row td {
+  background: #18252d;
+  font-weight: 950;
+}

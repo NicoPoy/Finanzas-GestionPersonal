@@ -1,0 +1,17 @@
+.aguinaldo-grid,
+.aguinaldo-summary-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.aguinaldo-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.aguinaldo-table-row {
+  grid-template-columns: 1.2fr 0.8fr auto;
+}
+
+.aguinaldo-history-row {
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+}

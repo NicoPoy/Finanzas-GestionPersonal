@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Banknote, PiggyBank, Plus, ReceiptText, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
+import "./aguinaldo.css";
 
 const DOLLAR_API_URL = "https://dolarapi.com/v1/dolares";
 

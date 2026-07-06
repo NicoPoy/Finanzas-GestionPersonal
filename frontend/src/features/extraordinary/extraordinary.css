@@ -1,0 +1,190 @@
+/* Gastos Extraordinarios (Proximo Sueldo / Proyección) */
+
+/* Form horizontal redesign for desktop */
+@media (min-width: 761px) {
+  .extraordinarios-form {
+    display: grid;
+    grid-template-columns: 2.5fr 1.5fr auto;
+    gap: 16px;
+    align-items: end;
+    background: rgba(34, 51, 61, 0.25);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  .extraordinarios-form label {
+    margin: 0;
+  }
+
+  .extraordinarios-form button[type="submit"] {
+    align-self: end;
+    height: 42px;
+    min-height: 42px;
+    margin-bottom: 0;
+  }
+}
+
+/* Total Strip card style (Planning Violet theme) */
+.total-strip {
+  background: rgba(170, 162, 242, 0.06);
+  border: 1px solid rgba(170, 162, 242, 0.25);
+  border-left: 5px solid var(--violet);
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.total-strip span {
+  color: var(--ink-strong);
+  font-size: 0.95rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.total-strip strong {
+  color: var(--violet);
+  font-size: 1.38rem;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(170, 162, 242, 0.15);
+}
+
+.card-statement-note {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-top: 4px;
+}
+
+/* Card List Layout Redesign (Replacing Tables) */
+.expense-card-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.expense-card {
+  background: rgba(29, 44, 53, 0.45);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--violet);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expense-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(170, 162, 242, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18), 0 0 8px rgba(170, 162, 242, 0.08);
+  background: rgba(34, 51, 61, 0.45);
+}
+
+.expense-card-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.expense-card-icon {
+  background: rgba(170, 162, 242, 0.1);
+  color: var(--violet);
+  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.expense-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.expense-card-info h4 {
+  color: var(--ink-strong);
+  font-size: 1.08rem;
+  font-weight: 900;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.expense-card-info p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.expense-card-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.expense-card-amount {
+  color: var(--mint);
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Pay row button */
+.pay-row-button {
+  background: rgba(117, 199, 154, 0.08) !important;
+  border: 1px solid rgba(117, 199, 154, 0.25) !important;
+  color: var(--mint) !important;
+  border-radius: 8px !important;
+  font-weight: 900;
+  padding: 6px 14px !important;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+}
+
+.pay-row-button:hover {
+  background: var(--mint-soft) !important;
+  border-color: var(--mint) !important;
+  color: #123023 !important;
+  box-shadow: 0 4px 12px rgba(117, 199, 154, 0.22);
+  transform: translateY(-1px);
+}
+
+/* Responsive fixes */
+@media (max-width: 760px) {
+  .extraordinarios-form {
+    padding: 16px;
+    gap: 12px;
+  }
+  .expense-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+  }
+  .expense-card-right {
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid rgba(73, 104, 116, 0.15);
+    padding-top: 12px;
+  }
+}
