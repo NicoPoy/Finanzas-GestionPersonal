@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Mail, X, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, Mail, X, Lock, Eye, EyeOff, Linkedin } from "lucide-react";
 import "./auth.css";
 
 export default function LoginScreen({ onLogin, onStartDemo, onToggleTheme, theme }) {
@@ -165,11 +165,38 @@ export default function LoginScreen({ onLogin, onStartDemo, onToggleTheme, theme
                 </button>
               </header>
               <p>
-                Por ahora el alta de cuentas se revisa manualmente para no exceder los límites del plan gratuito de la base de datos.
+                El alta de cuentas se revisa manualmente para no exceder los límites del plan gratuito de la base de datos.
               </p>
               <p>
-                Escribime por el mismo canal donde recibiste este link e incluí tu nombre y el email que querés usar para ingresar.
+                Escríbeme por email o búscame en LinkedIn detallando tu nombre y el email que deseas registrar para ingresar.
               </p>
+
+              <div className="login-modal-contact-methods">
+                <a href="mailto:nicolaspoy98@gmail.com" className="login-modal-method-card">
+                  <Mail size={20} className="method-icon-email" />
+                  <div className="method-details">
+                    <span className="method-label">Enviar Email</span>
+                    <strong className="method-value">nicolaspoy98@gmail.com</strong>
+                  </div>
+                </a>
+
+                <a
+                  href="https://www.linkedin.com/in/nicolas-poy-peters/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="login-modal-method-card"
+                >
+                  <Linkedin size={20} className="method-icon-linkedin" />
+                  <div className="method-details">
+                    <div className="linkedin-header-row">
+                      <span className="method-label">LinkedIn Profile</span>
+                      <span className="linkedin-open-to-work">Open to Work</span>
+                    </div>
+                    <strong className="method-value">Nicolás Poy Peters</strong>
+                  </div>
+                </a>
+              </div>
+
               <button className="login-contact-primary" onClick={() => setIsContactModalOpen(false)} type="button">
                 Entendido
               </button>

@@ -17,6 +17,8 @@ import {
   Menu,
   ShoppingBasket,
   X,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
@@ -193,6 +195,17 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(() => {
+    return localStorage.getItem("header-collapsed") === "true";
+  });
+
+  const toggleHeader = () => {
+    setIsHeaderCollapsed((prev) => {
+      const newVal = !prev;
+      localStorage.setItem("header-collapsed", String(newVal));
+      return newVal;
+    });
+  };
 
   useEffect(() => {
     function handleRouteChange() {
@@ -1368,7 +1381,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       </aside>
 
       <main className="dashboard-main">
-        <header className="dashboard-header">
+        <header className={`dashboard-header ${isHeaderCollapsed ? "collapsed" : ""}`}>
           <div className="header-left">
             <button
               aria-label="Abrir menu"
@@ -1379,6 +1392,15 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
               <Menu size={20} />
             </button>
             <h1>{moduleTitles[activeModule] ?? "Finanzas"}</h1>
+            <button
+              aria-label={isHeaderCollapsed ? "Mostrar montos" : "Ocultar montos"}
+              className="header-collapse-toggle"
+              onClick={toggleHeader}
+              title={isHeaderCollapsed ? "Mostrar montos" : "Ocultar montos"}
+              type="button"
+            >
+              {isHeaderCollapsed ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
           </div>
 
           <div className="header-right">

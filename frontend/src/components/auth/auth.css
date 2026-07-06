@@ -658,6 +658,95 @@
   transform: translateY(-1px);
 }
 
+/* Contact methods inside modal */
+.login-modal-contact-methods {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.login-modal-method-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--login-card-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--login-text-primary);
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.login-modal-method-card:hover {
+  background: var(--login-input-bg);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(93, 182, 198, 0.08);
+}
+
+.login-modal-method-card svg {
+  flex-shrink: 0;
+}
+
+.method-icon-email {
+  color: var(--primary);
+}
+
+.method-icon-linkedin {
+  color: #0a66c2;
+}
+
+.method-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.method-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--login-text-secondary);
+}
+
+.method-value {
+  font-size: 0.92rem;
+  color: var(--login-text-strong);
+  word-break: break-all;
+}
+
+.linkedin-header-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.linkedin-open-to-work {
+  background: #01754f;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 99px;
+  box-shadow: 0 2px 6px rgba(1, 117, 79, 0.3);
+}
+
+[data-theme="light"] .login-modal-method-card {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .login-modal-method-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 20px rgba(93, 182, 198, 0.12);
+}
+
 
 /* --- RESPONSIVIDAD (MOBILE & TABLET COLLAPSED) --- */
 
