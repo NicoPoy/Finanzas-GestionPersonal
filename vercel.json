@@ -8,6 +8,14 @@
     {
       "source": "/api/:path*",
       "destination": "/api/index.py"
+    },
+    {
+      "source": "/finanzas",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/finanzas/:path*",
+      "destination": "/index.html"
     }
   ]
 }
