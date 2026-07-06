@@ -16,6 +16,7 @@ import {
   Star,
   Menu,
   ShoppingBasket,
+  X,
 } from "lucide-react";
 import { CARD_COLORS, INITIAL_DATA } from "../../data/initialData.js";
 import {
@@ -1309,6 +1310,14 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
 
   return (
     <div className="dashboard-layout">
+      {isSidebarOpen ? (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      ) : null}
+
       <aside className={`dashboard-sidebar ${isSidebarOpen ? "open" : ""}`}>
         <div className="sidebar-brand">
           <img alt="" src="/logo_app_finanzas.png" />
@@ -1316,6 +1325,14 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
             <h2>Finanzas</h2>
             <p>Control Personal</p>
           </div>
+          <button
+            aria-label="Cerrar menu"
+            className="sidebar-close-btn"
+            onClick={() => setIsSidebarOpen(false)}
+            type="button"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="sidebar-nav" aria-label="Secciones de finanzas">

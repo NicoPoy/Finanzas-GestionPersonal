@@ -59,6 +59,40 @@
   letter-spacing: 0.02em;
 }
 
+.sidebar-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--nav-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.sidebar-close-btn:hover {
+  background: var(--surface-strong);
+  color: var(--ink-strong);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 55;
+  animation: sidebar-fade-in 0.2s ease;
+}
+
+@keyframes sidebar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .sidebar-brand p {
   color: var(--nav-muted);
   font-size: 0.8rem;
@@ -369,6 +403,10 @@
 
   .sidebar-toggle {
     display: inline-flex;
+  }
+
+  .sidebar-close-btn {
+    display: flex;
   }
 }
 
