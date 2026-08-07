@@ -7,9 +7,7 @@ import {
   CreditCard,
   FileText,
   Home,
-  Info,
   LayoutDashboard,
-  PiggyBank,
   TrendingDown,
   WalletCards,
   Wallet,
@@ -49,6 +47,18 @@ export default function DashboardModule({
   const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
   const topExpensesTotal = topExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const disappearingTotal = disappearingExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const visibleTopExpenses = topExpenses.slice(0, 5);
+  const topExpenseGroups = buildExpenseGroups(topExpenses);
+  const currentActions = buildCurrentActions({ debitTransfers, dueItems });
+  const planningActions = buildPlanningActions({
+    cardsPercent,
+    disappearingTotal,
+    dueItems,
+    health,
+    nextMonthSummary,
+    totalPercent,
+    upcomingCardExpenses,
+  });
   const isCurrentMonthView = selectedMonthOffset === 0;
 
   return (
@@ -59,11 +69,10 @@ export default function DashboardModule({
             <LayoutDashboard size={18} />
             Centro de control
           </span>
-          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Asi esta parado el mes siguiente"}</h2>
+          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Decision rapida para el mes siguiente"}</h2>
           {!isCurrentMonthView ? (
             <p>
-              Esta pantalla resume el sueldo de {nextMonthSummary.monthTitle}, usando las tarjetas del resumen de{" "}
-              {nextMonthSummary.statementMonthTitle}, tus gastos fijos cargados y los pagos que ya marcaste en el registro.
+              Primero miramos margen, gasto proyectado y acciones concretas. El detalle queda abajo, solo cuando ayuda a decidir.
             </p>
           ) : null}
           <DashboardMonthMenu
@@ -75,411 +84,407 @@ export default function DashboardModule({
 
         {!isCurrentMonthView ? (
           <article className={`dashboard-health dashboard-health-${health.tone}`}>
-          <span>{health.label}</span>
-          <strong>{currency.format(nextMonthSummary.remaining)}</strong>
-          <small>{health.description}</small>
+            <span>{health.label}</span>
+            <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+            <small>{health.description}</small>
           </article>
         ) : null}
       </section>
 
-      {!isCurrentMonthView ? (
+      {isCurrentMonthView ? (
+        <CurrentOperationsSection
+          cardPayments={cardPayments}
+          cardPaymentsTotal={cardPaymentsTotal}
+          currentActions={currentActions}
+          currentMonthHistory={currentMonthHistory}
+          currentMonthSummary={currentMonthSummary}
+          debitTransfers={debitTransfers}
+          dueItems={dueItems}
+          dueStats={dueStats}
+          isMonthZero={isMonthZero}
+          paidThisMonth={paidThisMonth}
+          pendingDebitTotal={pendingDebitTotal}
+          transferTotal={transferTotal}
+        />
+      ) : (
         <>
-      <section className="dashboard-main-grid">
-        <DashboardMetric
-          detail="Sueldo configurado mas otros ingresos."
-          icon={<Banknote size={21} />}
-          label="Ingresos disponibles"
-          tone="income"
-          value={currency.format(nextMonthSummary.salary)}
-        />
-        <DashboardMetric
-          detail={`Equivale al ${cardsPercent}% de tus ingresos.`}
-          icon={<CreditCard size={21} />}
-          label="Tarjetas"
-          tone="cards"
-          value={currency.format(nextMonthSummary.cardExpenses)}
-        />
-        <DashboardMetric
-          detail={`Fijos + compras mensuales: ${fixedPercent}% del ingreso.`}
-          icon={<Home size={21} />}
-          label="Gastos obligatorios"
-          tone="fixed"
-          value={currency.format(nextMonthSummary.fixedExpenses)}
-        />
-        <DashboardMetric
-          detail={`Tarjetas + fijos + extraordinarios: ${totalPercent}% del ingreso.`}
-          icon={<Wallet size={21} />}
-          label="Gasto proyectado"
-          tone="total"
-          value={currency.format(nextMonthSummary.totalExpenses)}
-        />
-      </section>
-
-      <section className="dashboard-story-grid">
-        <article className="dashboard-panel dashboard-panel-large">
-          <div className="dashboard-panel-heading">
-            <div>
-              <span className="dashboard-panel-kicker">Como se calcula</span>
-              <h3>Origen de la informacion</h3>
-            </div>
-            <Info size={22} />
-          </div>
-
-          <div className="dashboard-formula">
-            <div>
-              <small>Formula principal</small>
-              <strong>Ingresos - gastos proyectados = restante</strong>
-            </div>
-            <p>
-              {currency.format(nextMonthSummary.salary)} - {currency.format(nextMonthSummary.totalExpenses)} ={" "}
-              <b>{currency.format(nextMonthSummary.remaining)}</b>
-            </p>
-          </div>
-
-          <div className="dashboard-source-list">
-            <SourceItem
-              icon={<Banknote size={18} />}
+          <section className="dashboard-main-grid dashboard-main-grid-compact">
+            <DashboardMetric
+              detail="Sueldo configurado mas otros ingresos."
+              icon={<Banknote size={21} />}
               label="Ingresos"
-              text="Sale del sueldo configurado en Configuracion y suma los otros ingresos guardados."
+              tone="income"
+              value={currency.format(nextMonthSummary.salary)}
             />
-            <SourceItem
-              icon={<CreditCard size={18} />}
+            <DashboardMetric
+              detail={`Tarjetas usan ${cardsPercent}% del ingreso.`}
+              icon={<CreditCard size={21} />}
               label="Tarjetas"
-              text="Usa los bancos, tarjetas, cuotas y ajustes de resumen. Si una tarjeta ya fue pagada, toma el monto real guardado."
+              tone="cards"
+              value={currency.format(nextMonthSummary.cardExpenses)}
             />
-            <SourceItem
-              icon={<Home size={18} />}
-              label="Gastos fijos"
-              text="Suma departamento, suscripciones, actividades y extras cargados en sus secciones."
+            <DashboardMetric
+              detail={`Fijos y mensuales: ${fixedPercent}% del ingreso.`}
+              icon={<Home size={21} />}
+              label="Obligatorios"
+              tone="fixed"
+              value={currency.format(nextMonthSummary.fixedExpenses)}
             />
-            <SourceItem
-              icon={<CalendarClock size={18} />}
-              label="Pendientes"
-              text="Lee Registro de Pagos: paymentRegistry y paymentDetails para saber que esta pagado, transferido o pendiente."
+            <DashboardMetric
+              detail={`${totalPercent}% del sueldo ya esta comprometido.`}
+              icon={<Wallet size={21} />}
+              label="Gasto total"
+              tone="total"
+              value={currency.format(nextMonthSummary.totalExpenses)}
             />
-          </div>
-        </article>
+          </section>
 
-        <article className="dashboard-panel dashboard-health-panel">
-          <div className="dashboard-panel-heading">
-            <div>
-              <span className="dashboard-panel-kicker">Semaforo financiero</span>
-              <h3>{health.label}</h3>
-            </div>
-            <TrendingDown size={22} />
-          </div>
+          <section className="dashboard-decision-grid">
+            <ActionPanel actions={planningActions} title="Que conviene mirar ahora" />
 
-          <div className={`health-light health-light-${health.tone}`}>
-            <strong>{currency.format(nextMonthSummary.remaining)}</strong>
-            <span>{health.description}</span>
-          </div>
-
-          <div className="salary-meter" aria-label={`Uso del sueldo: ${totalPercent}%`}>
-            <span style={{ width: `${Math.min(totalPercent, 100)}%` }} />
-          </div>
-          <div className="salary-meter-labels">
-            <span>0%</span>
-            <strong>{totalPercent}% usado</strong>
-            <span>100%</span>
-          </div>
-
-          <div className="dashboard-mini-breakdown">
-            <BreakdownRow label="Tarjetas" value={nextMonthSummary.cardExpenses} />
-            <BreakdownRow label="Gastos obligatorios" value={nextMonthSummary.fixedExpenses} />
-            <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} />
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-insights-grid">
-        <article className="dashboard-panel top-expenses-panel">
-          <div className="dashboard-panel-heading">
-            <div>
-              <span className="dashboard-panel-kicker">Top gastos</span>
-              <h3>Lo que mas pesa</h3>
-            </div>
-            <FileText size={22} />
-          </div>
-          <div className="insight-total-line">
-            <span>Top 15 del resumen elegido</span>
-            <strong>{currency.format(topExpensesTotal)}</strong>
-          </div>
-          {topExpenses.length ? (
-            <div className="insight-list top-expenses-list">
-              {topExpenses.map((expense, index) => (
-                <div className="insight-row" key={expense.id}>
-                  <em>{index + 1}</em>
-                  <span>
-                    <strong>{expense.name}</strong>
-                    <small>
-                      {expense.category} - {expense.source}
-                    </small>
-                  </span>
-                  <i className="insight-percent">{getPercent(expense.amount, totalIncome)}%</i>
-                  <b>{currency.format(expense.amount)}</b>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="panel-empty">No hay gastos para ordenar todavia.</p>
-          )}
-        </article>
-
-        <article className="dashboard-panel account-flow-panel">
-          <div className="dashboard-panel-heading">
-            <div>
-              <span className="dashboard-panel-kicker">Flujo por cuenta</span>
-              <h3>Ruta del dinero</h3>
-            </div>
-            <WalletCards size={22} />
-          </div>
-          <div className="flow-summary-grid">
-            <FlowStat label="Ingresos" value={accountFlow?.incomeTotal ?? 0} />
-            <FlowStat label="A transferir" value={accountFlow?.transferTotal ?? 0} tone="warning" />
-            <FlowStat label="Despues de transferir" value={accountFlow?.afterTransfers ?? 0} tone="success" />
-          </div>
-          {accountFlow?.accounts?.length ? (
-            <div className="flow-account-list">
-              {accountFlow.accounts.map((account) => (
-                <div className="flow-account-row" key={account.account}>
-                  <span>
-                    <strong>{account.account}</strong>
-                    <small>
-                      Transferir {currency.format(account.pendingTransfer)} - pendiente debito{" "}
-                      {currency.format(account.pendingDebit)}
-                    </small>
-                  </span>
-                  <b>{currency.format(account.total)}</b>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="panel-empty">No hay cuentas con transferencias pendientes.</p>
-          )}
-        </article>
-
-        <article className="dashboard-panel disappearing-panel">
-          <div className="dashboard-panel-heading">
-            <div>
-              <span className="dashboard-panel-kicker">Se liberan</span>
-              <h3>Gastos que desaparecen</h3>
-            </div>
-            <CreditCard size={22} />
-          </div>
-          <div className="insight-total-line">
-            <span>Alivio estimado despues de este resumen</span>
-            <strong>{currency.format(disappearingTotal)}</strong>
-          </div>
-          {disappearingExpenses.length ? (
-            <div className="insight-list">
-              {disappearingExpenses.slice(0, 6).map((expense) => (
-                <div className="insight-row" key={expense.id}>
-                  <em>OK</em>
-                  <span>
-                    <strong>{expense.name}</strong>
-                    <small>{expense.card} - ultima cuota o compra unica</small>
-                  </span>
-                  <b>{currency.format(expense.amount)}</b>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="panel-empty">No hay cuotas que desaparezcan en este pago.</p>
-          )}
-        </article>
-      </section>
-
-      <section className="dashboard-panel upcoming-card-expenses-panel">
-        <div className="dashboard-panel-heading">
-          <div>
-            <span className="dashboard-panel-kicker">Resumen elegido</span>
-            <h3>Gastos nuevos de tarjeta</h3>
-          </div>
-          <CreditCard size={22} />
-        </div>
-
-        <p className="upcoming-card-note">
-          Estos son los gastos del resumen elegido que no estaban en el resumen anterior de cada tarjeta.
-        </p>
-
-        <div className="upcoming-card-grid">
-          {upcomingCardExpenses.map((card) => (
-            <UpcomingCardExpensesCard card={card} key={card.cardId} />
-          ))}
-        </div>
-      </section>
-
-        </>
-      ) : null}
-
-      <section className="dashboard-current-section">
-        <div className="dashboard-current-header">
-          <div>
-            <span className="dashboard-kicker">
-              <CheckCircle2 size={18} />
-              Seguimiento operativo
-            </span>
-            <h3>{isCurrentMonthView ? `Mes actual: ${currentMonthSummary.monthTitle}` : `Seguimiento: ${currentMonthSummary.monthTitle}`}</h3>
-            <p>
-              Esta seccion mira los estados guardados del mes {isCurrentMonthView ? "actual" : "elegido"} y calcula cuanto tenes que mover a cada cuenta
-              configurada en "Debita de".
-            </p>
-          </div>
-          <div className="dashboard-current-total">
-            <small>Total a transferir</small>
-            <strong>{currency.format(transferTotal)}</strong>
-            <span>{currency.format(pendingDebitTotal)} ya transferido, esperando debito</span>
-          </div>
-        </div>
-
-        <div className="dashboard-current-grid">
-          <article className="dashboard-panel dashboard-movement-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <span className="dashboard-panel-kicker">Pagos reales</span>
-                <h3>{isCurrentMonthView ? "Movimiento del mes actual" : "Movimiento del mes elegido"}</h3>
-              </div>
-              <CheckCircle2 size={22} />
-            </div>
-
-            <div className="dashboard-current-month">
-              <div>
-                <small>{isMonthZero ? "Mes inicial" : currentMonthSummary.monthTitle}</small>
-                <strong>{currency.format(paidThisMonth)}</strong>
-                <span>pagado registrado</span>
-              </div>
-              <div>
-                <small>Pendiente actual</small>
-                <strong>{currency.format(currentMonthSummary.pendingTotal)}</strong>
-                <span>segun estados guardados</span>
-              </div>
-            </div>
-
-            <section className="card-payments-summary">
-              <div className="card-payments-total">
-                <span className="card-payments-icon">
-                  <CreditCard size={20} />
-                </span>
+            <article className="dashboard-panel dashboard-health-panel dashboard-decision-health">
+              <div className="dashboard-panel-heading">
                 <div>
-                  <small>Total tarjetas pagadas</small>
-                  <strong>{currency.format(cardPaymentsTotal)}</strong>
+                  <span className="dashboard-panel-kicker">Semaforo financiero</span>
+                  <h3>{health.label}</h3>
                 </div>
+                <TrendingDown size={22} />
               </div>
 
-              {cardPayments.length ? (
-                <div className="card-payments-list">
-                  {cardPayments.map((item) => (
-                    <CardPaymentDetail item={item} key={item.id} />
+              <div className={`health-light health-light-${health.tone}`}>
+                <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+                <span>{health.description}</span>
+              </div>
+
+              <div className="salary-meter" aria-label={`Uso del sueldo: ${totalPercent}%`}>
+                <span style={{ width: `${Math.min(totalPercent, 100)}%` }} />
+              </div>
+              <div className="salary-meter-labels">
+                <span>0%</span>
+                <strong>{totalPercent}% usado</strong>
+                <span>100%</span>
+              </div>
+
+              <div className="dashboard-mini-breakdown">
+                <BreakdownRow label="Tarjetas" value={nextMonthSummary.cardExpenses} />
+                <BreakdownRow label="Gastos obligatorios" value={nextMonthSummary.fixedExpenses} />
+                <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} />
+              </div>
+            </article>
+          </section>
+
+          <section className="dashboard-insights-grid dashboard-insights-grid-focused">
+            <article className="dashboard-panel top-expenses-panel top-expenses-panel-compact">
+              <div className="dashboard-panel-heading">
+                <div>
+                  <span className="dashboard-panel-kicker">Top gastos</span>
+                  <h3>Lo que mas pesa</h3>
+                </div>
+                <FileText size={22} />
+              </div>
+              <div className="insight-total-line">
+                <span>Top 5 visible de {topExpenses.length} gastos</span>
+                <strong>{currency.format(topExpensesTotal)}</strong>
+              </div>
+              {visibleTopExpenses.length ? (
+                <div className="insight-list compact-expense-list">
+                  {visibleTopExpenses.map((expense, index) => (
+                    <div className="insight-row compact-expense-row" key={expense.id}>
+                      <em>{index + 1}</em>
+                      <span>
+                        <strong>{expense.name}</strong>
+                        <small>
+                          {expense.category} - {expense.source}
+                        </small>
+                      </span>
+                      <i className="insight-percent">{getPercent(expense.amount, totalIncome)}%</i>
+                      <b>{currency.format(expense.amount)}</b>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <p className="card-payments-empty">Todavia no hay tarjetas pagadas en este mes.</p>
+                <p className="panel-empty">No hay gastos para ordenar todavia.</p>
               )}
-            </section>
 
-            {currentMonthHistory.length ? (
-              <div className="dashboard-list">
-                {currentMonthHistory.map((item) => (
-                  <div className="dashboard-list-row" key={item.id}>
-                    <span>
-                      <strong>{item.serviceName}</strong>
-                      <small>
-                        {item.period} - {item.category}
-                      </small>
+              {topExpenseGroups.length ? (
+                <div className="expense-group-strip" aria-label="Gastos agrupados por categoria">
+                  {topExpenseGroups.map((group) => (
+                    <span key={group.category}>
+                      {group.category}
+                      <strong>{currency.format(group.total)}</strong>
                     </span>
-                    <b>{currency.format(item.paidAmount)}</b>
-                  </div>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+
+            <article className="dashboard-panel account-flow-panel">
+              <div className="dashboard-panel-heading">
+                <div>
+                  <span className="dashboard-panel-kicker">Flujo por cuenta</span>
+                  <h3>Ruta del dinero</h3>
+                </div>
+                <WalletCards size={22} />
+              </div>
+              <div className="flow-summary-grid">
+                <FlowStat label="Ingresos" value={accountFlow?.incomeTotal ?? 0} />
+                <FlowStat label="A transferir" value={accountFlow?.transferTotal ?? 0} tone="warning" />
+                <FlowStat label="Despues de transferir" value={accountFlow?.afterTransfers ?? 0} tone="success" />
+              </div>
+              {accountFlow?.accounts?.length ? (
+                <div className="flow-account-list">
+                  {accountFlow.accounts.map((account) => (
+                    <div className="flow-account-row" key={account.account}>
+                      <span>
+                        <strong>{account.account}</strong>
+                        <small>
+                          Transferir {currency.format(account.pendingTransfer)} - pendiente debito {currency.format(account.pendingDebit)}
+                        </small>
+                      </span>
+                      <b>{currency.format(account.total)}</b>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="panel-empty">No hay cuentas con transferencias pendientes.</p>
+              )}
+            </article>
+          </section>
+
+          <section className="dashboard-insights-grid dashboard-card-change-grid">
+            <article className="dashboard-panel disappearing-panel">
+              <div className="dashboard-panel-heading">
+                <div>
+                  <span className="dashboard-panel-kicker">Se liberan</span>
+                  <h3>Gastos que desaparecen</h3>
+                </div>
+                <CreditCard size={22} />
+              </div>
+              <div className="insight-total-line">
+                <span>Alivio despues de este resumen</span>
+                <strong>{currency.format(disappearingTotal)}</strong>
+              </div>
+              {disappearingExpenses.length ? (
+                <div className="insight-list">
+                  {disappearingExpenses.slice(0, 5).map((expense) => (
+                    <div className="insight-row" key={expense.id}>
+                      <em>OK</em>
+                      <span>
+                        <strong>{expense.name}</strong>
+                        <small>{expense.card} - ultima cuota o compra unica</small>
+                      </span>
+                      <b>{currency.format(expense.amount)}</b>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="panel-empty">No hay cuotas que desaparezcan en este pago.</p>
+              )}
+            </article>
+
+            <section className="dashboard-panel upcoming-card-expenses-panel">
+              <div className="dashboard-panel-heading">
+                <div>
+                  <span className="dashboard-panel-kicker">Tarjetas</span>
+                  <h3>Gastos nuevos</h3>
+                </div>
+                <CreditCard size={22} />
+              </div>
+
+              <div className="upcoming-card-grid upcoming-card-grid-compact">
+                {upcomingCardExpenses.map((card) => (
+                  <UpcomingCardExpensesCard card={card} key={card.cardId} />
                 ))}
               </div>
-            ) : (
-              <p className="panel-empty">Todavia no registraste otros pagos del mes.</p>
-            )}
-          </article>
+            </section>
+          </section>
+        </>
+      )}
+    </section>
+  );
+}
 
-          <article className="dashboard-panel dashboard-transfer-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <span className="dashboard-panel-kicker">Debita de</span>
-                <h3>Transferencias por cuenta</h3>
-              </div>
-              <WalletCards size={22} />
-            </div>
-
-            {debitTransfers.length ? (
-              <div className="transfer-account-list">
-                {debitTransfers.map((account) => (
-                  <TransferAccountCard account={account} key={account.account} />
-                ))}
-              </div>
-            ) : (
-              <p className="panel-empty">No hay gastos de este mes asociados a una cuenta "Debita de".</p>
-            )}
-          </article>
+function CurrentOperationsSection({
+  cardPayments,
+  cardPaymentsTotal,
+  currentActions,
+  currentMonthHistory,
+  currentMonthSummary,
+  debitTransfers,
+  dueItems,
+  dueStats,
+  isMonthZero,
+  paidThisMonth,
+  pendingDebitTotal,
+  transferTotal,
+}) {
+  return (
+    <section className="dashboard-current-section">
+      <div className="dashboard-current-header">
+        <div>
+          <span className="dashboard-kicker">
+            <CheckCircle2 size={18} />
+            Seguimiento operativo
+          </span>
+          <h3>Mes actual: {currentMonthSummary.monthTitle}</h3>
+          <p>
+            Esta vista mira pagos, vencimientos y cuentas con movimiento pendiente. Todo lo demas queda fuera para que puedas operar rapido.
+          </p>
         </div>
+        <div className="dashboard-current-total">
+          <small>Total a transferir</small>
+          <strong>{currency.format(transferTotal)}</strong>
+          <span>{currency.format(pendingDebitTotal)} ya transferido, esperando debito</span>
+        </div>
+      </div>
 
-        <article className="dashboard-panel">
+      <ActionPanel actions={currentActions} title="Que tengo que hacer ahora" />
+
+      <div className="dashboard-current-grid">
+        <article className="dashboard-panel dashboard-movement-panel">
           <div className="dashboard-panel-heading">
             <div>
-              <span className="dashboard-panel-kicker">Registro</span>
-              <h3>Vencimientos</h3>
+              <span className="dashboard-panel-kicker">Pagos reales</span>
+              <h3>Movimiento del mes actual</h3>
             </div>
-            <CalendarClock size={22} />
+            <CheckCircle2 size={22} />
           </div>
 
-          <div className="due-status-grid">
-            <StatusTile label="Vencidos" tone="danger" value={dueStats.overdue} />
-            <StatusTile label="Proximos" tone="warning" value={dueStats.soon} />
-            <StatusTile label="Pendientes" value={dueStats.pending} />
-            <StatusTile label="Pagados" tone="success" value={dueStats.paid} />
+          <div className="dashboard-current-month">
+            <div>
+              <small>{isMonthZero ? "Mes inicial" : currentMonthSummary.monthTitle}</small>
+              <strong>{currency.format(paidThisMonth)}</strong>
+              <span>pagado registrado</span>
+            </div>
+            <div>
+              <small>Pendiente actual</small>
+              <strong>{currency.format(currentMonthSummary.pendingTotal)}</strong>
+              <span>segun estados guardados</span>
+            </div>
           </div>
 
-          {dueItems.length ? (
+          <section className="card-payments-summary">
+            <div className="card-payments-total">
+              <span className="card-payments-icon">
+                <CreditCard size={20} />
+              </span>
+              <div>
+                <small>Total tarjetas pagadas</small>
+                <strong>{currency.format(cardPaymentsTotal)}</strong>
+              </div>
+            </div>
+
+            {cardPayments.length ? (
+              <div className="card-payments-list">
+                {cardPayments.map((item) => (
+                  <CardPaymentDetail item={item} key={item.id} />
+                ))}
+              </div>
+            ) : (
+              <p className="card-payments-empty">Todavia no hay tarjetas pagadas en este mes.</p>
+            )}
+          </section>
+
+          {currentMonthHistory.length ? (
             <div className="dashboard-list">
-              {dueItems.slice(0, 7).map((item) => (
-                <div className={`dashboard-list-row due-${item.status}`} key={item.paymentKey}>
+              {currentMonthHistory.map((item) => (
+                <div className="dashboard-list-row" key={item.id}>
                   <span>
-                    <strong>{item.name}</strong>
+                    <strong>{item.serviceName}</strong>
                     <small>
-                      {item.category} - vence el {item.dueDate.toLocaleDateString("es-AR")}
+                      {item.period} - {item.category}
                     </small>
                   </span>
-                  <DueBadge item={item} />
+                  <b>{currency.format(item.paidAmount)}</b>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="panel-empty">Todavia no hay vencimientos para mostrar.</p>
+            <p className="panel-empty">Todavia no registraste otros pagos del mes.</p>
           )}
         </article>
-      </section>
 
-      {!isCurrentMonthView ? (
-      <section className="dashboard-panel dashboard-explain-panel">
+        <article className="dashboard-panel dashboard-transfer-panel">
+          <div className="dashboard-panel-heading">
+            <div>
+              <span className="dashboard-panel-kicker">Debita de</span>
+              <h3>Transferencias por cuenta</h3>
+            </div>
+            <WalletCards size={22} />
+          </div>
+
+          {debitTransfers.length ? (
+            <div className="transfer-account-list">
+              {debitTransfers.map((account) => (
+                <TransferAccountCard account={account} key={account.account} />
+              ))}
+            </div>
+          ) : (
+            <p className="panel-empty">No hay gastos de este mes asociados a una cuenta "Debita de".</p>
+          )}
+        </article>
+      </div>
+
+      <article className="dashboard-panel">
         <div className="dashboard-panel-heading">
           <div>
-            <span className="dashboard-panel-kicker">Lectura rapida</span>
-            <h3>Que significa cada numero</h3>
+            <span className="dashboard-panel-kicker">Registro</span>
+            <h3>Vencimientos</h3>
           </div>
-          <FileText size={22} />
+          <CalendarClock size={22} />
         </div>
 
-        <div className="dashboard-explain-grid">
-          <ExplainCard title="Restante">
-            Es el dinero que queda despues de restar tarjetas, gastos fijos y gastos extraordinarios del ingreso total.
-          </ExplainCard>
-          <ExplainCard title="Pendiente">
-            Es lo que todavia no aparece como pagado o transferido en el registro del mes.
-          </ExplainCard>
-          <ExplainCard title="Tarjetas">
-            Para el mes elegido toma el resumen que corresponde al mes anterior. Para meses ya pagados usa el monto real guardado.
-          </ExplainCard>
-          <ExplainCard title="Gasto proyectado">
-            Es una foto anticipada del mes: sirve para decidir antes de que llegue el cierre real.
-          </ExplainCard>
+        <div className="due-status-grid">
+          <StatusTile label="Vencidos" tone="danger" value={dueStats.overdue} />
+          <StatusTile label="Proximos" tone="warning" value={dueStats.soon} />
+          <StatusTile label="Pendientes" value={dueStats.pending} />
+          <StatusTile label="Pagados" tone="success" value={dueStats.paid} />
         </div>
-      </section>
-      ) : null}
+
+        {dueItems.length ? (
+          <div className="dashboard-list">
+            {dueItems.slice(0, 7).map((item) => (
+              <div className={`dashboard-list-row due-${item.status}`} key={item.paymentKey}>
+                <span>
+                  <strong>{item.name}</strong>
+                  <small>
+                    {item.category} - vence el {item.dueDate.toLocaleDateString("es-AR")}
+                  </small>
+                </span>
+                <DueBadge item={item} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="panel-empty">Todavia no hay vencimientos para mostrar.</p>
+        )}
+      </article>
     </section>
+  );
+}
+
+function ActionPanel({ actions, title }) {
+  return (
+    <article className="dashboard-panel dashboard-action-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Acciones</span>
+          <h3>{title}</h3>
+        </div>
+        <AlertTriangle size={22} />
+      </div>
+      <div className="dashboard-action-list">
+        {actions.map((action) => (
+          <div className={`dashboard-action-row dashboard-action-${action.tone}`} key={action.id}>
+            <em>{action.badge}</em>
+            <span>
+              <strong>{action.title}</strong>
+              <small>{action.detail}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -504,6 +509,7 @@ function DashboardMonthMenu({ monthOptions, onSelectMonth, selectedMonthOffset }
     </div>
   );
 }
+
 function DashboardMetric({ detail, icon, label, tone, value }) {
   return (
     <article className={`dashboard-metric dashboard-metric-${tone}`}>
@@ -512,18 +518,6 @@ function DashboardMetric({ detail, icon, label, tone, value }) {
       <strong>{value}</strong>
       <small>{detail}</small>
     </article>
-  );
-}
-
-function SourceItem({ icon, label, text }) {
-  return (
-    <div className="dashboard-source-item">
-      <span>{icon}</span>
-      <div>
-        <strong>{label}</strong>
-        <p>{text}</p>
-      </div>
-    </div>
   );
 }
 
@@ -669,16 +663,161 @@ function TransferAccountCard({ account }) {
     </article>
   );
 }
+function buildCurrentActions({ debitTransfers, dueItems }) {
+  const transferTotal = debitTransfers.reduce((sum, account) => sum + account.pendingTransfer, 0);
+  const overdue = dueItems.filter((item) => item.status === "overdue");
+  const soon = dueItems.filter((item) => item.status === "soon");
+  const transferred = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
+  const actions = [];
 
-function ExplainCard({ children, title }) {
-  return (
-    <article className="dashboard-explain-card">
-      <strong>{title}</strong>
-      <p>{children}</p>
-    </article>
-  );
+  if (transferTotal > 0) {
+    actions.push({
+      badge: "Mover",
+      detail: `Hay ${debitTransfers.filter((account) => account.pendingTransfer > 0).length} cuentas con gastos pendientes de fondeo.`,
+      id: "transfer",
+      title: `Transferir ${currency.format(transferTotal)}`,
+      tone: "warning",
+    });
+  }
+
+  if (overdue.length) {
+    actions.push({
+      badge: "Vence",
+      detail: `${overdue.length} pagos ya pasaron su fecha de vencimiento.`,
+      id: "overdue",
+      title: "Resolver vencimientos atrasados",
+      tone: "danger",
+    });
+  }
+
+  if (soon.length) {
+    actions.push({
+      badge: "3 dias",
+      detail: `${soon.length} pagos vencen en los proximos dias.`,
+      id: "soon",
+      title: "Revisar pagos cercanos",
+      tone: "warning",
+    });
+  }
+
+  if (transferred > 0) {
+    actions.push({
+      badge: "Debito",
+      detail: `${currency.format(transferred)} ya fue transferido y espera debito.`,
+      id: "pending-debit",
+      title: "Controlar debitos pendientes",
+      tone: "neutral",
+    });
+  }
+
+  if (!actions.length) {
+    actions.push({
+      badge: "OK",
+      detail: "No aparecen transferencias ni vencimientos urgentes para este mes.",
+      id: "clear",
+      title: "Sin acciones urgentes",
+      tone: "success",
+    });
+  }
+
+  return actions.slice(0, 4);
 }
 
+function buildPlanningActions({ cardsPercent, disappearingTotal, dueItems, health, nextMonthSummary, totalPercent, upcomingCardExpenses }) {
+  const upcomingTotal = upcomingCardExpenses.reduce((sum, card) => sum + (Number(card.total) || 0), 0);
+  const dueSoon = dueItems.filter((item) => item.status === "soon" || item.status === "overdue").length;
+  const actions = [];
+
+  if (nextMonthSummary.remaining < 0) {
+    actions.push({
+      badge: "Rojo",
+      detail: `Faltan ${currency.format(Math.abs(nextMonthSummary.remaining))} para cubrir lo proyectado.`,
+      id: "negative",
+      title: "Recortar antes del cierre",
+      tone: "danger",
+    });
+  } else if (health.tone === "warning") {
+    actions.push({
+      badge: "Margen",
+      detail: "El restante existe, pero queda ajustado contra tus ingresos.",
+      id: "margin",
+      title: "Cuidar gastos variables",
+      tone: "warning",
+    });
+  } else {
+    actions.push({
+      badge: "OK",
+      detail: `${currency.format(nextMonthSummary.remaining)} quedaria libre despues de lo proyectado.`,
+      id: "healthy",
+      title: "Margen saludable",
+      tone: "success",
+    });
+  }
+
+  if (cardsPercent >= 30) {
+    actions.push({
+      badge: "Tarj",
+      detail: `Las tarjetas consumen ${cardsPercent}% del ingreso disponible.`,
+      id: "cards-high",
+      title: "Revisar peso de tarjetas",
+      tone: "warning",
+    });
+  }
+
+  if (totalPercent >= 75) {
+    actions.push({
+      badge: "Uso",
+      detail: `El gasto proyectado usa ${totalPercent}% del sueldo.`,
+      id: "usage-high",
+      title: "Dejar margen de seguridad",
+      tone: totalPercent >= 100 ? "danger" : "warning",
+    });
+  }
+
+  if (upcomingTotal > 0) {
+    actions.push({
+      badge: "Nuevo",
+      detail: `${currency.format(upcomingTotal)} aparece como gasto nuevo frente al resumen anterior.`,
+      id: "new-card-expenses",
+      title: "Mirar compras nuevas de tarjeta",
+      tone: "neutral",
+    });
+  }
+
+  if (disappearingTotal > 0) {
+    actions.push({
+      badge: "Libera",
+      detail: `${currency.format(disappearingTotal)} dejaria de repetirse despues de este resumen.`,
+      id: "disappearing",
+      title: "Contar alivio futuro",
+      tone: "success",
+    });
+  }
+
+  if (dueSoon > 0) {
+    actions.push({
+      badge: "Vence",
+      detail: `${dueSoon} vencimientos necesitan atencion pronto.`,
+      id: "due-soon",
+      title: "No perder vencimientos",
+      tone: "warning",
+    });
+  }
+
+  return actions.slice(0, 4);
+}
+
+function buildExpenseGroups(expenses) {
+  const byCategory = new Map();
+
+  expenses.forEach((expense) => {
+    byCategory.set(expense.category, (byCategory.get(expense.category) || 0) + (Number(expense.amount) || 0));
+  });
+
+  return Array.from(byCategory, ([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 4);
+}
 function getSummaryPeriod(summary) {
   if (summary.year == null || summary.monthIndex == null) {
     return "";
@@ -828,6 +967,13 @@ function DueBadge({ item }) {
 
   return <em className="status-pill pending">En {item.diffInDays} dias</em>;
 }
+
+
+
+
+
+
+
 
 
 

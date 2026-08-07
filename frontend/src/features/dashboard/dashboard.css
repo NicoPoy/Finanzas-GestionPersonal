@@ -113,7 +113,6 @@
 
 .dashboard-hero p,
 .dashboard-source-item p,
-.dashboard-explain-card p,
 .dashboard-metric small,
 .dashboard-health small,
 .dashboard-current-month span,
@@ -180,8 +179,7 @@
 }
 
 .dashboard-metric,
-.dashboard-panel,
-.dashboard-explain-card {
+.dashboard-panel {
   background: rgba(34, 51, 61, 0.94);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -252,11 +250,6 @@
   --metric-soft: var(--amber-soft);
 }
 
-.dashboard-story-grid {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1fr) minmax(330px, 0.72fr);
-}
 
 .dashboard-insights-grid {
   align-items: start;
@@ -457,6 +450,146 @@
   color: var(--amber);
 }
 
+
+.dashboard-decision-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dashboard-action-panel {
+  gap: 14px;
+}
+
+.dashboard-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-action-row {
+  align-items: flex-start;
+  background: var(--surface-soft);
+  border: 1px solid rgba(73, 104, 116, 0.62);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: 11px;
+  padding: 12px;
+}
+
+.dashboard-action-row em {
+  background: var(--primary-soft);
+  border-radius: 999px;
+  color: var(--primary-strong);
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+  min-width: 44px;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.dashboard-action-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dashboard-action-row strong {
+  color: var(--ink-strong);
+  font-size: 0.95rem;
+}
+
+.dashboard-action-row small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.dashboard-action-success {
+  border-left-color: var(--mint);
+}
+
+.dashboard-action-success em {
+  background: var(--mint-soft);
+  color: var(--mint);
+}
+
+.dashboard-action-warning {
+  border-left-color: var(--amber);
+}
+
+.dashboard-action-warning em {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.dashboard-action-danger {
+  border-left-color: var(--danger);
+}
+
+.dashboard-action-danger em {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.dashboard-insights-grid-focused,
+.dashboard-card-change-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.top-expenses-panel-compact {
+  grid-column: auto;
+}
+
+.compact-expense-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.compact-expense-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+}
+
+.compact-expense-row .insight-percent {
+  display: none;
+}
+
+.expense-group-strip {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.expense-group-strip span {
+  background: rgba(16, 26, 34, 0.36);
+  border: 1px solid rgba(73, 104, 116, 0.54);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  display: grid;
+  font-size: 0.74rem;
+  font-weight: 900;
+  gap: 4px;
+  padding: 10px;
+}
+
+.expense-group-strip strong {
+  color: var(--ink-strong);
+  font-size: 0.92rem;
+}
+
+.upcoming-card-grid-compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+  .dashboard-decision-grid,
+  .dashboard-insights-grid-focused,
+  .dashboard-card-change-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .dashboard-current-section {
   background:
     linear-gradient(180deg, rgba(93, 182, 198, 0.08), rgba(34, 51, 61, 0.42)),
@@ -674,9 +807,6 @@
 .dashboard-source-item strong,
 .dashboard-current-month strong,
 .dashboard-list-row strong,
-.dashboard-explain-card strong {
-  color: var(--ink-strong);
-}
 
 .dashboard-formula p {
   color: var(--ink);
@@ -1165,35 +1295,9 @@
   padding-top: 2px;
 }
 
-.dashboard-explain-panel {
-  gap: 16px;
-}
-
-.dashboard-explain-grid {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.dashboard-explain-card {
-  box-shadow: none;
-  padding: 15px;
-}
-
-.dashboard-explain-card p {
-  margin-top: 7px;
-}
 
 @media (max-width: 1180px) {
   .dashboard-main-grid,
-  .dashboard-explain-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dashboard-story-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .dashboard-insights-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1208,9 +1312,6 @@
   .dashboard-main-grid,
   .dashboard-source-list,
   .dashboard-current-month,
-  .dashboard-explain-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 
   .dashboard-hero,
   .dashboard-panel,
@@ -1282,6 +1383,11 @@
     justify-self: auto;
   }
 }
+
+
+
+
+
 
 
 

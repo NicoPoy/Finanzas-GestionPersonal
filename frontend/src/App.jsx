@@ -13,6 +13,31 @@ import "./styles/components.css";
 
 const FinanceApp = React.lazy(() => import("./features/finance/FinanceApp.jsx"));
 
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="app-shell">
+          <section className="loading-screen">
+            <strong>No se pudo cargar la interfaz. Recarga la pagina.</strong>
+          </section>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // App decide si mostrar login o la aplicacion autenticada.
 // En esta app solo se utiliza el "dark mode".
 export default function App() {
@@ -208,8 +233,9 @@ export default function App() {
   }
 
   return (
-    <Suspense
-      fallback={
+    <AppErrorBoundary>
+      <Suspense
+        fallback={
         <main className="app-shell">
           <section className="loading-screen">
             <strong>Cargando interfaz...</strong>
@@ -224,7 +250,8 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-    </Suspense>
+      </Suspense>
+    </AppErrorBoundary>
   );
 }
 
@@ -245,3 +272,4 @@ async function getApiErrorMessage(response) {
 
   return "No se pudo iniciar sesion. Revisa la configuracion del backend.";
 }
+
