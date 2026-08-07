@@ -36,6 +36,7 @@ import {
   getOwnExpenseAmount,
   getPaymentKey,
   getPaymentPeriod,
+  getStatementOffsetForPaymentMonth,
 } from "../../domain/financeCalculations.js";
 import { normalizeData } from "../../domain/storage.js";
 import { apiUrl } from "../../services/platform.js";
@@ -195,6 +196,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [dashboardMonthOffset, setDashboardMonthOffset] = useState(1);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(() => {
     return localStorage.getItem("header-collapsed") === "true";
   });
@@ -319,9 +321,20 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const currentPaymentMonth = getCalendarMonth(0);
   const upcomingCardPaymentMonth = getCalendarMonth(1);
   const currentStatementMonth = getCalendarMonth(0);
+  const dashboardPaymentMonth = getCalendarMonth(dashboardMonthOffset);
+  const dashboardPreviousPaymentMonth = getCalendarMonth(dashboardMonthOffset - 1);
+  const dashboardMonthOptions = [0, 1].map((offset) => ({
+    label: offset === 0 ? "Mes actual" : "Mes siguiente",
+    offset,
+    title: getCalendarMonth(offset).title,
+  }));
   const registryServices = useMemo(
     () => buildRegistryServices(data, banksWithTotals, 0),
     [banksWithTotals, data],
+  );
+  const dashboardServices = useMemo(
+    () => buildRegistryServices(data, banksWithTotals, dashboardMonthOffset),
+    [banksWithTotals, dashboardMonthOffset, data],
   );
   const currentCardPaymentKey = selectedCard
     ? getPaymentKey(upcomingCardPaymentMonth.year, upcomingCardPaymentMonth.monthIndex, `card:${selectedCard.id}`)
@@ -343,62 +356,71 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const salaryUsagePercent =
     incomeTotal > 0 ? Math.max(0, Math.round(((incomeTotal - nextMonthSummary.remaining) / incomeTotal) * 100)) : 0;
   const shouldShowSpendingWarning = incomeTotal > 0 && nextMonthSummary.remaining <= incomeTotal * 0.5;
-  const currentMonthSummary = useMemo(
+  const dashboardSummary = useMemo(
     () =>
       buildDashboardSummary({
         banks: banksWithTotals,
         data,
         fixedExpensesTotal,
         paymentDetails: data.paymentDetails,
-        paymentMonthOffset: 0,
+        paymentMonthOffset: dashboardMonthOffset,
         paymentRegistry: data.paymentRegistry,
         salary: data.salary,
       }),
-    [banksWithTotals, data, fixedExpensesTotal],
+    [banksWithTotals, dashboardMonthOffset, data, fixedExpensesTotal],
   );
-  const currentDueItems = useMemo(
+  const dashboardDueItems = useMemo(
     () =>
       buildDueItems({
-        monthIndex: currentPaymentMonth.monthIndex,
+        monthIndex: dashboardPaymentMonth.monthIndex,
         paymentDetails: data.paymentDetails,
         paymentRegistry: data.paymentRegistry,
-        services: registryServices,
-        year: currentPaymentMonth.year,
+        services: dashboardServices,
+        year: dashboardPaymentMonth.year,
       }),
-    [currentPaymentMonth, data.paymentDetails, data.paymentRegistry, registryServices],
+    [dashboardPaymentMonth, dashboardServices, data.paymentDetails, data.paymentRegistry],
   );
-  const currentDebitTransfers = useMemo(
+  const dashboardDebitTransfers = useMemo(
     () =>
       buildDebitTransferSummary({
-        monthIndex: currentPaymentMonth.monthIndex,
+        monthIndex: dashboardPaymentMonth.monthIndex,
         paymentDetails: data.paymentDetails,
         paymentRegistry: data.paymentRegistry,
-        services: registryServices,
-        year: currentPaymentMonth.year,
+        services: dashboardServices,
+        year: dashboardPaymentMonth.year,
       }),
-    [currentPaymentMonth, data.paymentDetails, data.paymentRegistry, registryServices],
+    [dashboardPaymentMonth, dashboardServices, data.paymentDetails, data.paymentRegistry],
   );
-  const currentPaymentPeriod = getPaymentPeriod(currentPaymentMonth.year, currentPaymentMonth.monthIndex);
+  const dashboardPreviousPaymentPeriod = getPaymentPeriod(
+    dashboardPreviousPaymentMonth.year,
+    dashboardPreviousPaymentMonth.monthIndex,
+  );
   const upcomingCardExpenses = useMemo(
-    () => buildUpcomingCardExpenseSummary(banksWithTotals, data.paymentHistory, currentPaymentPeriod),
-    [banksWithTotals, currentPaymentPeriod, data.paymentHistory],
+    () =>
+      buildUpcomingCardExpenseSummary(
+        banksWithTotals,
+        data.paymentHistory,
+        dashboardPreviousPaymentPeriod,
+        dashboardMonthOffset,
+      ),
+    [banksWithTotals, dashboardMonthOffset, dashboardPreviousPaymentPeriod, data.paymentHistory],
   );
   const topDashboardExpenses = useMemo(
-    () => buildTopDashboardExpenses(banksWithTotals, data),
-    [banksWithTotals, data],
+    () => buildTopDashboardExpenses(banksWithTotals, data, dashboardMonthOffset),
+    [banksWithTotals, dashboardMonthOffset, data],
   );
   const disappearingCardExpenses = useMemo(
-    () => buildDisappearingCardExpenses(banksWithTotals),
-    [banksWithTotals],
+    () => buildDisappearingCardExpenses(banksWithTotals, dashboardMonthOffset),
+    [banksWithTotals, dashboardMonthOffset],
   );
   const accountFlow = useMemo(
     () =>
       buildAccountFlow({
-        debitTransfers: currentDebitTransfers,
+        debitTransfers: dashboardDebitTransfers,
         incomeTotal,
-        nextMonthSummary,
+        summary: dashboardSummary,
       }),
-    [currentDebitTransfers, incomeTotal, nextMonthSummary],
+    [dashboardDebitTransfers, dashboardSummary, incomeTotal],
   );
   const cardFixedExpensesByCategory = useMemo(
     () => buildCardFixedExpensesByCategory(banksWithTotals, data.cardFixedCategories),
@@ -1428,13 +1450,16 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           {activeModule === "dashboard" ? (
         <DashboardModule
           accountFlow={accountFlow}
-          currentMonthSummary={currentMonthSummary}
-          debitTransfers={currentDebitTransfers}
+          currentMonthSummary={dashboardSummary}
+          debitTransfers={dashboardDebitTransfers}
           disappearingExpenses={disappearingCardExpenses}
-          dueItems={currentDueItems}
+          dueItems={dashboardDueItems}
           history={data.paymentHistory}
+          monthOptions={dashboardMonthOptions}
           monthZeroDate={data.monthZeroDate}
-          nextMonthSummary={nextMonthSummary}
+          nextMonthSummary={dashboardSummary}
+          onSelectMonth={setDashboardMonthOffset}
+          selectedMonthOffset={dashboardMonthOffset}
           topExpenses={topDashboardExpenses}
           upcomingCardExpenses={upcomingCardExpenses}
         />
@@ -1624,7 +1649,8 @@ function buildDebitTransferSummary({ monthIndex, paymentDetails, paymentRegistry
   );
 }
 
-function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod) {
+function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod, paymentMonthOffset = 1) {
+  const statementOffset = getStatementOffsetForPaymentMonth(paymentMonthOffset);
   return banks.flatMap((bank) =>
     bank.cards.map((card) => {
       const previousPayment = history.find(
@@ -1637,7 +1663,7 @@ function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod
             .filter((expense) => !expense.isFixed)
             .filter((expense) => !previousExpenseIds.has(expense.id))
             .map((expense) => {
-              const amount = getExpenseAmountForStatementOffset(expense, 0);
+              const amount = getExpenseAmountForStatementOffset(expense, statementOffset);
 
               return {
                 amount,
@@ -1665,12 +1691,13 @@ function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod
   );
 }
 
-function buildTopDashboardExpenses(banks, data) {
+function buildTopDashboardExpenses(banks, data, paymentMonthOffset = 1) {
+  const statementOffset = getStatementOffsetForPaymentMonth(paymentMonthOffset);
   const cardExpenses = banks.flatMap((bank) =>
     bank.cards.flatMap((card) =>
       card.expenses
         .map((expense) => ({
-          amount: getExpenseAmountForStatementOffset(expense, 0),
+          amount: getExpenseAmountForStatementOffset(expense, statementOffset),
           category: "Tarjetas",
           id: `card-${expense.id}`,
           name: expense.origin,
@@ -1715,14 +1742,15 @@ function mapTopSimpleExpenses(expenses, category) {
     .filter((expense) => expense.amount > 0);
 }
 
-function buildDisappearingCardExpenses(banks) {
+function buildDisappearingCardExpenses(banks, paymentMonthOffset = 1) {
+  const statementOffset = getStatementOffsetForPaymentMonth(paymentMonthOffset);
   return banks
     .flatMap((bank) =>
       bank.cards.flatMap((card) =>
         card.expenses
           .filter((expense) => !expense.isFixed)
           .map((expense) => ({
-            amount: getExpenseAmountForStatementOffset(expense, 0),
+            amount: getExpenseAmountForStatementOffset(expense, statementOffset),
             card: `${card.name} - ${bank.name}`,
             id: expense.id,
             installments: Number(expense.installments) || 0,
@@ -1734,12 +1762,12 @@ function buildDisappearingCardExpenses(banks) {
     .sort((a, b) => b.amount - a.amount);
 }
 
-function buildAccountFlow({ debitTransfers, incomeTotal, nextMonthSummary }) {
+function buildAccountFlow({ debitTransfers, incomeTotal, summary }) {
   const transferTotal = debitTransfers.reduce((sum, account) => sum + account.pendingTransfer, 0);
   const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
 
   return {
-    availableAfterPlannedExpenses: nextMonthSummary.remaining,
+    availableAfterPlannedExpenses: summary.remaining,
     incomeTotal,
     pendingDebitTotal,
     transferTotal,
@@ -1753,4 +1781,9 @@ function buildAccountFlow({ debitTransfers, incomeTotal, nextMonthSummary }) {
     })),
   };
 }
+
+
+
+
+
 

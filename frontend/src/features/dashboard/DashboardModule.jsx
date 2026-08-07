@@ -24,8 +24,11 @@ export default function DashboardModule({
   disappearingExpenses = [],
   dueItems,
   history,
+  monthOptions = [],
   monthZeroDate,
   nextMonthSummary,
+  onSelectMonth,
+  selectedMonthOffset,
   topExpenses = [],
   upcomingCardExpenses = [],
 }) {
@@ -46,29 +49,41 @@ export default function DashboardModule({
   const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
   const topExpensesTotal = topExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const disappearingTotal = disappearingExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const isCurrentMonthView = selectedMonthOffset === 0;
 
   return (
     <section className="dashboard-view">
-      <section className="dashboard-hero">
+      <section className={`dashboard-hero ${isCurrentMonthView ? "dashboard-hero-menu-only" : ""}`}>
         <div className="dashboard-hero-copy">
           <span className="dashboard-kicker">
             <LayoutDashboard size={18} />
             Centro de control
           </span>
-          <h2>Asi esta parado tu proximo sueldo</h2>
-          <p>
-            Esta pantalla resume el sueldo de {nextMonthSummary.monthTitle}, usando las tarjetas del resumen de{" "}
-            {nextMonthSummary.statementMonthTitle}, tus gastos fijos cargados y los pagos que ya marcaste en el registro.
-          </p>
+          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Asi esta parado el mes siguiente"}</h2>
+          {!isCurrentMonthView ? (
+            <p>
+              Esta pantalla resume el sueldo de {nextMonthSummary.monthTitle}, usando las tarjetas del resumen de{" "}
+              {nextMonthSummary.statementMonthTitle}, tus gastos fijos cargados y los pagos que ya marcaste en el registro.
+            </p>
+          ) : null}
+          <DashboardMonthMenu
+            monthOptions={monthOptions}
+            onSelectMonth={onSelectMonth}
+            selectedMonthOffset={selectedMonthOffset}
+          />
         </div>
 
-        <article className={`dashboard-health dashboard-health-${health.tone}`}>
+        {!isCurrentMonthView ? (
+          <article className={`dashboard-health dashboard-health-${health.tone}`}>
           <span>{health.label}</span>
           <strong>{currency.format(nextMonthSummary.remaining)}</strong>
           <small>{health.description}</small>
-        </article>
+          </article>
+        ) : null}
       </section>
 
+      {!isCurrentMonthView ? (
+        <>
       <section className="dashboard-main-grid">
         <DashboardMetric
           detail="Sueldo configurado mas otros ingresos."
@@ -186,7 +201,7 @@ export default function DashboardModule({
             <FileText size={22} />
           </div>
           <div className="insight-total-line">
-            <span>Top 15 del proximo resumen</span>
+            <span>Top 15 del resumen elegido</span>
             <strong>{currency.format(topExpensesTotal)}</strong>
           </div>
           {topExpenses.length ? (
@@ -252,7 +267,7 @@ export default function DashboardModule({
             <CreditCard size={22} />
           </div>
           <div className="insight-total-line">
-            <span>Alivio estimado siguiente resumen</span>
+            <span>Alivio estimado despues de este resumen</span>
             <strong>{currency.format(disappearingTotal)}</strong>
           </div>
           {disappearingExpenses.length ? (
@@ -269,7 +284,7 @@ export default function DashboardModule({
               ))}
             </div>
           ) : (
-            <p className="panel-empty">No hay cuotas que desaparezcan en el proximo pago.</p>
+            <p className="panel-empty">No hay cuotas que desaparezcan en este pago.</p>
           )}
         </article>
       </section>
@@ -277,14 +292,14 @@ export default function DashboardModule({
       <section className="dashboard-panel upcoming-card-expenses-panel">
         <div className="dashboard-panel-heading">
           <div>
-            <span className="dashboard-panel-kicker">Proximo resumen</span>
+            <span className="dashboard-panel-kicker">Resumen elegido</span>
             <h3>Gastos nuevos de tarjeta</h3>
           </div>
           <CreditCard size={22} />
         </div>
 
         <p className="upcoming-card-note">
-          Estos son los gastos del resumen vigente que no estaban en el resumen anterior de cada tarjeta.
+          Estos son los gastos del resumen elegido que no estaban en el resumen anterior de cada tarjeta.
         </p>
 
         <div className="upcoming-card-grid">
@@ -294,6 +309,9 @@ export default function DashboardModule({
         </div>
       </section>
 
+        </>
+      ) : null}
+
       <section className="dashboard-current-section">
         <div className="dashboard-current-header">
           <div>
@@ -301,9 +319,9 @@ export default function DashboardModule({
               <CheckCircle2 size={18} />
               Seguimiento operativo
             </span>
-            <h3>Mes actual: {currentMonthSummary.monthTitle}</h3>
+            <h3>{isCurrentMonthView ? `Mes actual: ${currentMonthSummary.monthTitle}` : `Seguimiento: ${currentMonthSummary.monthTitle}`}</h3>
             <p>
-              Esta seccion mira los estados guardados del mes actual y calcula cuanto tenes que mover a cada cuenta
+              Esta seccion mira los estados guardados del mes {isCurrentMonthView ? "actual" : "elegido"} y calcula cuanto tenes que mover a cada cuenta
               configurada en "Debita de".
             </p>
           </div>
@@ -319,7 +337,7 @@ export default function DashboardModule({
             <div className="dashboard-panel-heading">
               <div>
                 <span className="dashboard-panel-kicker">Pagos reales</span>
-                <h3>Movimiento del mes actual</h3>
+                <h3>{isCurrentMonthView ? "Movimiento del mes actual" : "Movimiento del mes elegido"}</h3>
               </div>
               <CheckCircle2 size={22} />
             </div>
@@ -394,7 +412,7 @@ export default function DashboardModule({
                 ))}
               </div>
             ) : (
-              <p className="panel-empty">No hay gastos del mes asociados a una cuenta "Debita de".</p>
+              <p className="panel-empty">No hay gastos de este mes asociados a una cuenta "Debita de".</p>
             )}
           </article>
         </div>
@@ -435,6 +453,7 @@ export default function DashboardModule({
         </article>
       </section>
 
+      {!isCurrentMonthView ? (
       <section className="dashboard-panel dashboard-explain-panel">
         <div className="dashboard-panel-heading">
           <div>
@@ -452,17 +471,39 @@ export default function DashboardModule({
             Es lo que todavia no aparece como pagado o transferido en el registro del mes.
           </ExplainCard>
           <ExplainCard title="Tarjetas">
-            Para el proximo sueldo toma el resumen que corresponde al mes anterior. Para meses ya pagados usa el monto real guardado.
+            Para el mes elegido toma el resumen que corresponde al mes anterior. Para meses ya pagados usa el monto real guardado.
           </ExplainCard>
           <ExplainCard title="Gasto proyectado">
             Es una foto anticipada del mes: sirve para decidir antes de que llegue el cierre real.
           </ExplainCard>
         </div>
       </section>
+      ) : null}
     </section>
   );
 }
 
+function DashboardMonthMenu({ monthOptions, onSelectMonth, selectedMonthOffset }) {
+  if (!monthOptions.length) {
+    return null;
+  }
+
+  return (
+    <div className="dashboard-month-menu" aria-label="Elegir mes del dashboard">
+      {monthOptions.map((option) => (
+        <button
+          className={option.offset === selectedMonthOffset ? "active" : ""}
+          key={option.offset}
+          onClick={() => onSelectMonth?.(option.offset)}
+          type="button"
+        >
+          <span>{option.label}</span>
+          <strong>{option.title}</strong>
+        </button>
+      ))}
+    </div>
+  );
+}
 function DashboardMetric({ detail, icon, label, tone, value }) {
   return (
     <article className={`dashboard-metric dashboard-metric-${tone}`}>
@@ -787,3 +828,8 @@ function DueBadge({ item }) {
 
   return <em className="status-pill pending">En {item.diffInDays} dias</em>;
 }
+
+
+
+
+
