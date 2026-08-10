@@ -887,6 +887,18 @@
   padding: 11px 12px;
 }
 
+.breakdown-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.breakdown-row small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 .breakdown-row strong {
   color: var(--ink-strong);
 }
@@ -1310,8 +1322,9 @@
 @media (max-width: 760px) {
   .dashboard-hero,
   .dashboard-main-grid,
-  .dashboard-source-list,
-  .dashboard-current-month,
+  .dashboard-current-month {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
   .dashboard-hero,
   .dashboard-panel,
@@ -1383,6 +1396,7 @@
     justify-self: auto;
   }
 }
+
 
 
 

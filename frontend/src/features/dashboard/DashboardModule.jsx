@@ -36,13 +36,13 @@ export default function DashboardModule({
   const currentMonthHistory = currentMonthEntries.filter((item) => !isCardPayment(item)).slice(0, 6);
   const cardPaymentsTotal = cardPayments.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
   const isMonthZero = isSummaryMonthZero(currentMonthSummary, monthZeroDate);
-  const health = getFinancialHealth(nextMonthSummary);
-  const dueStats = getDueStats(dueItems);
-  const paidThisMonth = currentMonthEntries.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
   const totalIncome = nextMonthSummary.salary || 0;
   const cardsPercent = getPercent(nextMonthSummary.cardExpenses, totalIncome);
   const fixedPercent = getPercent(nextMonthSummary.fixedExpenses, totalIncome);
   const totalPercent = getPercent(nextMonthSummary.totalExpenses, totalIncome);
+  const health = getFinancialHealth(nextMonthSummary, totalPercent);
+  const dueStats = getDueStats(dueItems);
+  const paidThisMonth = currentMonthEntries.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
   const transferTotal = debitTransfers.reduce((sum, account) => sum + account.pendingTransfer, 0);
   const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
   const topExpensesTotal = topExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -69,10 +69,10 @@ export default function DashboardModule({
             <LayoutDashboard size={18} />
             Centro de control
           </span>
-          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Decision rapida para el mes siguiente"}</h2>
+          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Lectura clara del mes siguiente"}</h2>
           {!isCurrentMonthView ? (
             <p>
-              Primero miramos margen, gasto proyectado y acciones concretas. El detalle queda abajo, solo cuando ayuda a decidir.
+              Lee de arriba hacia abajo: primero cuanto entra, cuanto ya esta comprometido, cuanto queda libre y que accion conviene tomar.
             </p>
           ) : null}
           <DashboardMonthMenu
@@ -110,28 +110,28 @@ export default function DashboardModule({
         <>
           <section className="dashboard-main-grid dashboard-main-grid-compact">
             <DashboardMetric
-              detail="Sueldo configurado mas otros ingresos."
+              detail="Todo el dinero disponible para cubrir este mes: sueldo + otros ingresos."
               icon={<Banknote size={21} />}
               label="Ingresos"
               tone="income"
               value={currency.format(nextMonthSummary.salary)}
             />
             <DashboardMetric
-              detail={`Tarjetas usan ${cardsPercent}% del ingreso.`}
+              detail={`Resumen de tarjetas a pagar con este sueldo: ${cardsPercent}% del ingreso.`}
               icon={<CreditCard size={21} />}
               label="Tarjetas"
               tone="cards"
               value={currency.format(nextMonthSummary.cardExpenses)}
             />
             <DashboardMetric
-              detail={`Fijos y mensuales: ${fixedPercent}% del ingreso.`}
+              detail={`Gastos recurrentes que ya sabes que van a salir: ${fixedPercent}% del ingreso.`}
               icon={<Home size={21} />}
               label="Obligatorios"
               tone="fixed"
               value={currency.format(nextMonthSummary.fixedExpenses)}
             />
             <DashboardMetric
-              detail={`${totalPercent}% del sueldo ya esta comprometido.`}
+              detail={`Suma de tarjetas, fijos y extraordinarios. Ya compromete ${totalPercent}% del sueldo.`}
               icon={<Wallet size={21} />}
               label="Gasto total"
               tone="total"
@@ -166,9 +166,9 @@ export default function DashboardModule({
               </div>
 
               <div className="dashboard-mini-breakdown">
-                <BreakdownRow label="Tarjetas" value={nextMonthSummary.cardExpenses} />
-                <BreakdownRow label="Gastos obligatorios" value={nextMonthSummary.fixedExpenses} />
-                <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} />
+                <BreakdownRow label="Tarjetas" value={nextMonthSummary.cardExpenses} note="Resumen que se paga con este sueldo" />
+                <BreakdownRow label="Gastos obligatorios" value={nextMonthSummary.fixedExpenses} note="Fijos, compras mensuales y recurrentes" />
+                <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} note="Gastos puntuales cargados para este periodo" />
               </div>
             </article>
           </section>
@@ -521,10 +521,13 @@ function DashboardMetric({ detail, icon, label, tone, value }) {
   );
 }
 
-function BreakdownRow({ label, value }) {
+function BreakdownRow({ label, note, value }) {
   return (
     <div className="breakdown-row">
-      <span>{label}</span>
+      <span>
+        {label}
+        {note ? <small>{note}</small> : null}
+      </span>
       <strong>{currency.format(value)}</strong>
     </div>
   );
@@ -764,12 +767,12 @@ function buildPlanningActions({ cardsPercent, disappearingTotal, dueItems, healt
     });
   }
 
-  if (totalPercent >= 75) {
+  if (totalPercent >= 40) {
     actions.push({
       badge: "Uso",
-      detail: `El gasto proyectado usa ${totalPercent}% del sueldo.`,
-      id: "usage-high",
-      title: "Dejar margen de seguridad",
+      detail: `El gasto proyectado ya usa ${totalPercent}% del sueldo. Desde el 40% conviene mirarlo de cerca.`,
+      id: "usage-watch",
+      title: totalPercent >= 75 ? "Dejar margen de seguridad" : "Uso del sueldo en observacion",
       tone: totalPercent >= 100 ? "danger" : "warning",
     });
   }
@@ -851,16 +854,24 @@ function getPercent(value, total) {
   return Math.max(0, Math.round(((Number(value) || 0) / total) * 100));
 }
 
-function getFinancialHealth(summary) {
+function getFinancialHealth(summary, usedPercent = 0) {
   const remaining = summary.remaining || 0;
   const income = summary.salary || 0;
   const ratio = income > 0 ? remaining / income : 0;
 
   if (remaining < 0) {
     return {
-      description: "Los gastos proyectados superan los ingresos disponibles.",
+      description: "Los gastos proyectados superan los ingresos disponibles. Este mes necesita ajuste antes de cerrar.",
       label: "Atencion",
       tone: "danger",
+    };
+  }
+
+  if (usedPercent >= 40) {
+    return {
+      description: `Ya tenes ${usedPercent}% del sueldo comprometido. Todavia hay saldo, pero conviene seguirlo de cerca.`,
+      label: "Uso del sueldo en observacion",
+      tone: "warning",
     };
   }
 
@@ -873,7 +884,7 @@ function getFinancialHealth(summary) {
   }
 
   return {
-    description: "Hay margen disponible despues de los gastos proyectados.",
+    description: `Saldo saludable: solo ${usedPercent}% del sueldo esta comprometido.`,
     label: "Saldo saludable",
     tone: "success",
   };
@@ -967,6 +978,10 @@ function DueBadge({ item }) {
 
   return <em className="status-pill pending">En {item.diffInDays} dias</em>;
 }
+
+
+
+
 
 
 
