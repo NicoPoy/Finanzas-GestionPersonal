@@ -59,6 +59,16 @@ export default function DashboardModule({
     totalPercent,
     upcomingCardExpenses,
   });
+  const quickRead = buildQuickRead({ health, nextMonthSummary, topExpenseGroups, totalPercent });
+  const trendComparison = buildTrendComparison(currentMonthSummary, nextMonthSummary);
+  const priorityAlerts = buildPriorityAlerts({ cardsPercent, disappearingTotal, dueItems, nextMonthSummary, totalPercent, upcomingCardExpenses });
+  const riskRanking = buildRiskRanking({ cardsPercent, dueItems, nextMonthSummary, topExpenseGroups, totalPercent, upcomingCardExpenses });
+  const financialState = buildFinancialState({ dueItems, nextMonthSummary, totalPercent, upcomingCardExpenses });
+  const closeChecklist = buildCloseChecklist({ cardPaymentsTotal, currentMonthSummary, dueStats, pendingDebitTotal, transferTotal });
+  const financeNotes = buildFinanceNotes({ priorityAlerts, riskRanking, trendComparison });
+  const [scenarioType, setScenarioType] = React.useState("expense");
+  const [scenarioAmount, setScenarioAmount] = React.useState("");
+  const scenario = buildWhatIfScenario({ amount: scenarioAmount, nextMonthSummary, type: scenarioType });
   const isCurrentMonthView = selectedMonthOffset === 0;
 
   return (
@@ -95,6 +105,7 @@ export default function DashboardModule({
         <CurrentOperationsSection
           cardPayments={cardPayments}
           cardPaymentsTotal={cardPaymentsTotal}
+          closeChecklist={closeChecklist}
           currentActions={currentActions}
           currentMonthHistory={currentMonthHistory}
           currentMonthSummary={currentMonthSummary}
@@ -108,6 +119,12 @@ export default function DashboardModule({
         />
       ) : (
         <>
+          <section className="dashboard-readout-grid">
+            <QuickReadCard quickRead={quickRead} />
+            <TrendComparisonCard comparison={trendComparison} />
+            <FinancialStateCard state={financialState} />
+          </section>
+
           <section className="dashboard-main-grid dashboard-main-grid-compact">
             <DashboardMetric
               detail="Todo el dinero disponible para cubrir este mes: sueldo + otros ingresos."
@@ -179,6 +196,20 @@ export default function DashboardModule({
             </article>
           </section>
 
+          <section className="dashboard-support-grid">
+            <PriorityAlertsPanel alerts={priorityAlerts} />
+            <RiskRankingPanel risks={riskRanking} />
+            <GlossaryPanel />
+            <WhatIfSimulator
+              amount={scenarioAmount}
+              onAmountChange={setScenarioAmount}
+              onTypeChange={setScenarioType}
+              scenario={scenario}
+              type={scenarioType}
+            />
+            <FinanceNotesPanel notes={financeNotes} />
+          </section>
+
           <section className="dashboard-insights-grid dashboard-insights-grid-focused">
             <article className="dashboard-panel top-expenses-panel top-expenses-panel-compact">
               <div className="dashboard-panel-heading">
@@ -195,7 +226,7 @@ export default function DashboardModule({
               {visibleTopExpenses.length ? (
                 <div className="insight-list compact-expense-list">
                   {visibleTopExpenses.map((expense, index) => (
-                    <div className="insight-row compact-expense-row" key={expense.id}>
+                    <div className="insight-row compact-expense-row" key={expense.id ?? `${expense.name}-${index}`}>
                       <em>{index + 1}</em>
                       <span>
                         <strong>{expense.name}</strong>
@@ -272,8 +303,8 @@ export default function DashboardModule({
               </div>
               {disappearingExpenses.length ? (
                 <div className="insight-list">
-                  {disappearingExpenses.slice(0, 5).map((expense) => (
-                    <div className="insight-row" key={expense.id}>
+                  {disappearingExpenses.slice(0, 5).map((expense, index) => (
+                    <div className="insight-row" key={expense.id ?? `${expense.name}-${index}`}>
                       <em>OK</em>
                       <span>
                         <strong>{expense.name}</strong>
@@ -310,9 +341,241 @@ export default function DashboardModule({
   );
 }
 
+function QuickReadCard({ quickRead }) {
+  return (
+    <article className={`dashboard-panel dashboard-quick-read dashboard-quick-read-${quickRead.tone}`}>
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Lectura rapida</span>
+          <h3>{quickRead.title}</h3>
+        </div>
+        <LayoutDashboard size={22} />
+      </div>
+      <p>{quickRead.description}</p>
+      <div className="quick-read-facts">
+        {quickRead.facts.map((fact) => (
+          <span key={fact.label}>
+            <small>{fact.label}</small>
+            <strong>{fact.value}</strong>
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function TrendComparisonCard({ comparison }) {
+  return (
+    <article className="dashboard-panel dashboard-trend-card">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Comparacion</span>
+          <h3>Contra el mes actual</h3>
+        </div>
+        <TrendingDown size={22} />
+      </div>
+      <div className="trend-comparison-list">
+        {comparison.map((item) => (
+          <div className={`trend-comparison-row trend-${item.tone}`} key={item.label}>
+            <span>
+              <strong>{item.label}</strong>
+              <small>{item.description}</small>
+            </span>
+            <b>{item.value}</b>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function PriorityAlertsPanel({ alerts }) {
+  return (
+    <article className="dashboard-panel dashboard-priority-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Alertas</span>
+          <h3>Prioridad de lectura</h3>
+        </div>
+        <AlertTriangle size={22} />
+      </div>
+      <div className="priority-alert-list">
+        {alerts.map((alert) => (
+          <div className={`priority-alert priority-${alert.tone}`} key={alert.id}>
+            <em>{alert.level}</em>
+            <span>
+              <strong>{alert.title}</strong>
+              <small>{alert.detail}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function RiskRankingPanel({ risks }) {
+  return (
+    <article className="dashboard-panel dashboard-risk-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Riesgos</span>
+          <h3>Donde mirar primero</h3>
+        </div>
+        <FileText size={22} />
+      </div>
+      <div className="risk-ranking-list">
+        {risks.map((risk, index) => (
+          <div className={`risk-ranking-row risk-${risk.tone}`} key={risk.id}>
+            <em>{index + 1}</em>
+            <span>
+              <strong>{risk.title}</strong>
+              <small>{risk.detail}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function FinancialStateCard({ state }) {
+  return (
+    <article className={`dashboard-panel dashboard-state-card dashboard-state-${state.tone}`}>
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Estado financiero</span>
+          <h3>{state.label}</h3>
+        </div>
+        <strong className="state-score">{state.score}/100</strong>
+      </div>
+      <p>{state.description}</p>
+      <div className="state-factor-list">
+        {state.factors.map((factor) => (
+          <span key={factor.label}>
+            <small>{factor.label}</small>
+            <strong>{factor.value}</strong>
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function WhatIfSimulator({ amount, onAmountChange, onTypeChange, scenario, type }) {
+  return (
+    <article className="dashboard-panel dashboard-simulator-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Simulador</span>
+          <h3>Que pasa si...</h3>
+        </div>
+        <Wallet size={22} />
+      </div>
+      <div className="simulator-controls">
+        <select onChange={(event) => onTypeChange(event.target.value)} value={type}>
+          <option value="expense">Agrego un gasto</option>
+          <option value="income">Cobro extra</option>
+          <option value="remove">Saco un gasto</option>
+          <option value="cardPayment">Pago tarjeta antes</option>
+        </select>
+        <input
+          inputMode="decimal"
+          onChange={(event) => onAmountChange(event.target.value)}
+          placeholder="$0"
+          value={amount}
+        />
+      </div>
+      <div className={`scenario-result scenario-${scenario.tone}`}>
+        <strong>{scenario.title}</strong>
+        <small>{scenario.description}</small>
+      </div>
+    </article>
+  );
+}
+
+function FinanceNotesPanel({ notes }) {
+  return (
+    <article className="dashboard-panel dashboard-linked-notes-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Notas financieras</span>
+          <h3>Para dejar contexto</h3>
+        </div>
+        <FileText size={22} />
+      </div>
+      <div className="linked-note-list">
+        {notes.map((note) => (
+          <div key={note.id}>
+            <strong>{note.title}</strong>
+            <small>{note.detail}</small>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function CloseMonthChecklist({ checklist }) {
+  return (
+    <article className="dashboard-panel dashboard-close-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Cierre de mes</span>
+          <h3>Checklist operativo</h3>
+        </div>
+        <CheckCircle2 size={22} />
+      </div>
+      <div className="close-checklist">
+        {checklist.map((item) => (
+          <div className={`close-check-item ${item.done ? "done" : "pending"}`} key={item.id}>
+            <em>{item.done ? <CheckCircle2 size={14} /> : <ClockIcon />}</em>
+            <span>
+              <strong>{item.title}</strong>
+              <small>{item.detail}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function ClockIcon() {
+  return <CalendarClock size={14} />;
+}
+function GlossaryPanel() {
+  const items = [
+    { label: "Tarjetas", text: "Resumen que vas a pagar con este sueldo." },
+    { label: "Obligatorios", text: "Gastos que ya estan previstos y conviene separar primero." },
+    { label: "Libre", text: "Dinero que queda despues de todo lo proyectado." },
+    { label: "Uso del sueldo", text: "Porcentaje del ingreso que ya esta comprometido." },
+  ];
+
+  return (
+    <article className="dashboard-panel dashboard-glossary-panel">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Glosario</span>
+          <h3>Que significa cada cosa</h3>
+        </div>
+        <Wallet size={22} />
+      </div>
+      <div className="dashboard-glossary-list">
+        {items.map((item) => (
+          <div key={item.label}>
+            <strong>{item.label}</strong>
+            <small>{item.text}</small>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
 function CurrentOperationsSection({
   cardPayments,
   cardPaymentsTotal,
+  closeChecklist,
   currentActions,
   currentMonthHistory,
   currentMonthSummary,
@@ -345,6 +608,8 @@ function CurrentOperationsSection({
       </div>
 
       <ActionPanel actions={currentActions} title="Que tengo que hacer ahora" />
+
+      <CloseMonthChecklist checklist={closeChecklist} />
 
       <div className="dashboard-current-grid">
         <article className="dashboard-panel dashboard-movement-panel">
@@ -435,15 +700,15 @@ function CurrentOperationsSection({
         <div className="dashboard-panel-heading">
           <div>
             <span className="dashboard-panel-kicker">Registro</span>
-            <h3>Vencimientos</h3>
+            <h3>Centro de vencimientos</h3>
           </div>
           <CalendarClock size={22} />
         </div>
 
         <div className="due-status-grid">
           <StatusTile label="Vencidos" tone="danger" value={dueStats.overdue} />
-          <StatusTile label="Proximos" tone="warning" value={dueStats.soon} />
-          <StatusTile label="Pendientes" value={dueStats.pending} />
+          <StatusTile label="Hoy" tone="warning" value={dueStats.today} />
+          <StatusTile label="Proximos" tone="warning" value={Math.max(dueStats.soon - dueStats.today, 0)} />
           <StatusTile label="Pagados" tone="success" value={dueStats.paid} />
         </div>
 
@@ -616,8 +881,8 @@ function UpcomingCardExpensesCard({ card }) {
         </p>
       ) : card.expenses.length ? (
         <div className="upcoming-expense-list">
-          {card.expenses.map((expense) => (
-            <div className="upcoming-expense-row" key={expense.id}>
+          {card.expenses.map((expense, index) => (
+            <div className="upcoming-expense-row" key={expense.id ?? `${expense.name}-${index}`}>
               <span>
                 <strong>{expense.origin}</strong>
                 <small>{getUpcomingExpenseDetail(expense)}</small>
@@ -732,6 +997,247 @@ function buildCurrentActions({ debitTransfers, dueItems }) {
   return actions.slice(0, 4);
 }
 
+function buildFinancialState({ dueItems, nextMonthSummary, totalPercent, upcomingCardExpenses }) {
+  const dueSoon = dueItems.filter((item) => item.status === "soon" || item.status === "overdue").length;
+  const newCardTotal = upcomingCardExpenses.reduce((sum, card) => sum + (Number(card.total) || 0), 0);
+  const newCardPercent = getPercent(newCardTotal, nextMonthSummary.salary || 0);
+  const negativePenalty = nextMonthSummary.remaining < 0 ? 35 : 0;
+  const usedPenalty = totalPercent >= 40 ? Math.min(totalPercent - 35, 35) : 0;
+  const duePenalty = Math.min(dueSoon * 8, 24);
+  const newCardPenalty = Math.min(newCardPercent, 18);
+  const score = Math.max(0, Math.round(100 - negativePenalty - usedPenalty - duePenalty - newCardPenalty));
+  const tone = score < 55 ? "danger" : score < 78 ? "warning" : "success";
+  const label = tone === "danger" ? "Ajustar" : tone === "warning" ? "Revisar" : "Ordenado";
+  const description = tone === "danger"
+    ? "El mes necesita correccion antes de sumar nuevos compromisos."
+    : tone === "warning"
+      ? "El mes esta cubierto, pero tiene senales para mirar antes de gastar mas."
+      : "El mes esta ordenado y mantiene margen para decidir tranquilo.";
+
+  return {
+    description,
+    factors: [
+      { label: "Sueldo usado", value: `${totalPercent}%` },
+      { label: "Vencimientos", value: dueSoon || "OK" },
+      { label: "Compras nuevas", value: currency.format(newCardTotal) },
+    ],
+    label,
+    score,
+    tone,
+  };
+}
+
+function buildWhatIfScenario({ amount, nextMonthSummary, type }) {
+  const value = parseMoneyValue(amount);
+  const remaining = nextMonthSummary.remaining || 0;
+  const salary = nextMonthSummary.salary || 0;
+  const delta = type === "income" || type === "remove" || type === "cardPayment" ? value : -value;
+  const nextRemaining = remaining + delta;
+  const nextUsed = getPercent(Math.max(salary - nextRemaining, 0), salary);
+  const labels = {
+    cardPayment: "Si pagas tarjeta antes",
+    expense: "Si agregas ese gasto",
+    income: "Si cobras ese extra",
+    remove: "Si sacas ese gasto",
+  };
+  const tone = nextRemaining < 0 ? "danger" : nextUsed >= 40 ? "warning" : "success";
+
+  if (!value) {
+    return {
+      description: `Cargá un monto para ver cuanto cambiaria el dinero libre de ${currency.format(remaining)}.`,
+      title: "Esperando monto",
+      tone: "neutral",
+    };
+  }
+
+  return {
+    description: `Quedarian ${currency.format(nextRemaining)} libres y el sueldo usado pasaria a ${nextUsed}%.`,
+    title: labels[type] ?? labels.expense,
+    tone,
+  };
+}
+
+function buildCloseChecklist({ cardPaymentsTotal, currentMonthSummary, dueStats, pendingDebitTotal, transferTotal }) {
+  return [
+    {
+      detail: dueStats.overdue ? `${dueStats.overdue} vencimientos estan atrasados.` : "No hay vencimientos atrasados.",
+      done: !dueStats.overdue,
+      id: "overdue",
+      title: "Revisar vencidos",
+    },
+    {
+      detail: transferTotal ? `Falta transferir ${currency.format(transferTotal)}.` : "No quedan transferencias pendientes.",
+      done: transferTotal <= 0,
+      id: "transfer",
+      title: "Registrar transferencias",
+    },
+    {
+      detail: pendingDebitTotal ? `${currency.format(pendingDebitTotal)} ya transferido espera debito.` : "No hay debitos transferidos pendientes.",
+      done: pendingDebitTotal <= 0,
+      id: "debit",
+      title: "Confirmar debitos",
+    },
+    {
+      detail: cardPaymentsTotal ? `${currency.format(cardPaymentsTotal)} de tarjetas ya figura pagado.` : "Todavia no hay tarjetas pagadas registradas.",
+      done: cardPaymentsTotal > 0,
+      id: "cards",
+      title: "Confirmar tarjetas pagadas",
+    },
+    {
+      detail: currentMonthSummary.pendingTotal ? `Quedan ${currency.format(currentMonthSummary.pendingTotal)} pendientes.` : "Mes actual sin pendiente proyectado.",
+      done: currentMonthSummary.pendingTotal <= 0,
+      id: "next",
+      title: "Preparar mes siguiente",
+    },
+  ];
+}
+
+function buildFinanceNotes({ priorityAlerts, riskRanking, trendComparison }) {
+  const notes = [];
+  const firstAlert = priorityAlerts[0];
+  const firstRisk = riskRanking[0];
+  const moneyTrend = trendComparison[0];
+
+  if (firstAlert) {
+    notes.push({ detail: firstAlert.detail, id: "alert", title: `Anotar decision sobre: ${firstAlert.title}` });
+  }
+
+  if (firstRisk) {
+    notes.push({ detail: firstRisk.detail, id: "risk", title: `Explicar variacion en ${firstRisk.title}` });
+  }
+
+  if (moneyTrend) {
+    notes.push({ detail: moneyTrend.description, id: "trend", title: "Dejar contexto del cambio mensual" });
+  }
+
+  return notes.slice(0, 3);
+}
+
+function parseMoneyValue(value) {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  const normalized = String(value || "").replace(/\./g, "").replace(/,/g, ".").replace(/[^0-9.]/g, "");
+  return Number(normalized) || 0;
+}
+function buildQuickRead({ health, nextMonthSummary, topExpenseGroups, totalPercent }) {
+  const mainWeight = topExpenseGroups[0]?.category || "gastos proyectados";
+  const remaining = nextMonthSummary.remaining || 0;
+  const title = health.tone === "danger" ? "Necesita ajuste" : health.tone === "warning" ? "Hay que mirarlo de cerca" : "Vas bien";
+  const description = health.tone === "danger"
+    ? `Los gastos superan los ingresos. Falta cubrir ${currency.format(Math.abs(remaining))} y el mayor peso viene de ${mainWeight}.`
+    : health.tone === "warning"
+      ? `Todavia hay margen, pero ya tenes ${totalPercent}% del sueldo usado. El mayor peso viene de ${mainWeight} y quedarian ${currency.format(remaining)} libres.`
+      : `El mes esta ordenado: solo ${totalPercent}% del sueldo esta usado. El mayor peso viene de ${mainWeight} y quedarian ${currency.format(remaining)} libres.`;
+
+  return {
+    description,
+    facts: [
+      { label: "Sueldo usado", value: `${totalPercent}%` },
+      { label: "Dinero libre", value: currency.format(remaining) },
+      { label: "Mayor peso", value: mainWeight },
+    ],
+    title,
+    tone: health.tone,
+  };
+}
+
+function buildTrendComparison(currentSummary, nextSummary) {
+  const currentIncome = currentSummary.salary || 0;
+  const nextIncome = nextSummary.salary || 0;
+  const expenseDelta = (nextSummary.totalExpenses || 0) - (currentSummary.totalExpenses || 0);
+  const cardDelta = (nextSummary.cardExpenses || 0) - (currentSummary.cardExpenses || 0);
+  const remainingDelta = (nextSummary.remaining || 0) - (currentSummary.remaining || 0);
+  const currentCardsPercent = getPercent(currentSummary.cardExpenses, currentIncome);
+  const nextCardsPercent = getPercent(nextSummary.cardExpenses, nextIncome);
+
+  return [
+    buildTrendItem("Gasto proyectado", expenseDelta, "Vas a gastar", "menos que el mes actual", "mas que el mes actual", true),
+    {
+      description: nextCardsPercent === currentCardsPercent
+        ? "El peso de tarjetas se mantiene igual."
+        : `Tarjetas ${nextCardsPercent > currentCardsPercent ? "suben" : "bajan"} ${Math.abs(nextCardsPercent - currentCardsPercent)} puntos contra el mes actual.`,
+      label: "Tarjetas",
+      tone: nextCardsPercent > currentCardsPercent ? "warning" : nextCardsPercent < currentCardsPercent ? "success" : "neutral",
+      value: `${nextCardsPercent}%`,
+    },
+    buildTrendItem("Dinero libre", remainingDelta, "Quedaria", "menos libre", "mas libre", false),
+  ];
+}
+
+function buildTrendItem(label, delta, prefix, negativeText, positiveText, lowerIsBetter) {
+  const amount = currency.format(Math.abs(delta));
+  const isNeutral = delta === 0;
+  const isPositive = delta > 0;
+  const tone = isNeutral ? "neutral" : lowerIsBetter ? (isPositive ? "warning" : "success") : (isPositive ? "success" : "warning");
+  const direction = isNeutral ? "igual que el mes actual" : isPositive ? positiveText : negativeText;
+
+  return {
+    description: isNeutral ? `${prefix} igual que el mes actual.` : `${prefix} ${amount} ${direction}.`,
+    label,
+    tone,
+    value: isNeutral ? "Sin cambio" : `${isPositive ? "+" : "-"}${amount}`,
+  };
+}
+
+function buildPriorityAlerts({ cardsPercent, disappearingTotal, dueItems, nextMonthSummary, totalPercent, upcomingCardExpenses }) {
+  const upcomingTotal = upcomingCardExpenses.reduce((sum, card) => sum + (Number(card.total) || 0), 0);
+  const dueSoon = dueItems.filter((item) => item.status === "soon" || item.status === "overdue").length;
+  const alerts = [];
+
+  if (nextMonthSummary.remaining < 0) {
+    alerts.push({ detail: `Faltan ${currency.format(Math.abs(nextMonthSummary.remaining))} para cubrir lo proyectado.`, id: "negative", level: "Critico", title: "Saldo proyectado negativo", tone: "danger" });
+  }
+
+  if (totalPercent >= 40) {
+    alerts.push({ detail: `Ya esta comprometido ${totalPercent}% del sueldo.`, id: "salary-use", level: "Atencion", title: "Uso del sueldo alto", tone: "warning" });
+  }
+
+  if (cardsPercent >= 30) {
+    alerts.push({ detail: `Tarjetas representan ${cardsPercent}% del ingreso.`, id: "cards", level: "Atencion", title: "Tarjetas con mucho peso", tone: "warning" });
+  }
+
+  if (dueSoon > 0) {
+    alerts.push({ detail: `${dueSoon} vencimientos necesitan revision pronto.`, id: "due", level: "Atencion", title: "Vencimientos proximos", tone: "warning" });
+  }
+
+  if (upcomingTotal > 0) {
+    alerts.push({ detail: `${currency.format(upcomingTotal)} aparece como compras nuevas de tarjeta.`, id: "new-expenses", level: "Info", title: "Aparecieron gastos nuevos", tone: "neutral" });
+  }
+
+  if (disappearingTotal > 0) {
+    alerts.push({ detail: `${currency.format(disappearingTotal)} dejaria de repetirse mas adelante.`, id: "relief", level: "Info", title: "Gastos que desaparecen", tone: "success" });
+  }
+
+  if (!alerts.length) {
+    alerts.push({ detail: "No hay alertas importantes para este mes proyectado.", id: "clear", level: "OK", title: "Sin alertas relevantes", tone: "success" });
+  }
+
+  const weight = { danger: 0, warning: 1, neutral: 2, success: 3 };
+  return alerts.sort((a, b) => weight[a.tone] - weight[b.tone]).slice(0, 4);
+}
+
+function buildRiskRanking({ cardsPercent, dueItems, nextMonthSummary, topExpenseGroups, totalPercent, upcomingCardExpenses }) {
+  const upcomingTotal = upcomingCardExpenses.reduce((sum, card) => sum + (Number(card.total) || 0), 0);
+  const dueSoon = dueItems.filter((item) => item.status === "soon" || item.status === "overdue").length;
+  const risks = [
+    { detail: `Ya usa ${totalPercent}% del ingreso disponible.`, id: "salary", score: totalPercent, title: "Sueldo comprometido", tone: totalPercent >= 40 ? "warning" : "neutral" },
+    { detail: `Tarjetas representan ${cardsPercent}% del sueldo.`, id: "cards", score: cardsPercent + 8, title: "Tarjetas", tone: cardsPercent >= 30 ? "warning" : "neutral" },
+    { detail: dueSoon ? `${dueSoon} vencimientos proximos o vencidos.` : "No hay vencimientos urgentes cargados.", id: "due", score: dueSoon * 20, title: "Vencimientos", tone: dueSoon ? "warning" : "success" },
+    { detail: upcomingTotal ? `${currency.format(upcomingTotal)} en compras nuevas. Movimiento controlable si lo revisas ahora.` : "No aparecen compras nuevas de tarjeta.", id: "new", score: getPercent(upcomingTotal, nextMonthSummary.salary || 0), title: "Compras nuevas", tone: upcomingTotal ? "neutral" : "success" },
+  ];
+
+  if (nextMonthSummary.remaining < 0) {
+    risks.push({ detail: `Faltan ${currency.format(Math.abs(nextMonthSummary.remaining))}.`, id: "negative", score: 999, title: "Saldo negativo", tone: "danger" });
+  }
+
+  if (topExpenseGroups[0]) {
+    risks.push({ detail: `${currency.format(topExpenseGroups[0].total)} agrupado en esta categoria.`, id: "category", score: getPercent(topExpenseGroups[0].total, nextMonthSummary.salary || 0), title: `Categoria: ${topExpenseGroups[0].category}`, tone: "neutral" });
+  }
+
+  return risks.sort((a, b) => b.score - a.score).slice(0, 3);
+}
 function buildPlanningActions({ cardsPercent, disappearingTotal, dueItems, health, nextMonthSummary, totalPercent, upcomingCardExpenses }) {
   const upcomingTotal = upcomingCardExpenses.reduce((sum, card) => sum + (Number(card.total) || 0), 0);
   const dueSoon = dueItems.filter((item) => item.status === "soon" || item.status === "overdue").length;
@@ -901,8 +1407,9 @@ function getDueStats(items) {
     (stats, item) => ({
       ...stats,
       [item.status]: (stats[item.status] ?? 0) + 1,
+      today: item.status === "soon" && item.diffInDays === 0 ? (stats.today ?? 0) + 1 : stats.today,
     }),
-    { overdue: 0, paid: 0, pending: 0, soon: 0 },
+    { overdue: 0, paid: 0, pending: 0, soon: 0, today: 0 },
   );
 }
 
@@ -984,6 +1491,14 @@ function DueBadge({ item }) {
 
   return <em className="status-pill pending">En {item.diffInDays} dias</em>;
 }
+
+
+
+
+
+
+
+
 
 
 

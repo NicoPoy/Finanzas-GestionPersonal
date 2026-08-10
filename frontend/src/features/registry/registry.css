@@ -301,6 +301,52 @@
   --month-fill: var(--primary);
 }
 
+
+.registry-filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.registry-filter-bar button {
+  align-items: center;
+  background: rgba(16, 26, 34, 0.36);
+  border: 1px solid rgba(73, 104, 116, 0.58);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 11px;
+}
+
+.registry-filter-bar button.active {
+  background: rgba(93, 182, 198, 0.16);
+  border-color: rgba(134, 212, 223, 0.58);
+  color: var(--primary-strong);
+}
+
+.registry-filter-bar span {
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.registry-filter-bar strong {
+  align-items: center;
+  background: rgba(93, 182, 198, 0.14);
+  border-radius: 999px;
+  color: var(--ink-strong);
+  display: inline-flex;
+  font-size: 0.72rem;
+  justify-content: center;
+  min-width: 24px;
+  padding: 3px 7px;
+}
 /* Service Card List */
 .registry-service-list {
   display: grid;
@@ -566,3 +612,4 @@
     flex-direction: column;
   }
 }
+

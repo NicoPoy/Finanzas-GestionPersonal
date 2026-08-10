@@ -34,6 +34,7 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
   const currentMonthIndex = today.getMonth();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
+  const [activeFilter, setActiveFilter] = useState("all");
   const selectedMonth = MONTHS[selectedMonthIndex];
   const monthStates = MONTHS.map((_, monthIndex) => buildMonthState({
     monthIndex,
@@ -44,6 +45,15 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
     today,
   }));
   const selectedState = monthStates[selectedMonthIndex] ?? { completedCount: 0, savedCount: 0 };
+  const registryRows = services.map((service) => buildRegistryRow({
+    monthIndex: selectedMonthIndex,
+    paymentDetails,
+    paymentRegistry,
+    selectedYear,
+    service,
+  }));
+  const registryFilters = buildRegistryFilters(registryRows);
+  const visibleRows = filterRegistryRows(registryRows, activeFilter);
 
   return (
     <section className="workspace single-column registry-workspace">
@@ -141,17 +151,31 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
               })}
             </div>
 
+            <div className="registry-filter-bar" aria-label="Filtros del registro">
+              {registryFilters.map((filter) => (
+                <button
+                  className={activeFilter === filter.id ? "active" : ""}
+                  key={filter.id}
+                  onClick={() => setActiveFilter(filter.id)}
+                  type="button"
+                >
+                  <span>{filter.label}</span>
+                  <strong>{filter.count}</strong>
+                </button>
+              ))}
+            </div>
+
             <div className="registry-service-list">
-              {services.map((service) => (
+              {visibleRows.map((row) => (
                 <RegistryServiceCard
-                  key={service.id}
+                  key={row.service.id}
                   month={selectedMonth.label}
                   monthIndex={selectedMonthIndex}
                   onSetPaymentStatus={onSetPaymentStatus}
                   paymentDetails={paymentDetails}
                   paymentRegistry={paymentRegistry}
                   selectedYear={selectedYear}
-                  service={service}
+                  service={row.service}
                 />
               ))}
             </div>
@@ -167,6 +191,50 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
   );
 }
 
+function buildRegistryRow({ monthIndex, paymentDetails, paymentRegistry, selectedYear, service }) {
+  const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
+  const detail = paymentDetails[paymentKey] ?? {};
+  const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+  const dueDate = new Date(selectedYear, monthIndex, Math.min(service.dueDay ?? 10, new Date(selectedYear, monthIndex + 1, 0).getDate()));
+  const today = new Date();
+  const diffInDays = Math.ceil((startOfRegistryDay(dueDate) - startOfRegistryDay(today)) / 86400000);
+
+  return {
+    detail,
+    diffInDays,
+    isCard: service.category === "Tarjetas" || String(service.id).startsWith("card:"),
+    isDebit: Boolean(service.paymentCard),
+    key: paymentKey,
+    service,
+    status,
+  };
+}
+
+function buildRegistryFilters(rows) {
+  return [
+    { count: rows.length, id: "all", label: "Todos" },
+    { count: rows.filter((row) => row.status === PAYMENT_STATUS.NONE).length, id: "pending", label: "Pendientes" },
+    { count: rows.filter((row) => row.status === PAYMENT_STATUS.PAID || row.status === PAYMENT_STATUS.DEBITED).length, id: "paid", label: "Pagados" },
+    { count: rows.filter((row) => row.status === PAYMENT_STATUS.NONE && row.diffInDays >= 0 && row.diffInDays <= 3).length, id: "soon", label: "Vencen pronto" },
+    { count: rows.filter((row) => row.isCard).length, id: "cards", label: "Tarjetas" },
+    { count: rows.filter((row) => row.isDebit).length, id: "debits", label: "Debitos" },
+    { count: rows.filter((row) => row.service.paymentCard).length, id: "account", label: "Cuenta/banco" },
+  ];
+}
+
+function filterRegistryRows(rows, filter) {
+  if (filter === "pending") return rows.filter((row) => row.status === PAYMENT_STATUS.NONE);
+  if (filter === "paid") return rows.filter((row) => row.status === PAYMENT_STATUS.PAID || row.status === PAYMENT_STATUS.DEBITED);
+  if (filter === "soon") return rows.filter((row) => row.status === PAYMENT_STATUS.NONE && row.diffInDays >= 0 && row.diffInDays <= 3);
+  if (filter === "cards") return rows.filter((row) => row.isCard);
+  if (filter === "debits") return rows.filter((row) => row.isDebit);
+  if (filter === "account") return rows.filter((row) => row.service.paymentCard);
+  return rows;
+}
+
+function startOfRegistryDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 function RegistryServiceCard({
   month,
   monthIndex,
@@ -376,3 +444,4 @@ function formatRegistryDate(value) {
     year: "numeric",
   }).format(date);
 }
+
