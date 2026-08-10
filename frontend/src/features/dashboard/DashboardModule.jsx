@@ -152,7 +152,13 @@ export default function DashboardModule({
               </div>
 
               <div className={`health-light health-light-${health.tone}`}>
-                <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+                <div className="health-summary-row">
+                  <span>
+                    <small>Dinero que queda libre</small>
+                    <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+                  </span>
+                  <b>{totalPercent}% del sueldo usado</b>
+                </div>
                 <span>{health.description}</span>
               </div>
 
@@ -978,6 +984,7 @@ function DueBadge({ item }) {
 
   return <em className="status-pill pending">En {item.diffInDays} dias</em>;
 }
+
 
 
 
