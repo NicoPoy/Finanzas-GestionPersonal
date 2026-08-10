@@ -10,6 +10,7 @@ export function normalizeData(data) {
     salary: Number(data.salary) || 0,
     otherIncomes: normalizeOtherIncomes(data.otherIncomes ?? INITIAL_DATA.otherIncomes),
     monthlyPurchases: normalizeMonthlyPurchases(data.monthlyPurchases ?? INITIAL_DATA.monthlyPurchases),
+    savingsGoals: normalizeSavingsGoals(data.savingsGoals ?? INITIAL_DATA.savingsGoals),
     cardFixedCategories: normalizeCardFixedCategories(data.cardFixedCategories ?? INITIAL_DATA.cardFixedCategories),
     debitCards: normalizeDebitCards(data.debitCards ?? INITIAL_DATA.debitCards),
     paymentDetails: normalizePaymentDetails(data.paymentDetails ?? INITIAL_DATA.paymentDetails),
@@ -183,7 +184,52 @@ function normalizeSimpleExpenses(expenses) {
     ...expense,
     dueDay: clampDay(expense.dueDay),
     paymentCard: expense.paymentCard ?? "",
+    startMonth: expense.startMonth == null ? null : clampMonth(expense.startMonth),
+    startYear: expense.startYear == null ? null : Number(expense.startYear) || null,
+    amountHistory: normalizeAmountHistory(expense),
   }));
+}
+
+function normalizeAmountHistory(expense) {
+  const history = Array.isArray(expense.amountHistory) ? expense.amountHistory : [];
+  const normalized = history
+    .map((item) => ({
+      amount: Number(item.amount) || 0,
+      startMonth: item.startMonth == null ? null : clampMonth(item.startMonth),
+      startYear: item.startYear == null ? null : Number(item.startYear) || null,
+    }))
+    .filter((item) => item.amount > 0 && item.startMonth != null && item.startYear != null);
+
+  if (normalized.length) {
+    return normalized.sort((a, b) => a.startYear * 12 + a.startMonth - (b.startYear * 12 + b.startMonth));
+  }
+
+  if (expense.startMonth == null || expense.startYear == null) {
+    return [];
+  }
+
+  return [
+    {
+      amount: Number(expense.amount) || 0,
+      startMonth: clampMonth(expense.startMonth),
+      startYear: Number(expense.startYear) || new Date().getFullYear(),
+    },
+  ].filter((item) => item.amount > 0);
+}
+
+function normalizeSavingsGoals(goals) {
+  return (Array.isArray(goals) ? goals : []).map((goal) => ({
+    ...goal,
+    currentAmount: Number(goal.currentAmount) || 0,
+    id: String(goal.id ?? crypto.randomUUID()),
+    monthlyContribution: Number(goal.monthlyContribution) || 0,
+    name: String(goal.name ?? '').trim(),
+    targetAmount: Number(goal.targetAmount) || 0,
+  })).filter((goal) => goal.name && goal.targetAmount > 0);
+}
+function clampMonth(month) {
+  const parsedMonth = Number(month);
+  return Math.min(Math.max(Number.isFinite(parsedMonth) ? parsedMonth : 0, 0), 11);
 }
 
 function clampDay(day) {

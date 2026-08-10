@@ -4,8 +4,64 @@ import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import { currency } from "../../utils/formatters.js";
 import "./simpleExpenses.css";
 
-// Modulo generico para Departamento, Suscripciones, Actividades y Extras.
-// Recibe la configuracion de la seccion desde FinanceApp para evitar duplicar pantallas casi iguales.
+const MONTH_OPTIONS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+function getCurrentStartPeriod() {
+  const today = new Date();
+
+  return {
+    startMonth: today.getMonth(),
+    startYear: today.getFullYear(),
+  };
+}
+
+function normalizeStartMonth(value) {
+  const parsed = Number(value);
+  return Math.min(Math.max(Number.isFinite(parsed) ? parsed : getCurrentStartPeriod().startMonth, 0), 11);
+}
+
+function normalizeStartYear(value) {
+  const currentYear = getCurrentStartPeriod().startYear;
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) && parsed > 1900 ? Math.round(parsed) : currentYear;
+}
+
+function formatStartPeriod(expense) {
+  if (expense.startMonth == null || expense.startYear == null) {
+    return "Desde: siempre";
+  }
+
+  return `Desde: ${MONTH_OPTIONS[normalizeStartMonth(expense.startMonth)]} ${normalizeStartYear(expense.startYear)}`;
+}
+
+function formatAmountHistory(expense) {
+  const history = Array.isArray(expense.amountHistory) ? expense.amountHistory : [];
+
+  if (!history.length) {
+    return [];
+  }
+
+  return history
+    .slice()
+    .sort((a, b) => a.startYear * 12 + a.startMonth - (b.startYear * 12 + b.startMonth))
+    .map((item) => `${MONTH_OPTIONS[normalizeStartMonth(item.startMonth)]} ${normalizeStartYear(item.startYear)}: ${currency.format(item.amount)}`);
+}
+// Módulo genérico para Departamento, Suscripciones, Actividades y Extras.
+// Recibe la configuración de la sección desde FinanceApp para evitar duplicar pantallas casi iguales.
 export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate }) {
   const Icon = module.icon;
 
@@ -50,9 +106,12 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
 
 // Formulario simple de nombre + monto para gastos fijos no asociados a tarjeta.
 function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubmit }) {
+  const defaultStart = getCurrentStartPeriod();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDay, setDueDay] = useState("10");
+  const [startMonth, setStartMonth] = useState(String(defaultStart.startMonth));
+  const [startYear, setStartYear] = useState(String(defaultStart.startYear));
   const [paymentCard, setPaymentCard] = useState("");
 
   function handleSubmit(event) {
@@ -67,12 +126,17 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
       name: name.trim(),
       amount: parsedAmount,
       dueDay: Math.min(Math.max(Number(dueDay) || 10, 1), 31),
+      startMonth: normalizeStartMonth(startMonth),
+      startYear: normalizeStartYear(startYear),
       paymentCard,
     });
 
+    const nextDefaultStart = getCurrentStartPeriod();
     setName("");
     setAmount("");
     setDueDay("10");
+    setStartMonth(String(nextDefaultStart.startMonth));
+    setStartYear(String(nextDefaultStart.startYear));
     setPaymentCard("");
   }
 
@@ -97,7 +161,7 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
       </label>
 
       <label>
-        Vence dia
+        Vence día
         <input
           min="1"
           max="31"
@@ -105,6 +169,28 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
           type="number"
           value={dueDay}
           onChange={(event) => setDueDay(event.target.value)}
+        />
+      </label>
+
+      <label>
+        Desde mes
+        <select value={startMonth} onChange={(event) => setStartMonth(event.target.value)}>
+          {MONTH_OPTIONS.map((month, index) => (
+            <option key={month} value={index}>
+              {month}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        Año
+        <input
+          min="2000"
+          max="2100"
+          type="number"
+          value={startYear}
+          onChange={(event) => setStartYear(event.target.value)}
         />
       </label>
 
@@ -128,34 +214,38 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
   );
 }
 
-// Lista gastos propios de la seccion y gastos fijos pagados con tarjeta como referencia no sumable.
+// Lista gastos propios de la sección y gastos fijos pagados con tarjeta como referencia no sumable.
 function FixedExpenseList({
   cardExpenses = [],
   debitCards = [],
-  emptyMessage = "Todavia no cargaste gastos fijos del departamento.",
+  emptyMessage = "Todavía no cargaste gastos fijos del departamento.",
   expenses,
   icon: Icon,
   onRemove,
   onUpdate,
 }) {
   const [editingId, setEditingId] = useState("");
-  const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "", paymentCard: "" });
+  const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "", paymentCard: "", startMonth: "", startYear: "" });
   const editingExpense = expenses.find((expense) => expense.id === editingId);
   const parsedDraftAmount = Number(draft.amount);
   const canSaveEdit = Boolean(editingExpense) && draft.name.trim() && parsedDraftAmount > 0;
 
   function closeEditModal() {
     setEditingId("");
-    setDraft({ amount: "", dueDay: "", name: "", paymentCard: "" });
+    setDraft({ amount: "", dueDay: "", name: "", paymentCard: "", startMonth: "", startYear: "" });
   }
 
   function startEdit(expense) {
+    const defaultStart = getCurrentStartPeriod();
+
     setEditingId(expense.id);
     setDraft({
       amount: String(expense.amount),
       dueDay: String(expense.dueDay ?? 10),
       name: expense.name,
       paymentCard: expense.paymentCard ?? "",
+      startMonth: String(expense.startMonth ?? defaultStart.startMonth),
+      startYear: String(expense.startYear ?? defaultStart.startYear),
     });
   }
 
@@ -169,6 +259,8 @@ function FixedExpenseList({
       dueDay: Math.min(Math.max(Number(draft.dueDay) || 10, 1), 31),
       name: draft.name.trim(),
       paymentCard: draft.paymentCard,
+      startMonth: normalizeStartMonth(draft.startMonth),
+      startYear: normalizeStartYear(draft.startYear),
     });
     closeEditModal();
   }
@@ -205,7 +297,7 @@ function FixedExpenseList({
                 <h4>{expense.name}</h4>
                 <p>
                   <span>Vence: Día {expense.dueDay ?? 10}</span>
-                  <span className="bullet">•</span>
+                  <span className="bullet">-</span>
                   <span>Tarjeta: {expense.source}</span>
                 </p>
               </div>
@@ -250,13 +342,36 @@ function FixedExpenseList({
                 />
               </label>
               <label>
-                Vence dia
+                Vence día
                 <input
                   max="31"
                   min="1"
                   type="number"
                   value={draft.dueDay}
                   onChange={(event) => setDraft((current) => ({ ...current, dueDay: event.target.value }))}
+                />
+              </label>
+              <label>
+                Desde mes
+                <select
+                  value={draft.startMonth}
+                  onChange={(event) => setDraft((current) => ({ ...current, startMonth: event.target.value }))}
+                >
+                  {MONTH_OPTIONS.map((month, index) => (
+                    <option key={month} value={index}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Año
+                <input
+                  min="2000"
+                  max="2100"
+                  type="number"
+                  value={draft.startYear}
+                  onChange={(event) => setDraft((current) => ({ ...current, startYear: event.target.value }))}
                 />
               </label>
               <label>
@@ -300,7 +415,9 @@ function SimpleExpenseRow({ expense, icon: Icon, onDelete, onEdit }) {
           <h4>{expense.name}</h4>
           <p>
             <span>Vence: Día {expense.dueDay ?? 10}</span>
-            <span className="bullet">•</span>
+            <span className="bullet">-</span>
+            <span>{formatStartPeriod(expense)}</span>
+            <span className="bullet">-</span>
             <span>Debita de: {expense.paymentCard || "Sin asociar"}</span>
           </p>
         </div>

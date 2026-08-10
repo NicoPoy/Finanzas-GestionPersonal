@@ -4,7 +4,7 @@
 @media (min-width: 761px) {
   .fixed-expense-form {
     display: grid;
-    grid-template-columns: 2fr 1.2fr 1fr 1.2fr auto;
+    grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(130px, 1fr) minmax(95px, 0.8fr) minmax(150px, 1.1fr) auto;
     gap: 16px;
     align-items: end;
     background: rgba(34, 51, 61, 0.25);
@@ -244,4 +244,21 @@
     border-top: 1px solid rgba(73, 104, 116, 0.15);
     padding-top: 12px;
   }
+}
+
+.expense-amount-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.expense-amount-history span {
+  background: rgba(93, 182, 198, 0.08);
+  border: 1px solid rgba(93, 182, 198, 0.18);
+  border-radius: 6px;
+  color: var(--primary-strong);
+  font-size: 0.72rem;
+  font-weight: 850;
+  padding: 3px 7px;
 }

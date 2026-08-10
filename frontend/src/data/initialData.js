@@ -5,6 +5,7 @@ export const INITIAL_DATA = {
   salary: 0,
   otherIncomes: [],
   monthlyPurchases: [],
+  savingsGoals: [],
   cardFixedCategories: [],
   debitCards: [],
   paymentDetails: {},

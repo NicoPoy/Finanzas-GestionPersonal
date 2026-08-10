@@ -191,6 +191,7 @@ function getCardMonthlyAmountForPayment(card, paymentMonthOffset = 0) {
 
 // Construye las filas del registro anual: tarjetas + gastos simples cargados en cada seccion.
 export function buildRegistryServices(data, banks, paymentMonthOffset = 0) {
+  const { monthIndex, year } = getCalendarMonth(paymentMonthOffset);
   const cardServices = banks.flatMap((bank) =>
     bank.cards.map((card) => ({
       id: `card:${card.id}`,
@@ -203,10 +204,10 @@ export function buildRegistryServices(data, banks, paymentMonthOffset = 0) {
 
   return [
     ...cardServices,
-    ...mapSimpleServices(data.departmentExpenses, "Departamento", "department"),
-    ...mapSimpleServices(data.subscriptionExpenses, "Suscripciones", "subscriptions"),
-    ...mapSimpleServices(data.activityExpenses, "Actividades", "activities"),
-    ...mapSimpleServices(data.extraExpenses, "Extras", "extras"),
+    ...mapSimpleServices(data.departmentExpenses, "Departamento", "department", year, monthIndex),
+    ...mapSimpleServices(data.subscriptionExpenses, "Suscripciones", "subscriptions", year, monthIndex),
+    ...mapSimpleServices(data.activityExpenses, "Actividades", "activities", year, monthIndex),
+    ...mapSimpleServices(data.extraExpenses, "Extras", "extras", year, monthIndex),
   ];
 }
 
@@ -225,7 +226,6 @@ export function buildOtherIncomesTotal(data) {
 export function buildDashboardSummary({
   banks,
   data,
-  fixedExpensesTotal,
   paymentDetails,
   paymentMonthOffset = 0,
   paymentRegistry,
@@ -249,6 +249,7 @@ export function buildDashboardSummary({
   });
 
   const extraordinaryExpenses = buildExtraordinaryExpensesTotal(data, paymentMonthOffset);
+  const fixedExpensesTotal = buildFixedExpensesTotalForMonth(data, year, monthIndex);
   const otherIncomesTotal = buildOtherIncomesTotal(data);
   const incomeTotal = salary + otherIncomesTotal;
   const totalExpenses = cardExpenses + fixedExpensesTotal + extraordinaryExpenses;
@@ -280,10 +281,60 @@ export function buildDashboardSummary({
   };
 }
 
-function mapSimpleServices(expenses, category, prefix) {
-  return expenses.map((expense) => ({
+export function isSimpleExpenseActiveForMonth(expense, year, monthIndex) {
+  const startYear = Number(expense.startYear);
+  const startMonth = Number(expense.startMonth);
+
+  if (!Number.isInteger(startYear) || !Number.isInteger(startMonth)) {
+    return true;
+  }
+
+  return year * 12 + monthIndex >= startYear * 12 + startMonth;
+}
+
+export function getSimpleExpenseAmountForMonth(expense, year, monthIndex) {
+  if (!isSimpleExpenseActiveForMonth(expense, year, monthIndex)) {
+    return 0;
+  }
+
+  const targetPeriod = year * 12 + monthIndex;
+  const history = (Array.isArray(expense.amountHistory) ? expense.amountHistory : [])
+    .map((item) => ({
+      amount: Number(item.amount) || 0,
+      period: (Number(item.startYear) || 0) * 12 + (Number(item.startMonth) || 0),
+    }))
+    .filter((item) => item.amount > 0 && item.period <= targetPeriod)
+    .sort((a, b) => b.period - a.period);
+
+  return history[0]?.amount ?? (Number(expense.amount) || 0);
+}
+
+export function buildSimpleExpensesTotalForMonth(data, year, monthIndex) {
+  const sections = [
+    data.departmentExpenses,
+    data.subscriptionExpenses,
+    data.activityExpenses,
+    data.extraExpenses,
+  ];
+
+  return sections.reduce(
+    (total, expenses) =>
+      total +
+      (expenses ?? []).reduce((sum, expense) => sum + getSimpleExpenseAmountForMonth(expense, year, monthIndex), 0),
+    0,
+  );
+}
+
+export function buildFixedExpensesTotalForMonth(data, year, monthIndex) {
+  const monthlyPurchasesTotal = (data.monthlyPurchases ?? []).reduce((sum, purchase) => sum + (Number(purchase.amount) || 0), 0);
+
+  return buildSimpleExpensesTotalForMonth(data, year, monthIndex) + monthlyPurchasesTotal;
+}
+
+function mapSimpleServices(expenses, category, prefix, year, monthIndex) {
+  return expenses.filter((expense) => isSimpleExpenseActiveForMonth(expense, year, monthIndex)).map((expense) => ({
     id: `${prefix}:${expense.id}`,
-    amount: expense.amount,
+    amount: getSimpleExpenseAmountForMonth(expense, year, monthIndex),
     category,
     dueDay: expense.dueDay ?? 10,
     paymentCard: expense.paymentCard ?? "",

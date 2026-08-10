@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  BarChart3,
   Banknote,
   CreditCard,
   Dumbbell,
@@ -29,6 +30,8 @@ import {
   buildDueItems,
   buildOtherIncomesTotal,
   buildRegistryServices,
+  getSimpleExpenseAmountForMonth,
+  isSimpleExpenseActiveForMonth,
   getCalendarMonth,
   countCards,
   getExpenseAmountForStatementOffset,
@@ -52,6 +55,7 @@ import SettingsModule from "../settings/SettingsModule.jsx";
 import ExtraordinariosModule from "../extraordinary/ExtraordinariosModule.jsx";
 import SimpleExpenseModule from "../simpleExpenses/SimpleExpenseModule.jsx";
 import MonthlyPurchasesModule from "../monthlyPurchases/MonthlyPurchasesModule.jsx";
+import SavingsGoalsModule from "../savingsGoals/SavingsGoalsModule.jsx";
 import "../../styles/shell.css";
 
 const MODULE_ROUTES = {
@@ -60,16 +64,18 @@ const MODULE_ROUTES = {
   "/finanzas/dashboard": "dashboard",
   "/finanzas/registro": "registry",
   "/finanzas/compras-mensuales": "monthlyPurchases",
+  "/finanzas/metas-ahorro": "savingsGoals",
   "/finanzas/departamento": "department",
   "/finanzas/suscripciones": "subscriptions",
   "/finanzas/actividades": "activities",
   "/finanzas/extras": "extras",
   "/finanzas/tarjetas": "cards",
+  "/finanzas/deuda-cuotas": "projection",
   "/finanzas/extraordinarios": "extraordinary",
   "/finanzas/dolares": "dollars",
   "/finanzas/aguinaldo": "aguinaldo",
   "/finanzas/historial": "history",
-  "/finanzas/configuracion": "settings",
+  "/finanzas/configuración": "settings",
 };
 
 const MODULE_PATHS = Object.fromEntries(
@@ -185,7 +191,7 @@ const DEMO_PROFILE = {
   ],
 };
 
-// Orquestador de la app privada: administra estado, totales y navegacion entre secciones.
+// Orquestador de la app privada: administra estado, totales y navegación entre secciones.
 export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, onToggleTheme, theme }) {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState(() => getModuleFromPath(window.location.pathname));
@@ -308,17 +314,17 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   );
   const totalDebt = banksWithTotals.reduce((sum, bank) => sum + bank.totalDebt, 0);
   const cardSavingsTotal = banksWithTotals.reduce((sum, bank) => sum + bank.savingsTotal, 0);
-  const departmentTotal = data.departmentExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const subscriptionsTotal = data.subscriptionExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const activitiesTotal = data.activityExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const extrasTotal = data.extraExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const currentPaymentMonth = getCalendarMonth(0);
+  const departmentTotal = buildActiveSimpleExpenseTotal(data.departmentExpenses, currentPaymentMonth.year, currentPaymentMonth.monthIndex);
+  const subscriptionsTotal = buildActiveSimpleExpenseTotal(data.subscriptionExpenses, currentPaymentMonth.year, currentPaymentMonth.monthIndex);
+  const activitiesTotal = buildActiveSimpleExpenseTotal(data.activityExpenses, currentPaymentMonth.year, currentPaymentMonth.monthIndex);
+  const extrasTotal = buildActiveSimpleExpenseTotal(data.extraExpenses, currentPaymentMonth.year, currentPaymentMonth.monthIndex);
   const monthlyPurchasesTotal = data.monthlyPurchases.reduce((sum, purchase) => sum + purchase.amount, 0);
   const otherIncomesTotal = buildOtherIncomesTotal(data);
   const incomeTotal = data.salary + otherIncomesTotal;
   const fixedExpensesTotal = departmentTotal + subscriptionsTotal + activitiesTotal + extrasTotal + monthlyPurchasesTotal;
   const currentPaymentMonthTotal = currentPaymentCardTotal + fixedExpensesTotal;
   const remainingTotal = incomeTotal - currentPaymentMonthTotal;
-  const currentPaymentMonth = getCalendarMonth(0);
   const upcomingCardPaymentMonth = getCalendarMonth(1);
   const currentStatementMonth = getCalendarMonth(0);
   const dashboardPaymentMonth = getCalendarMonth(dashboardMonthOffset);
@@ -345,13 +351,12 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       buildDashboardSummary({
         banks: banksWithTotals,
         data,
-        fixedExpensesTotal,
         paymentDetails: data.paymentDetails,
         paymentMonthOffset: 1,
         paymentRegistry: data.paymentRegistry,
         salary: data.salary,
       }),
-    [banksWithTotals, data, fixedExpensesTotal],
+    [banksWithTotals, data],
   );
   const salaryUsagePercent =
     incomeTotal > 0 ? Math.max(0, Math.round(((incomeTotal - nextMonthSummary.remaining) / incomeTotal) * 100)) : 0;
@@ -361,13 +366,12 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       buildDashboardSummary({
         banks: banksWithTotals,
         data,
-        fixedExpensesTotal,
         paymentDetails: data.paymentDetails,
         paymentMonthOffset: dashboardMonthOffset,
         paymentRegistry: data.paymentRegistry,
         salary: data.salary,
       }),
-    [banksWithTotals, dashboardMonthOffset, data, fixedExpensesTotal],
+    [banksWithTotals, dashboardMonthOffset, data],
   );
   const dashboardDueItems = useMemo(
     () =>
@@ -430,7 +434,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     department: {
       cardExpenses: cardFixedExpensesByCategory.department,
       debitCards: data.debitCards,
-      emptyMessage: "Todavia no cargaste gastos fijos del departamento.",
+      emptyMessage: "Todavía no cargaste gastos fijos del departamento.",
       expenses: data.departmentExpenses,
       icon: Home,
       namePlaceholder: "Ej: luz",
@@ -443,7 +447,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     subscriptions: {
       cardExpenses: cardFixedExpensesByCategory.subscriptions,
       debitCards: data.debitCards,
-      emptyMessage: "Todavia no cargaste suscripciones.",
+      emptyMessage: "Todavía no cargaste suscripciones.",
       expenses: data.subscriptionExpenses,
       icon: Repeat,
       namePlaceholder: "Ej: Netflix",
@@ -456,7 +460,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     activities: {
       cardExpenses: cardFixedExpensesByCategory.activities,
       debitCards: data.debitCards,
-      emptyMessage: "Todavia no cargaste actividades.",
+      emptyMessage: "Todavía no cargaste actividades.",
       expenses: data.activityExpenses,
       icon: Dumbbell,
       namePlaceholder: "Ej: gimnasio",
@@ -469,7 +473,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     extras: {
       cardExpenses: cardFixedExpensesByCategory.extras,
       debitCards: data.debitCards,
-      emptyMessage: "Todavia no cargaste extras.",
+      emptyMessage: "Todavía no cargaste extras.",
       expenses: data.extraExpenses,
       icon: Sparkles,
       namePlaceholder: "Ej: salida",
@@ -783,6 +787,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           id: crypto.randomUUID(),
           dueDay: expense.dueDay ?? 10,
           ...expense,
+          amountHistory: buildSimpleExpenseHistoryEntry(expense),
         },
         ...current[storageKey],
       ],
@@ -802,6 +807,41 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     }));
   }
 
+  function addSavingsGoal(goal) {
+    setData((current) => ({
+      ...current,
+      savingsGoals: [
+        {
+          id: crypto.randomUUID(),
+          ...goal,
+        },
+        ...current.savingsGoals,
+      ],
+    }));
+  }
+
+  function updateSavingsGoal(goalId, updates) {
+    setData((current) => ({
+      ...current,
+      savingsGoals: current.savingsGoals.map((goal) =>
+        goal.id === goalId ? { ...goal, ...updates } : goal,
+      ),
+    }));
+  }
+
+  function removeSavingsGoal(goalId) {
+    requestConfirmation({
+      confirmLabel: "Eliminar meta",
+      message: "Se va a eliminar esta meta de ahorro.",
+      onConfirm: () =>
+        setData((current) => ({
+          ...current,
+          savingsGoals: current.savingsGoals.filter((goal) => goal.id !== goalId),
+        })),
+      title: "Eliminar meta",
+      tone: "danger",
+    });
+  }
   function updateMonthlyPurchase(purchaseId, updates) {
     setData((current) => ({
       ...current,
@@ -945,7 +985,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         setData((current) => ({
           ...current,
           [storageKey]: current[storageKey].map((expense) =>
-            expense.id === expenseId ? { ...expense, ...updates } : expense,
+            expense.id === expenseId ? applySimpleExpenseUpdates(expense, updates) : expense,
           ),
         })),
       title: "Modificar gasto",
@@ -1012,7 +1052,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           id: crypto.randomUUID(),
           items: [],
           method: "Ingreso adicional",
-          notes: "Ingreso adicional cargado desde Configuracion.",
+          notes: "Ingreso adicional cargado desde Configuración.",
           paidAmount: income.amount,
           paidAt,
           period,
@@ -1080,7 +1120,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   function updateCardFixedCategory(categoryId, name) {
     requestConfirmation({
       confirmLabel: "Guardar cambios",
-      message: "Se va a modificar el nombre de esta seccion.",
+      message: "Se va a modificar el nombre de esta sección.",
       onConfirm: () =>
         setData((current) => ({
           ...current,
@@ -1088,14 +1128,14 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
             category.id === categoryId ? { ...category, name } : category,
           ),
         })),
-      title: "Modificar seccion",
+      title: "Modificar sección",
     });
   }
 
   function removeCardFixedCategory(categoryId) {
     requestConfirmation({
-      confirmLabel: "Eliminar seccion",
-      message: "Se va a eliminar esta seccion y sus gastos fijos de tarjeta se moveran a la primera seccion disponible.",
+      confirmLabel: "Eliminar sección",
+      message: "Se va a eliminar esta sección y sus gastos fijos de tarjeta se moverán a la primera sección disponible.",
       onConfirm: () =>
         setData((current) => {
           const nextCategories = current.cardFixedCategories.filter((category) => category.id !== categoryId);
@@ -1109,7 +1149,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
             ),
           };
         }),
-      title: "Eliminar seccion",
+      title: "Eliminar sección",
       tone: "danger",
     });
   }
@@ -1124,7 +1164,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   function updateDebitCard(previousName, nextName) {
     requestConfirmation({
       confirmLabel: "Guardar cambios",
-      message: "Se va a modificar esta opcion de debito en todo el perfil.",
+      message: "Se va a modificar esta opción de débito en todo el perfil.",
       onConfirm: () =>
         setData((current) => ({
           ...current,
@@ -1134,14 +1174,14 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           activityExpenses: replacePaymentCardName(current.activityExpenses, previousName, nextName),
           extraExpenses: replacePaymentCardName(current.extraExpenses, previousName, nextName),
         })),
-      title: "Modificar debito",
+      title: "Modificar débito",
     });
   }
 
   function removeDebitCard(name) {
     requestConfirmation({
-      confirmLabel: "Eliminar debito",
-      message: "Se va a eliminar esta opcion y los gastos asociados quedaran sin asociar.",
+      confirmLabel: "Eliminar débito",
+      message: "Se va a eliminar esta opción y los gastos asociados quedarán sin asociar.",
       onConfirm: () =>
         setData((current) => ({
           ...current,
@@ -1151,7 +1191,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           activityExpenses: replacePaymentCardName(current.activityExpenses, name, ""),
           extraExpenses: replacePaymentCardName(current.extraExpenses, name, ""),
         })),
-      title: "Eliminar debito",
+      title: "Eliminar débito",
       tone: "danger",
     });
   }
@@ -1209,7 +1249,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
                   id: crypto.randomUUID(),
                   items: [],
                   method: service?.paymentCard ?? previousDetail.method ?? "",
-                  notes: isTransferredStatus ? "Transferido, pendiente de debito." : previousDetail.notes ?? "",
+                  notes: isTransferredStatus ? "Transferido, pendiente de débito." : previousDetail.notes ?? "",
                   paidAmount,
                   paidAt: paidAt || new Date().toISOString(),
                   period,
@@ -1294,7 +1334,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const moduleTitles = {
     activities: "Actividades",
     aguinaldo: "Calculo Aguinaldo",
-    cards: "Tarjetas de Credito",
+    cards: "Tarjetas de Crédito",
     dashboard: "Dashboard",
     department: "Departamento",
     dollars: "Compra de Dolares",
@@ -1302,8 +1342,9 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     extras: "Extras",
     history: "Historial de Pagos",
     monthlyPurchases: "Compras Mensuales",
+    savingsGoals: "Metas de Ahorro",
     registry: "Registro de Pagos",
-    settings: "Configuracion",
+    settings: "Configuración",
     subscriptions: "Suscripciones",
   };
 
@@ -1314,6 +1355,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "registry", label: "Registro de Pagos", icon: ListChecks },
         { id: "monthlyPurchases", label: "Compras Mensuales", icon: ShoppingBasket },
+        { id: "savingsGoals", label: "Metas de Ahorro", icon: PiggyBank },
       ],
     },
     {
@@ -1328,7 +1370,8 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     {
       title: "Tarjetas y extraordinarios",
       items: [
-        { id: "cards", label: "Tarjetas de Credito", icon: CreditCard },
+        { id: "cards", label: "Tarjetas de Crédito", icon: CreditCard },
+        { id: "projection", label: "Deuda y Cuotas", icon: BarChart3 },
         { id: "extraordinary", label: "Gastos Extraordinarios", icon: Star },
       ],
     },
@@ -1338,7 +1381,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         { id: "dollars", label: "Compra de Dolares", icon: Banknote },
         { id: "aguinaldo", label: "Calculo Aguinaldo", icon: PiggyBank },
         { id: "history", label: "Historial de Pagos", icon: History },
-        { id: "settings", label: "Configuracion", icon: Settings },
+        { id: "settings", label: "Configuración", icon: Settings },
       ],
     },
   ];
@@ -1534,6 +1577,13 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           onUpdate={updateMonthlyPurchase}
           purchases={data.monthlyPurchases}
         />
+      ) : activeModule === "savingsGoals" ? (
+        <SavingsGoalsModule
+          goals={data.savingsGoals}
+          onAdd={addSavingsGoal}
+          onRemove={removeSavingsGoal}
+          onUpdate={updateSavingsGoal}
+        />
       ) : activeModule === "history" ? (
         <HistoryModule history={data.paymentHistory} />
       ) : activeModule === "extraordinary" ? (
@@ -1593,6 +1643,53 @@ function ConfirmModal({ confirmation, onCancel, onConfirm }) {
       </section>
     </div>
   );
+}
+
+function buildSimpleExpenseHistoryEntry(expense) {
+  if (expense.startMonth == null || expense.startYear == null || !(Number(expense.amount) > 0)) {
+    return [];
+  }
+
+  return [
+    {
+      amount: Number(expense.amount) || 0,
+      startMonth: Number(expense.startMonth),
+      startYear: Number(expense.startYear),
+    },
+  ];
+}
+
+function applySimpleExpenseUpdates(expense, updates) {
+  const nextExpense = { ...expense, ...updates };
+  const amountChanged = Object.hasOwn(updates, "amount") && Number(updates.amount) !== Number(expense.amount);
+  const startChanged =
+    Object.hasOwn(updates, "startMonth") && Number(updates.startMonth) !== Number(expense.startMonth) ||
+    Object.hasOwn(updates, "startYear") && Number(updates.startYear) !== Number(expense.startYear);
+
+  if (!amountChanged && !startChanged) {
+    return nextExpense;
+  }
+
+  const nextEntry = buildSimpleExpenseHistoryEntry(nextExpense)[0];
+  const previousHistory = Array.isArray(expense.amountHistory) ? expense.amountHistory : [];
+
+  if (!nextEntry) {
+    return nextExpense;
+  }
+
+  return {
+    ...nextExpense,
+    amountHistory: [
+      ...previousHistory.filter(
+        (item) => Number(item.startYear) !== nextEntry.startYear || Number(item.startMonth) !== nextEntry.startMonth,
+      ),
+      nextEntry,
+    ].sort((a, b) => a.startYear * 12 + a.startMonth - (b.startYear * 12 + b.startMonth)),
+  };
+}
+function buildActiveSimpleExpenseTotal(expenses, year, monthIndex) {
+  return (expenses ?? [])
+    .reduce((sum, expense) => sum + getSimpleExpenseAmountForMonth(expense, year, monthIndex), 0);
 }
 
 function replacePaymentCardName(expenses, previousName, nextName) {
@@ -1692,6 +1789,7 @@ function buildUpcomingCardExpenseSummary(banks, history, previousStatementPeriod
 }
 
 function buildTopDashboardExpenses(banks, data, paymentMonthOffset = 1) {
+  const { monthIndex, year } = getCalendarMonth(paymentMonthOffset);
   const statementOffset = getStatementOffsetForPaymentMonth(paymentMonthOffset);
   const cardExpenses = banks.flatMap((bank) =>
     bank.cards.flatMap((card) =>
@@ -1707,10 +1805,10 @@ function buildTopDashboardExpenses(banks, data, paymentMonthOffset = 1) {
     ),
   );
   const simpleExpenses = [
-    ...mapTopSimpleExpenses(data.departmentExpenses, "Departamento"),
-    ...mapTopSimpleExpenses(data.subscriptionExpenses, "Suscripciones"),
-    ...mapTopSimpleExpenses(data.activityExpenses, "Actividades"),
-    ...mapTopSimpleExpenses(data.extraExpenses, "Extras"),
+    ...mapTopSimpleExpenses(data.departmentExpenses, "Departamento", year, monthIndex),
+    ...mapTopSimpleExpenses(data.subscriptionExpenses, "Suscripciones", year, monthIndex),
+    ...mapTopSimpleExpenses(data.activityExpenses, "Actividades", year, monthIndex),
+    ...mapTopSimpleExpenses(data.extraExpenses, "Extras", year, monthIndex),
     ...mapTopSimpleExpenses(data.extraordinaryExpenses, "Extraordinarios"),
     ...mapTopMonthlyPurchases(data.monthlyPurchases),
   ];
@@ -1730,8 +1828,9 @@ function mapTopMonthlyPurchases(purchases) {
     .filter((purchase) => purchase.amount > 0);
 }
 
-function mapTopSimpleExpenses(expenses, category) {
+function mapTopSimpleExpenses(expenses, category, year, monthIndex) {
   return (expenses ?? [])
+    .filter((expense) => year == null || isSimpleExpenseActiveForMonth(expense, year, monthIndex))
     .map((expense) => ({
       amount: Number(expense.amount) || 0,
       category,

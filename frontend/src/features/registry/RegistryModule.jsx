@@ -217,7 +217,7 @@ function buildRegistryFilters(rows) {
     { count: rows.filter((row) => row.status === PAYMENT_STATUS.PAID || row.status === PAYMENT_STATUS.DEBITED).length, id: "paid", label: "Pagados" },
     { count: rows.filter((row) => row.status === PAYMENT_STATUS.NONE && row.diffInDays >= 0 && row.diffInDays <= 3).length, id: "soon", label: "Vencen pronto" },
     { count: rows.filter((row) => row.isCard).length, id: "cards", label: "Tarjetas" },
-    { count: rows.filter((row) => row.isDebit).length, id: "debits", label: "Debitos" },
+    { count: rows.filter((row) => row.isDebit).length, id: "debits", label: "Débitos" },
     { count: rows.filter((row) => row.service.paymentCard).length, id: "account", label: "Cuenta/banco" },
   ];
 }

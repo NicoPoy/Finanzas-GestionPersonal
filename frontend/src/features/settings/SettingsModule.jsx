@@ -28,7 +28,7 @@ export default function SettingsModule({
         <div className="section-heading">
           <div>
             <p>Datos mensuales</p>
-            <h2>Configuracion</h2>
+            <h2>Configuración</h2>
           </div>
           <Settings size={34} strokeWidth={1.7} />
         </div>
@@ -103,7 +103,7 @@ export default function SettingsModule({
           <div className="settings-options-grid">
             <ConfigurableOptionPanel
               addPlaceholder="Ej: Cuenta sueldo"
-              emptyMessage="No hay opciones de debito cargadas."
+              emptyMessage="No hay opciónes de débito cargadas."
               items={debitCards.map((card) => ({ id: card, name: card }))}
               label="Opciones para Debita de"
               nameKey="name"
@@ -200,7 +200,7 @@ function OtherIncomeList({ incomes, onRemove, onUpdate }) {
   }
 
   if (!incomes.length) {
-    return <p className="panel-empty settings-empty">Todavia no cargaste otros ingresos.</p>;
+    return <p className="panel-empty settings-empty">Todavía no cargaste otros ingresos.</p>;
   }
 
   return (
@@ -353,7 +353,7 @@ function ConfigurableOptionPanel({
                     className="icon-button"
                     disabled={!canRemove}
                     onClick={() => onRemove(item.id)}
-                    title={canRemove ? "Eliminar" : "Debe quedar al menos una seccion"}
+                    title={canRemove ? "Eliminar" : "Debe quedar al menos una sección"}
                     type="button"
                   >
                     <Trash2 size={16} />
@@ -375,7 +375,7 @@ function ConfigurableOptionPanel({
             className="confirm-modal record-edit-modal"
             role="dialog"
           >
-            <h2 id="config-option-edit-title">Editar opcion</h2>
+            <h2 id="config-option-edit-title">Editar opción</h2>
             <form
               className="record-edit-form"
               onSubmit={(event) => {
