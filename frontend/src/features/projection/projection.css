@@ -73,15 +73,15 @@
 
 .projection-summary-card {
   display: grid;
-  gap: 7px;
-  min-height: 154px;
+  gap: 8px;
+  min-height: 172px;
   padding: 16px;
 }
 
 .projection-summary-card strong {
   color: var(--ink-strong);
   display: block;
-  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+  font-size: clamp(1.18rem, 1.7vw, 1.48rem);
   line-height: 1.05;
   overflow-wrap: anywhere;
 }
@@ -89,7 +89,7 @@
 .projection-summary-card small {
   color: var(--ink);
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 850;
   line-height: 1.35;
 }
@@ -182,7 +182,7 @@
 .projection-table {
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 1450px;
+  min-width: 1320px;
   table-layout: fixed;
   width: 100%;
 }
@@ -190,7 +190,7 @@
 .projection-table th,
 .projection-table td {
   border-bottom: 1px solid rgba(73, 104, 116, 0.38);
-  padding: 13px 14px;
+  padding: 14px 12px;
   text-align: right;
   vertical-align: middle;
 }
@@ -200,7 +200,10 @@
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 950;
-  letter-spacing: 0.04em;
+  height: 96px;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  position: relative;
   text-transform: uppercase;
 }
 
@@ -209,7 +212,7 @@
   left: 0;
   position: sticky;
   text-align: left;
-  width: 190px;
+  width: 150px;
   z-index: 2;
 }
 
@@ -227,45 +230,105 @@
   background: rgba(93, 182, 198, 0.08);
 }
 
-.projection-table tbody th span,
-.month-heading span {
+.projection-table tbody th span {
   color: var(--ink-strong);
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 950;
   letter-spacing: 0;
   line-height: 1.2;
   text-transform: none;
 }
 
-.projection-table tbody th small,
-.month-heading small {
+.projection-table tbody th small {
   color: var(--muted);
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.25;
   margin-top: 3px;
   text-transform: none;
 }
 
 .month-heading {
-  min-width: 178px;
+  min-width: 156px;
 }
 
-.projection-next-month {
-  background: rgba(93, 182, 198, 0.12) !important;
+.month-heading span {
+  color: var(--ink-strong);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+.month-heading small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-top: 5px;
+  text-transform: none;
+}
+
+.projection-priority-month {
+  background: rgba(93, 182, 198, 0.16) !important;
+}
+
+.projection-secondary-month {
+  background: rgba(93, 182, 198, 0.07) !important;
+}
+
+.projection-table thead .projection-priority-month {
+  background: rgba(93, 182, 198, 0.2) !important;
+  border-top: 3px solid var(--primary-strong);
+  color: var(--ink-strong);
+}
+
+.projection-table thead .projection-secondary-month {
+  background: rgba(93, 182, 198, 0.1) !important;
+  border-top: 3px solid rgba(93, 182, 198, 0.42);
+}
+
+.projection-table thead .projection-priority-month::before,
+.projection-table thead .projection-secondary-month::before {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.56rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 7px;
+  padding: 4px 7px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.projection-table thead .projection-priority-month::before {
+  background: var(--primary);
+  color: #10242b;
+  content: "Siguiente";
+}
+
+.projection-table thead .projection-secondary-month::before {
+  background: rgba(93, 182, 198, 0.12);
+  border: 1px solid rgba(93, 182, 198, 0.26);
+  color: var(--primary-strong);
+  content: "Luego";
 }
 
 .projection-amount {
   color: var(--primary-strong);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   white-space: nowrap;
 }
 
 .projection-empty {
   color: var(--faint);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .projection-total-row th,
@@ -273,18 +336,24 @@
   background: #152128 !important;
   border-bottom: 0;
   font-weight: 950;
+  padding-bottom: 14px;
+  padding-top: 14px;
 }
 
 .projection-total-row strong {
   color: var(--ink-strong);
-  font-size: 1rem;
+  font-size: 0.96rem;
   white-space: nowrap;
 }
 
-.projection-total-row td.projection-next-month strong {
+.projection-total-row td.projection-priority-month strong {
   color: var(--primary-strong);
+  font-size: 1.02rem;
 }
 
+.projection-total-row td.projection-secondary-month strong {
+  color: var(--ink-strong);
+}
 @media (max-width: 1280px) {
   .projection-summary-grid,
   .debt-mode-grid {

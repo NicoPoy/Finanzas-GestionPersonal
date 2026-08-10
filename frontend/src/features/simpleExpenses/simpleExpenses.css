@@ -118,11 +118,15 @@
 }
 
 .card-icon-secondary {
-  background: rgba(93, 182, 198, 0.06);
-  color: rgba(93, 182, 198, 0.6);
+  background: rgba(214, 168, 79, 0.14);
+  border: 1px solid rgba(242, 209, 130, 0.28);
+  color: #f2d182;
+  opacity: 0.9;
 }
 
-.expense-card-info {
+.item-card-paid .expense-card-icon svg {
+  stroke-width: 1.9;
+}.expense-card-info {
   display: flex;
   flex-direction: column;
   gap: 4px;

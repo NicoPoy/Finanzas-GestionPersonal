@@ -151,7 +151,7 @@ export default function ProjectionModule({ banks }) {
                   <tr>
                     <th>Tarjeta</th>
                     {months.map((month, index) => (
-                      <th className={`month-heading ${index === 0 ? "projection-next-month" : ""}`} key={month.key}>
+                      <th className={`month-heading ${getProjectionColumnClass(index)}`} key={month.key}>
                         <span>Sueldo {month.salaryLabel}</span>
                         <small>Paga resumen {month.statementLabel}</small>
                       </th>
@@ -166,7 +166,7 @@ export default function ProjectionModule({ banks }) {
                         <small>{row.bankName}</small>
                       </th>
                       {row.months.map((amount, index) => (
-                        <td className={index === 0 ? "projection-next-month" : ""} key={`${row.id}-${months[index].key}`}>
+                        <td className={getProjectionColumnClass(index)} key={`${row.id}-${months[index].key}`}>
                           <strong className={amount ? "projection-amount" : "projection-empty"}>
                             {amount ? currency.format(amount) : "-"}
                           </strong>
@@ -177,7 +177,7 @@ export default function ProjectionModule({ banks }) {
                   <tr className="projection-total-row">
                     <th>Total</th>
                     {monthlyTotals.map((amount, index) => (
-                      <td className={index === 0 ? "projection-next-month" : ""} key={months[index].key}>
+                      <td className={getProjectionColumnClass(index)} key={months[index].key}>
                         <strong>{amount ? currency.format(amount) : "-"}</strong>
                       </td>
                     ))}
@@ -197,6 +197,17 @@ export default function ProjectionModule({ banks }) {
   );
 }
 
+function getProjectionColumnClass(index) {
+  if (index === 0) {
+    return "projection-priority-month";
+  }
+
+  if (index === 1) {
+    return "projection-secondary-month";
+  }
+
+  return "";
+}
 function buildDebtStats(banks, months, monthlyTotals) {
   const installmentExpenses = banks.flatMap((bank) =>
     bank.cards.flatMap((card) =>
