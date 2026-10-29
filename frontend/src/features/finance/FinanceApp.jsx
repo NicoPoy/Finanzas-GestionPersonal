@@ -358,6 +358,18 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       }),
     [banksWithTotals, data],
   );
+  const currentDashboardSummary = useMemo(
+    () =>
+      buildDashboardSummary({
+        banks: banksWithTotals,
+        data,
+        paymentDetails: data.paymentDetails,
+        paymentMonthOffset: 0,
+        paymentRegistry: data.paymentRegistry,
+        salary: data.salary,
+      }),
+    [banksWithTotals, data],
+  );
   const salaryUsagePercent =
     incomeTotal > 0 ? Math.max(0, Math.round(((incomeTotal - nextMonthSummary.remaining) / incomeTotal) * 100)) : 0;
   const shouldShowSpendingWarning = incomeTotal > 0 && nextMonthSummary.remaining <= incomeTotal * 0.5;
@@ -1493,7 +1505,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           {activeModule === "dashboard" ? (
         <DashboardModule
           accountFlow={accountFlow}
-          currentMonthSummary={dashboardSummary}
+          currentMonthSummary={currentDashboardSummary}
           debitTransfers={dashboardDebitTransfers}
           disappearingExpenses={disappearingCardExpenses}
           dueItems={dashboardDueItems}

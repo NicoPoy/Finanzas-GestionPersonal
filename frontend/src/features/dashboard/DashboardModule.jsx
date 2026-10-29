@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertTriangle,
   Banknote,
@@ -59,12 +59,23 @@ export default function DashboardModule({
     totalPercent,
     upcomingCardExpenses,
   });
-  const quickRead = buildQuickRead({ health, nextMonthSummary, topExpenseGroups, totalPercent });
   const trendComparison = buildTrendComparison(currentMonthSummary, nextMonthSummary);
-  const priorityAlerts = buildPriorityAlerts({ cardsPercent, disappearingTotal, dueItems, nextMonthSummary, totalPercent, upcomingCardExpenses });
   const riskRanking = buildRiskRanking({ cardsPercent, dueItems, nextMonthSummary, topExpenseGroups, totalPercent, upcomingCardExpenses });
   const closeChecklist = buildCloseChecklist({ cardPaymentsTotal, currentMonthSummary, dueStats, pendingDebitTotal, transferTotal });
   const isCurrentMonthView = selectedMonthOffset === 0;
+  const [activeTab, setActiveTab] = useState("actions");
+  const tabs = isCurrentMonthView
+    ? [
+        { id: "actions", label: "Qué hacer" },
+        { id: "payments", label: "Pagos" },
+        { id: "accounts", label: "Cuentas" },
+      ]
+    : [
+        { id: "actions", label: "Qué hacer" },
+        { id: "expenses", label: "Gastos" },
+        { id: "accounts", label: "Cuentas" },
+        { id: "analysis", label: "Análisis" },
+      ];
 
   return (
     <section className="dashboard-view">
@@ -74,15 +85,18 @@ export default function DashboardModule({
             <LayoutDashboard size={18} />
             Centro de control
           </span>
-          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Lectura clara del mes siguiente"}</h2>
+          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Así está parado tu próximo sueldo"}</h2>
           {!isCurrentMonthView ? (
             <p>
-              Lee de arriba hacia abajo: primero cuanto entra, cuanto ya está comprometido, cuanto queda libre y que accion conviene tomar.
+              {nextMonthSummary.monthTitle}: cuánto entra, cuánto está comprometido y cuánto queda disponible.
             </p>
           ) : null}
           <DashboardMonthMenu
             monthOptions={monthOptions}
-            onSelectMonth={onSelectMonth}
+            onSelectMonth={(offset) => {
+              setActiveTab("actions");
+              onSelectMonth?.(offset);
+            }}
             selectedMonthOffset={selectedMonthOffset}
           />
         </div>
@@ -96,8 +110,20 @@ export default function DashboardModule({
         ) : null}
       </section>
 
+      {!isCurrentMonthView ? (
+        <section className="dashboard-main-grid dashboard-main-grid-compact" aria-label="Resumen del próximo sueldo">
+          <DashboardMetric detail="Sueldo configurado más otros ingresos." icon={<Banknote size={21} />} label="Ingresos disponibles" tone="income" value={currency.format(nextMonthSummary.salary)} />
+          <DashboardMetric detail={`${cardsPercent}% de tus ingresos.`} icon={<CreditCard size={21} />} label="Tarjetas" tone="cards" value={currency.format(nextMonthSummary.cardExpenses)} />
+          <DashboardMetric detail={`Fijos y compras mensuales: ${fixedPercent}% del ingreso.`} icon={<Home size={21} />} label="Gastos obligatorios" tone="fixed" value={currency.format(nextMonthSummary.fixedExpenses)} />
+          <DashboardMetric detail={`Tarjetas, fijos y extraordinarios: ${totalPercent}% del ingreso.`} icon={<Wallet size={21} />} label="Gasto proyectado" tone="total" value={currency.format(nextMonthSummary.totalExpenses)} />
+        </section>
+      ) : null}
+
+      <DashboardTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+
       {isCurrentMonthView ? (
         <CurrentOperationsSection
+          activeTab={activeTab}
           cardPayments={cardPayments}
           cardPaymentsTotal={cardPaymentsTotal}
           closeChecklist={closeChecklist}
@@ -114,63 +140,21 @@ export default function DashboardModule({
         />
       ) : (
         <>
-          <section className="dashboard-readout-grid">
-            <QuickReadCard quickRead={quickRead} />
-            <TrendComparisonCard comparison={trendComparison} />
-          </section>
+          {activeTab === "actions" ? (
+            <section className="dashboard-tab-content dashboard-action-content" aria-label="Qué hacer ahora">
+              <ActionPanel actions={planningActions} title="Qué conviene mirar ahora" />
+            </section>
+          ) : null}
 
-          <section className="dashboard-main-grid dashboard-main-grid-compact">
-            <DashboardMetric
-              detail="Todo el dinero disponible para cubrir este mes: sueldo + otros ingresos."
-              icon={<Banknote size={21} />}
-              label="Ingresos"
-              tone="income"
-              value={currency.format(nextMonthSummary.salary)}
-            />
-            <DashboardMetric
-              detail={`Resumen de tarjetas a pagar con este sueldo: ${cardsPercent}% del ingreso.`}
-              icon={<CreditCard size={21} />}
-              label="Tarjetas"
-              tone="cards"
-              value={currency.format(nextMonthSummary.cardExpenses)}
-            />
-            <DashboardMetric
-              detail={`Gastos recurrentes que ya sabes que van a salir: ${fixedPercent}% del ingreso.`}
-              icon={<Home size={21} />}
-              label="Obligatorios"
-              tone="fixed"
-              value={currency.format(nextMonthSummary.fixedExpenses)}
-            />
-            <DashboardMetric
-              detail={`Suma de tarjetas, fijos y extraordinarios. Ya compromete ${totalPercent}% del sueldo.`}
-              icon={<Wallet size={21} />}
-              label="Gasto total"
-              tone="total"
-              value={currency.format(nextMonthSummary.totalExpenses)}
-            />
-          </section>
-
-          <section className="dashboard-decision-grid">
-            <ActionPanel actions={planningActions} title="Que conviene mirar ahora" />
-
+          {activeTab === "expenses" ? (
+            <section className="dashboard-tab-content" aria-label="Detalle de gastos">
             <article className="dashboard-panel dashboard-health-panel dashboard-decision-health">
               <div className="dashboard-panel-heading">
                 <div>
-                  <span className="dashboard-panel-kicker">Semaforo financiero</span>
-                  <h3>{health.label}</h3>
+                  <span className="dashboard-panel-kicker">Distribución</span>
+                  <h3>Cómo se usa el sueldo</h3>
                 </div>
                 <TrendingDown size={22} />
-              </div>
-
-              <div className={`health-light health-light-${health.tone}`}>
-                <div className="health-summary-row">
-                  <span>
-                    <small>Dinero que queda libre</small>
-                    <strong>{currency.format(nextMonthSummary.remaining)}</strong>
-                  </span>
-                  <b>{totalPercent}% del sueldo usado</b>
-                </div>
-                <span>{health.description}</span>
               </div>
 
               <div className="salary-meter" aria-label={`Uso del sueldo: ${totalPercent}%`}>
@@ -188,14 +172,6 @@ export default function DashboardModule({
                 <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} note="Gastos puntuales cargados para este periodo" />
               </div>
             </article>
-          </section>
-
-          <section className="dashboard-support-grid">
-            <PriorityAlertsPanel alerts={priorityAlerts} />
-            <RiskRankingPanel risks={riskRanking} />
-            <GlossaryPanel />
-          </section>
-
           <section className="dashboard-insights-grid dashboard-insights-grid-focused">
             <article className="dashboard-panel top-expenses-panel top-expenses-panel-compact">
               <div className="dashboard-panel-heading">
@@ -241,6 +217,13 @@ export default function DashboardModule({
               ) : null}
             </article>
 
+          </section>
+
+          </section>
+          ) : null}
+
+          {activeTab === "accounts" ? (
+            <section className="dashboard-tab-content" aria-label="Cuentas">
             <article className="dashboard-panel account-flow-panel">
               <div className="dashboard-panel-heading">
                 <div>
@@ -272,8 +255,10 @@ export default function DashboardModule({
                 <p className="panel-empty">No hay cuentas con transferencias pendientes.</p>
               )}
             </article>
-          </section>
+            </section>
+          ) : null}
 
+          {activeTab === "expenses" ? (
           <section className="dashboard-insights-grid dashboard-card-change-grid">
             <article className="dashboard-panel disappearing-panel">
               <div className="dashboard-panel-heading">
@@ -321,34 +306,21 @@ export default function DashboardModule({
               </div>
             </section>
           </section>
+          ) : null}
+
+          {activeTab === "analysis" ? (
+            <section className="dashboard-tab-content dashboard-analysis-content" aria-label="Análisis del mes">
+              <TrendComparisonCard comparison={trendComparison} />
+              <RiskRankingPanel risks={riskRanking} />
+              <GlossaryPanel />
+            </section>
+          ) : null}
         </>
       )}
     </section>
   );
 }
 
-function QuickReadCard({ quickRead }) {
-  return (
-    <article className={`dashboard-panel dashboard-quick-read dashboard-quick-read-${quickRead.tone}`}>
-      <div className="dashboard-panel-heading">
-        <div>
-          <span className="dashboard-panel-kicker">Lectura rápida</span>
-          <h3>{quickRead.title}</h3>
-        </div>
-        <LayoutDashboard size={22} />
-      </div>
-      <p>{quickRead.description}</p>
-      <div className="quick-read-facts">
-        {quickRead.facts.map((fact) => (
-          <span key={fact.label}>
-            <small>{fact.label}</small>
-            <strong>{fact.value}</strong>
-          </span>
-        ))}
-      </div>
-    </article>
-  );
-}
 function TrendComparisonCard({ comparison }) {
   return (
     <article className="dashboard-panel dashboard-trend-card">
@@ -367,31 +339,6 @@ function TrendComparisonCard({ comparison }) {
               <small>{item.description}</small>
             </span>
             <b>{item.value}</b>
-          </div>
-        ))}
-      </div>
-    </article>
-  );
-}
-
-function PriorityAlertsPanel({ alerts }) {
-  return (
-    <article className="dashboard-panel dashboard-priority-panel">
-      <div className="dashboard-panel-heading">
-        <div>
-          <span className="dashboard-panel-kicker">Alertas</span>
-          <h3>Prioridad de lectura</h3>
-        </div>
-        <AlertTriangle size={22} />
-      </div>
-      <div className="priority-alert-list">
-        {alerts.map((alert) => (
-          <div className={`priority-alert priority-${alert.tone}`} key={alert.id}>
-            <em>{alert.level}</em>
-            <span>
-              <strong>{alert.title}</strong>
-              <small>{alert.detail}</small>
-            </span>
           </div>
         ))}
       </div>
@@ -481,6 +428,7 @@ function GlossaryPanel() {
   );
 }
 function CurrentOperationsSection({
+  activeTab,
   cardPayments,
   cardPaymentsTotal,
   closeChecklist,
@@ -505,7 +453,7 @@ function CurrentOperationsSection({
           </span>
           <h3>Mes actual: {currentMonthSummary.monthTitle}</h3>
           <p>
-            Esta vista mira pagos, vencimientos y cuentas con movimiento pendiente. Todo lo demas queda fuera para que puedas operar rapido.
+            Consultá primero las tareas pendientes. Los pagos y movimientos por cuenta están en las pestañas.
           </p>
         </div>
         <div className="dashboard-current-total">
@@ -515,11 +463,15 @@ function CurrentOperationsSection({
         </div>
       </div>
 
-      <ActionPanel actions={currentActions} title="Que tengo que hacer ahora" />
+      {activeTab === "actions" ? (
+        <section className="dashboard-tab-content" aria-label="Acciones del mes">
+          <ActionPanel actions={currentActions} title="Qué tengo que hacer ahora" />
+          <CloseMonthChecklist checklist={closeChecklist} />
+        </section>
+      ) : null}
 
-      <CloseMonthChecklist checklist={closeChecklist} />
-
-      <div className="dashboard-current-grid">
+      {activeTab === "payments" ? (
+      <div className="dashboard-tab-content">
         <article className="dashboard-panel dashboard-movement-panel">
           <div className="dashboard-panel-heading">
             <div>
@@ -583,6 +535,11 @@ function CurrentOperationsSection({
           )}
         </article>
 
+      </div>
+      ) : null}
+
+      {activeTab === "accounts" ? (
+        <section className="dashboard-tab-content" aria-label="Cuentas y transferencias">
         <article className="dashboard-panel dashboard-transfer-panel">
           <div className="dashboard-panel-heading">
             <div>
@@ -602,8 +559,10 @@ function CurrentOperationsSection({
             <p className="panel-empty">No hay gastos de este mes asociados a una cuenta "Debita de".</p>
           )}
         </article>
-      </div>
+        </section>
+      ) : null}
 
+      {activeTab === "payments" ? (
       <article className="dashboard-panel">
         <div className="dashboard-panel-heading">
           <div>
@@ -638,6 +597,7 @@ function CurrentOperationsSection({
           <p className="panel-empty">Todavía no hay vencimientos para mostrar.</p>
         )}
       </article>
+      ) : null}
     </section>
   );
 }
@@ -686,6 +646,24 @@ function DashboardMonthMenu({ monthOptions, onSelectMonth, selectedMonthOffset }
         </button>
       ))}
     </div>
+  );
+}
+
+function DashboardTabs({ activeTab, onChange, tabs }) {
+  return (
+    <nav className="dashboard-tabs" aria-label="Secciones del dashboard">
+      {tabs.map((tab) => (
+        <button
+          aria-current={activeTab === tab.id ? "page" : undefined}
+          className={activeTab === tab.id ? "active" : ""}
+          key={tab.id}
+          onClick={() => onChange(tab.id)}
+          type="button"
+        >
+          {tab.label}
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -940,27 +918,6 @@ function buildCloseChecklist({ cardPaymentsTotal, currentMonthSummary, dueStats,
   ];
 }
 
-function buildQuickRead({ health, nextMonthSummary, topExpenseGroups, totalPercent }) {
-  const mainWeight = topExpenseGroups[0]?.category || "gastos proyectados";
-  const remaining = nextMonthSummary.remaining || 0;
-  const title = health.tone === "danger" ? "Necesita ajuste" : health.tone === "warning" ? "Hay que mirarlo de cerca" : "Vas bien";
-  const description = health.tone === "danger"
-    ? `Los gastos superan los ingresos. Falta cubrir ${currency.format(Math.abs(remaining))} y el mayor peso viene de ${mainWeight}.`
-    : health.tone === "warning"
-      ? `Todavía hay margen, pero ya tenes ${totalPercent}% del sueldo usado. El mayor peso viene de ${mainWeight} y quedarían ${currency.format(remaining)} libres.`
-      : `El mes esta ordenado: solo ${totalPercent}% del sueldo esta usado. El mayor peso viene de ${mainWeight} y quedarían ${currency.format(remaining)} libres.`;
-
-  return {
-    description,
-    facts: [
-      { label: "Sueldo usado", value: `${totalPercent}%` },
-      { label: "Dinero libre", value: currency.format(remaining) },
-      { label: "Mayor peso", value: mainWeight },
-    ],
-    title,
-    tone: health.tone,
-  };
-}
 function buildTrendComparison(currentSummary, nextSummary) {
   const currentIncome = currentSummary.salary || 0;
   const nextIncome = nextSummary.salary || 0;
@@ -997,43 +954,6 @@ function buildTrendItem(label, delta, prefix, negativeText, positiveText, lowerI
     tone,
     value: isNeutral ? "Sin cambio" : `${isPositive ? "+" : "-"}${amount}`,
   };
-}
-
-function buildPriorityAlerts({ cardsPercent, disappearingTotal, dueItems, nextMonthSummary, totalPercent, upcomingCardExpenses }) {
-  const upcomingTotal = upcomingCardExpenses.reduce((sum, card) => sum + (Number(card.total) || 0), 0);
-  const dueSoon = dueItems.filter((item) => item.status === "soon" || item.status === "overdue").length;
-  const alerts = [];
-
-  if (nextMonthSummary.remaining < 0) {
-    alerts.push({ detail: `Faltan ${currency.format(Math.abs(nextMonthSummary.remaining))} para cubrir lo proyectado.`, id: "negative", level: "Crítico", title: "Saldo proyectado negativo", tone: "danger" });
-  }
-
-  if (totalPercent >= 40) {
-    alerts.push({ detail: `Ya está comprometido ${totalPercent}% del sueldo.`, id: "salary-use", level: "Atención", title: "Uso del sueldo alto", tone: "warning" });
-  }
-
-  if (cardsPercent >= 30) {
-    alerts.push({ detail: `Tarjetas representan ${cardsPercent}% del ingreso.`, id: "cards", level: "Atención", title: "Tarjetas con mucho peso", tone: "warning" });
-  }
-
-  if (dueSoon > 0) {
-    alerts.push({ detail: `${dueSoon} vencimientos necesitan revision pronto.`, id: "due", level: "Atención", title: "Vencimientos proximos", tone: "warning" });
-  }
-
-  if (upcomingTotal > 0) {
-    alerts.push({ detail: `${currency.format(upcomingTotal)} aparece como compras nuevas de tarjeta.`, id: "new-expenses", level: "Info", title: "Aparecieron gastos nuevos", tone: "neutral" });
-  }
-
-  if (disappearingTotal > 0) {
-    alerts.push({ detail: `${currency.format(disappearingTotal)} dejaria de repetirse mas adelante.`, id: "relief", level: "Info", title: "Gastos que desaparecen", tone: "success" });
-  }
-
-  if (!alerts.length) {
-    alerts.push({ detail: "No hay alertas importantes para este mes proyectado.", id: "clear", level: "OK", title: "Sin alertas relevantes", tone: "success" });
-  }
-
-  const weight = { danger: 0, warning: 1, neutral: 2, success: 3 };
-  return alerts.sort((a, b) => weight[a.tone] - weight[b.tone]).slice(0, 4);
 }
 
 function buildRiskRanking({ cardsPercent, dueItems, nextMonthSummary, topExpenseGroups, totalPercent, upcomingCardExpenses }) {
