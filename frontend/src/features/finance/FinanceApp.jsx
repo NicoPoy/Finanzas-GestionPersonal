@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   BarChart3,
@@ -199,6 +199,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const [selectedCardId, setSelectedCardId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(!isDemoMode);
   const [profileError, setProfileError] = useState("");
+  const profileSaveQueue = useRef(Promise.resolve());
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -285,22 +286,29 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       return;
     }
 
-    async function saveProfile() {
-      try {
-        await fetch(apiUrl("/api/profile"), {
+    const profileSnapshot = JSON.stringify(data);
+
+    profileSaveQueue.current = profileSaveQueue.current
+      .catch(() => {})
+      .then(async () => {
+        const response = await fetch(apiUrl("/api/profile"), {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: profileSnapshot,
         });
-      } catch {
-        setProfileError("No se pudo guardar el perfil financiero.");
-      }
-    }
 
-    saveProfile();
+        if (!response.ok) {
+          throw new Error("No se pudo guardar el perfil financiero.");
+        }
+
+        setProfileError("");
+      })
+      .catch(() => {
+        setProfileError("No se pudo guardar el perfil financiero.");
+      });
   }, [accessToken, data, hasLoadedProfile, isDemoMode]);
 
   const banksWithTotals = useMemo(() => buildBanksWithTotals(data), [data]);

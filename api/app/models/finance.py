@@ -1,13 +1,19 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 ExpenseCategory = Literal["department", "subscriptions", "activities", "extras"]
 
 
-class CardExpense(BaseModel):
+class FinanceModel(BaseModel):
+    """Conserva atributos del perfil que todavia no tengan un campo tipado."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+class CardExpense(FinanceModel):
     """Consumo de tarjeta.
 
     purchase_type distingue compras unicas de planes en cuotas cuando queda una cuota pendiente.
@@ -28,7 +34,7 @@ class CardExpense(BaseModel):
     is_saved: bool = False
 
 
-class Card(BaseModel):
+class Card(FinanceModel):
     id: str
     name: str
     accent: str
@@ -36,13 +42,13 @@ class Card(BaseModel):
     summarySavings: float = 0
 
 
-class Bank(BaseModel):
+class Bank(FinanceModel):
     id: str
     name: str
     cards: list[Card] = Field(default_factory=list)
 
 
-class DollarPurchaseMetadata(BaseModel):
+class DollarPurchaseMetadata(FinanceModel):
     casa: str = "blue"
     fechaActualizacion: str = ""
     rate: float = 0
@@ -50,13 +56,13 @@ class DollarPurchaseMetadata(BaseModel):
     usdAmount: float = 0
 
 
-class SimpleExpenseAmountHistory(BaseModel):
+class SimpleExpenseAmountHistory(FinanceModel):
     amount: float
     startMonth: int
     startYear: int
 
 
-class SimpleExpense(BaseModel):
+class SimpleExpense(FinanceModel):
     id: str
     name: str
     amount: float
@@ -70,13 +76,13 @@ class SimpleExpense(BaseModel):
     dollarPurchase: DollarPurchaseMetadata | None = None
 
 
-class OtherIncome(BaseModel):
+class OtherIncome(FinanceModel):
     id: str
     origin: str
     amount: float
 
 
-class MonthlyPurchase(BaseModel):
+class MonthlyPurchase(FinanceModel):
     id: str
     name: str
     amount: float
@@ -86,12 +92,12 @@ class MonthlyPurchase(BaseModel):
     purchased: bool = False
 
 
-class CardFixedCategory(BaseModel):
+class CardFixedCategory(FinanceModel):
     id: str
     name: str
 
 
-class PaymentDetail(BaseModel):
+class PaymentDetail(FinanceModel):
     paid: bool = False
     paidAt: str | None = None
     expectedAmount: float = 0
@@ -102,7 +108,7 @@ class PaymentDetail(BaseModel):
     transferred: bool = False
 
 
-class PaymentHistoryItem(BaseModel):
+class PaymentHistoryItem(FinanceModel):
     id: str
     type: str
     period: str
@@ -117,20 +123,20 @@ class PaymentHistoryItem(BaseModel):
     items: list[dict] = Field(default_factory=list)
 
 
-class PaymentRegistryEntry(BaseModel):
+class PaymentRegistryEntry(FinanceModel):
     year: int
     month: int
     service_id: str
     paid: bool = False
 
 
-class AguinaldoExpense(BaseModel):
+class AguinaldoExpense(FinanceModel):
     id: str
     origin: str
     amount: float
 
 
-class AguinaldoDollarPurchase(BaseModel):
+class AguinaldoDollarPurchase(FinanceModel):
     id: str
     amount: float
     casa: str = "blue"
@@ -140,7 +146,7 @@ class AguinaldoDollarPurchase(BaseModel):
     usdAmount: float = 0
 
 
-class AguinaldoHistoryItem(BaseModel):
+class AguinaldoHistoryItem(FinanceModel):
     id: str
     amount: float = 0
     assignedTotal: float = 0
@@ -153,7 +159,7 @@ class AguinaldoHistoryItem(BaseModel):
     savingsAmount: float = 0
 
 
-class AguinaldoProfile(BaseModel):
+class AguinaldoProfile(FinanceModel):
     amount: float = 0
     savingsAmount: float = 0
     expenses: list[AguinaldoExpense] = Field(default_factory=list)
@@ -161,7 +167,7 @@ class AguinaldoProfile(BaseModel):
     history: list[AguinaldoHistoryItem] = Field(default_factory=list)
 
 
-class FinanceProfileDocument(BaseModel):
+class FinanceProfileDocument(FinanceModel):
     """Documento principal de finanzas por usuario.
 
     Esta pensado como agregado MongoDB: una lectura reconstruye la pantalla completa.
@@ -183,7 +189,15 @@ class FinanceProfileDocument(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-class FrontendFinanceProfile(BaseModel):
+class SavingsGoal(FinanceModel):
+    id: str
+    name: str
+    targetAmount: float
+    currentAmount: float = 0
+    monthlyContribution: float = 0
+
+
+class FrontendFinanceProfile(FinanceModel):
     """Estructura que consume el frontend actualmente.
 
     Mantiene nombres camelCase para evitar transformaciones innecesarias en React.
@@ -194,6 +208,7 @@ class FrontendFinanceProfile(BaseModel):
     salary: float = 0
     otherIncomes: list[OtherIncome] = Field(default_factory=list)
     monthlyPurchases: list[MonthlyPurchase] = Field(default_factory=list)
+    savingsGoals: list[SavingsGoal] = Field(default_factory=list)
     cardFixedCategories: list[CardFixedCategory] = Field(default_factory=list)
     debitCards: list[str] = Field(default_factory=list)
     paymentDetails: dict[str, PaymentDetail] = Field(default_factory=dict)
