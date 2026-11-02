@@ -436,6 +436,10 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     () => buildRegistryServices(data, banksWithTotals, 0),
     [banksWithTotals, data],
   );
+  const transferUnassignedServices = useMemo(
+    () => transferServices.filter((service) => service.category !== "Tarjetas" && !service.paymentCard),
+    [transferServices],
+  );
   const currentCardPaymentKey = selectedCard
     ? getPaymentKey(upcomingCardPaymentMonth.year, upcomingCardPaymentMonth.monthIndex, `card:${selectedCard.id}`)
     : "";
@@ -511,6 +515,17 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         year: transferMonth.year,
       }),
     [data.paymentDetails, data.paymentRegistry, transferMonth, transferServices],
+  );
+  const transferUnassignedDueItems = useMemo(
+    () =>
+      buildDueItems({
+        monthIndex: transferMonth.monthIndex,
+        paymentDetails: data.paymentDetails,
+        paymentRegistry: data.paymentRegistry,
+        services: transferUnassignedServices,
+        year: transferMonth.year,
+      }),
+    [data.paymentDetails, data.paymentRegistry, transferMonth, transferUnassignedServices],
   );
   const dashboardPreviousPaymentPeriod = getPaymentPeriod(
     dashboardPreviousPaymentMonth.year,
@@ -1364,7 +1379,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
             const expectedAmount = Number(previousDetail.expectedAmount) || service?.amount || 0;
             const movementAt = isTransferredStatus
               ? previousDetail.paidAt || new Date().toISOString()
-              : status === "debited"
+              : isFinalStatus
                 ? new Date().toISOString()
                 : previousDetail.paidAt || new Date().toISOString();
             const paidAt = isFinalStatus || isTransferredStatus ? movementAt : "";
@@ -1728,6 +1743,8 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           transferAccounts={transferMonthAccounts}
           transferMonth={transferMonth}
           transferServices={transferServices}
+          unassignedDueItems={transferUnassignedDueItems}
+          unassignedServices={transferUnassignedServices}
           disappearingExpenses={disappearingCardExpenses}
           dueItems={dashboardDueItems}
           onMarkAccountTransferred={markAccountTransferred}

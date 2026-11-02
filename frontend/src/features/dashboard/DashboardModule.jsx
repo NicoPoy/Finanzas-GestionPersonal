@@ -26,6 +26,8 @@ export default function DashboardModule({
   transferAccounts = [],
   transferMonth,
   transferServices = [],
+  unassignedDueItems = [],
+  unassignedServices = [],
   topExpenses = [],
   upcomingCardExpenses = [],
 }) {
@@ -89,6 +91,14 @@ export default function DashboardModule({
                 onMarkAccountTransferred={onMarkAccountTransferred}
                 onSetPaymentStatus={onSetPaymentStatus}
                 paymentServices={transferServices}
+                year={transferMonth.year}
+              />
+              <UnassignedExpensePaymentsSection
+                items={unassignedDueItems}
+                monthIndex={transferMonth.monthIndex}
+                monthTitle={transferMonth.title}
+                onSetPaymentStatus={onSetPaymentStatus}
+                paymentServices={unassignedServices}
                 year={transferMonth.year}
               />
             </section>
@@ -585,6 +595,12 @@ function TransferScheduleSection({
 }) {
   const activeAccounts = accounts.filter((account) => account.pendingTransfer > 0 || account.pendingDebit > 0);
   const transferTotal = activeAccounts.reduce((sum, account) => sum + account.pendingTransfer, 0);
+  const pendingDebitTotal = accounts.reduce((sum, account) => sum + account.pendingDebit, 0);
+  const pendingDebitItems = accounts
+    .flatMap((account) => account.items
+      .filter((item) => item.status === "transferred" && item.amount > 0)
+      .map((item) => ({ ...item, account: account.account })))
+    .sort((a, b) => (Number(a.dueDay) || 31) - (Number(b.dueDay) || 31));
 
   return (
     <article className="dashboard-panel dashboard-transfer-schedule">
@@ -594,9 +610,15 @@ function TransferScheduleSection({
           <h3>Transferencias y débitos por cuenta</h3>
           <p>Pagos de {monthTitle}. El seguimiento empieza de nuevo el día 1 de cada mes.</p>
         </div>
-        <div className="dashboard-transfer-total">
-          <span>Total a transferir</span>
-          <strong>{currency.format(transferTotal)}</strong>
+        <div className="dashboard-transfer-totals">
+          <div className="dashboard-transfer-total">
+            <span>A transferir</span>
+            <strong>{currency.format(transferTotal)}</strong>
+          </div>
+          <div className="dashboard-transfer-total dashboard-pending-debit-total">
+            <span>Pendiente de débito</span>
+            <strong>{currency.format(pendingDebitTotal)}</strong>
+          </div>
         </div>
       </div>
 
@@ -604,7 +626,7 @@ function TransferScheduleSection({
         <div className="dashboard-transfer-schedule-list">
           {activeAccounts.map((account) => {
             const pendingItems = account.items.filter((item) => item.status === "pending" && item.amount > 0);
-            const transferredItems = account.items.filter((item) => item.status === "transferred" && item.amount > 0);
+            const transferredCount = account.items.filter((item) => item.status === "transferred" && item.amount > 0).length;
             const nearestDueDay = pendingItems.reduce(
               (nearest, item) => Math.min(nearest, Number(item.dueDay) || 31),
               31,
@@ -619,6 +641,7 @@ function TransferScheduleSection({
                       {account.pendingTransfer > 0
                         ? `${pendingItems.length} ${pendingItems.length === 1 ? "pago" : "pagos"} pendientes de fondeo`
                         : "Transferencia realizada"}
+                      {transferredCount > 0 ? ` · ${transferredCount} pendiente${transferredCount === 1 ? "" : "s"} de débito` : ""}
                     </small>
                   </div>
                   {account.pendingTransfer > 0 ? (
@@ -641,33 +664,109 @@ function TransferScheduleSection({
                     </>
                   ) : null}
                 </div>
-                {transferredItems.length ? (
-                  <div className="dashboard-debit-checklist">
-                    <span className="dashboard-debit-checklist-title">Pendiente de débito</span>
-                    {transferredItems.map((item) => (
-                      <div className="dashboard-debit-checklist-row" key={item.serviceId}>
-                        <span>
-                          <strong>{item.name}</strong>
-                          <small>{item.category}</small>
-                        </span>
-                        <b>{currency.format(item.amount)}</b>
-                        <button
-                          className="dashboard-debit-action"
-                          onClick={() => onSetPaymentStatus?.(year, monthIndex, item.serviceId, "debited", paymentServices)}
-                          type="button"
-                        >
-                          <CreditCard size={15} /> Marcar debitado
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
               </article>
             );
           })}
         </div>
+      ) : null}
+
+      {pendingDebitItems.length ? (
+        <section className="dashboard-pending-payments" aria-label="Débitos pendientes del mes">
+          <div className="dashboard-pending-payments-heading">
+            <div>
+              <span className="dashboard-debit-checklist-title">Pendiente de débito</span>
+              <small>{pendingDebitItems.length} {pendingDebitItems.length === 1 ? "gasto transferido" : "gastos transferidos"} esperando débito</small>
+            </div>
+            <strong>{currency.format(pendingDebitItems.reduce((sum, item) => sum + item.amount, 0))}</strong>
+          </div>
+          <div className="dashboard-pending-payment-list">
+            {pendingDebitItems.map((item) => (
+              <div className="dashboard-pending-payment-row" key={item.serviceId}>
+                <span className="dashboard-pending-payment-name">
+                  <strong>{item.name}</strong>
+                  <small>{item.account} · {item.category}{item.dueDay ? ` · Vence el día ${item.dueDay}` : ""}</small>
+                </span>
+                <button
+                  className="dashboard-debit-action"
+                  onClick={() => onSetPaymentStatus?.(year, monthIndex, item.serviceId, "paid", paymentServices)}
+                  type="button"
+                >
+                  <CheckCircle2 size={15} /> Marcar pagado
+                </button>
+                <b>{currency.format(item.amount)}</b>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : transferTotal > 0 ? (
+        <div className="dashboard-pending-payments-empty">
+          Marcá la transferencia de una cuenta para ver aquí los gastos que esperan débito.
+        </div>
       ) : (
-        <p className="panel-empty">No hay transferencias ni débitos pendientes para este mes.</p>
+        <div className="dashboard-month-complete" role="status">
+          <CheckCircle2 size={19} />
+          <span><strong>Mes completo</strong> · Todos los gastos asociados a cuentas están pagados.</span>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function UnassignedExpensePaymentsSection({
+  items = [],
+  monthIndex,
+  monthTitle,
+  onSetPaymentStatus,
+  paymentServices,
+  year,
+}) {
+  const pendingItems = items.filter((item) => item.status !== "paid" && item.amount > 0);
+  const pendingTotal = pendingItems.reduce((sum, item) => sum + item.amount, 0);
+
+  return (
+    <article className="dashboard-panel dashboard-unassigned-payments">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Mes actual</span>
+          <h3>Gastos sin tarjeta</h3>
+          <small className="dashboard-unassigned-payments-count">
+            {pendingItems.length} {pendingItems.length === 1 ? "gasto pendiente" : "gastos pendientes"} · {monthTitle}
+          </small>
+        </div>
+        <div className="dashboard-transfer-total dashboard-pending-payment-total">
+          <span>Pendiente de pago</span>
+          <strong>{currency.format(pendingTotal)}</strong>
+        </div>
+      </div>
+
+      {pendingItems.length ? (
+        <>
+          <div className="dashboard-pending-payment-list">
+            {pendingItems.map((item) => (
+              <div className="dashboard-pending-payment-row" key={item.id}>
+                <span className="dashboard-pending-payment-name">
+                  <strong>{item.name}</strong>
+                  <small>
+                    {item.category} · {item.status === "overdue" ? "Vencido · " : ""}Vence el día {item.dueDay}
+                  </small>
+                </span>
+                <button
+                  className="dashboard-debit-action"
+                  onClick={() => onSetPaymentStatus?.(year, monthIndex, item.id, "paid", paymentServices)}
+                  type="button"
+                >
+                  <CheckCircle2 size={15} /> Marcar pagado
+                </button>
+                <b>{currency.format(item.amount)}</b>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="dashboard-month-complete" role="status">
+          <CheckCircle2 size={19} />
+          <span><strong>Sin pagos pendientes</strong> · No hay gastos sin tarjeta por pagar en {monthTitle}.</span>
+        </div>
       )}
     </article>
   );

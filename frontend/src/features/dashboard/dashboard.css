@@ -877,6 +877,11 @@
   gap: 14px;
 }
 
+.dashboard-transfer-schedule .dashboard-panel-kicker,
+.dashboard-unassigned-payments .dashboard-panel-kicker {
+  color: #e7a8c8;
+}
+
 .dashboard-transfer-schedule .dashboard-panel-heading {
   align-items: center;
 }
@@ -885,6 +890,12 @@
   color: var(--muted);
   font-size: 0.84rem;
   margin: 4px 0 0;
+}
+
+.dashboard-transfer-totals {
+  align-items: start;
+  display: flex;
+  gap: 22px;
 }
 
 .dashboard-transfer-total {
@@ -905,6 +916,14 @@
   color: var(--primary-strong);
   font-size: 1.25rem;
   white-space: nowrap;
+}
+
+.dashboard-pending-debit-total strong {
+  color: var(--amber);
+}
+
+.dashboard-pending-payment-total strong {
+  color: var(--amber);
 }
 
 .dashboard-transfer-schedule-list {
@@ -1073,6 +1092,110 @@
   width: 100%;
 }
 
+.dashboard-pending-payments {
+  background: rgba(16, 26, 34, 0.28);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.dashboard-pending-payments-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-pending-payments-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.dashboard-pending-payments-heading small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.dashboard-pending-payments-heading > strong {
+  color: var(--amber);
+  font-size: 1.12rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.dashboard-pending-payments-empty {
+  background: rgba(16, 26, 34, 0.28);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding: 12px;
+}
+
+.dashboard-pending-payment-list {
+  display: grid;
+  gap: 7px;
+}
+
+.dashboard-pending-payment-row {
+  align-items: center;
+  background: rgba(16, 26, 34, 0.42);
+  border: 1px solid rgba(73, 104, 116, 0.42);
+  border-radius: 7px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 148px 90px;
+  padding: 8px 10px;
+}
+
+.dashboard-pending-payment-name {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-pending-payment-name strong {
+  color: var(--ink-strong);
+  font-size: 0.86rem;
+}
+
+.dashboard-pending-payment-name small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.dashboard-unassigned-payments-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 3px;
+}
+
+.dashboard-pending-payment-row > b {
+  color: var(--primary-strong);
+  font-size: 0.98rem;
+  font-weight: 950;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dashboard-month-complete {
+  align-items: center;
+  background: rgba(117, 199, 154, 0.08);
+  border: 1px solid rgba(117, 199, 154, 0.32);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  display: flex;
+  gap: 9px;
+  padding: 13px 14px;
+}
+
+.dashboard-month-complete svg,
+.dashboard-month-complete strong {
+  color: var(--mint);
+}
+
 @media (max-width: 600px) {
   .dashboard-transfer-schedule .dashboard-panel-heading {
     align-items: flex-start;
@@ -1081,6 +1204,11 @@
 
   .dashboard-transfer-total {
     text-align: left;
+  }
+
+  .dashboard-transfer-totals {
+    flex-wrap: wrap;
+    gap: 14px 22px;
   }
 
   .dashboard-transfer-schedule-list {
@@ -1130,6 +1258,26 @@
   }
 
   .dashboard-debit-action {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    width: auto;
+  }
+
+  .dashboard-pending-payment-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dashboard-pending-payment-name {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-pending-payment-row > b {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .dashboard-pending-payment-row > .dashboard-debit-action {
     grid-column: 1;
     grid-row: 2;
     justify-self: start;
