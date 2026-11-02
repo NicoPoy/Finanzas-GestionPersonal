@@ -107,6 +107,23 @@
   overflow-y: auto;
   padding: 19px 18px 18px;
   scrollbar-gutter: stable;
+  scrollbar-color: #526c78 transparent;
+  scrollbar-width: thin;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #526c78;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
 }
 
 .nav-group {
