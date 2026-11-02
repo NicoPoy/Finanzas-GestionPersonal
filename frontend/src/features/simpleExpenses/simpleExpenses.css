@@ -1,26 +1,77 @@
 /* Generic styles for Fixed Expenses (Departamento, Suscripciones, Actividades, Extras) */
 
-/* Form horizontal redesign for desktop */
+/* El formulario prioriza los datos principales y deja la vigencia en una segunda fila. */
 @media (min-width: 761px) {
-  .fixed-expense-form {
-    display: grid;
-    grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(160px, 1.25fr) minmax(130px, 1fr) minmax(95px, 0.8fr) minmax(150px, 1.1fr) auto;
-    gap: 16px;
-    align-items: end;
+  .fixed-expense-form:not(.extraordinarios-form) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
     background: rgba(34, 51, 61, 0.25);
     border: 1px solid var(--line);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px;
     margin-bottom: 20px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   }
 
-  .fixed-expense-form label {
+  .fixed-expense-primary-fields {
+    align-items: end;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(240px, 1.8fr) minmax(150px, 0.8fr) minmax(210px, 1.2fr) auto;
+  }
+
+  .fixed-expense-secondary-fields {
+    background: rgba(16, 26, 34, 0.24);
+    border: 1px solid rgba(73, 104, 116, 0.32);
+    border-radius: 10px;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .fixed-expense-secondary-heading {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fixed-expense-secondary-heading strong {
+    color: var(--ink-strong);
+    font-size: 0.82rem;
+  }
+
+  .fixed-expense-secondary-heading small {
+    color: var(--muted);
+    font-size: 0.76rem;
+  }
+
+  .fixed-expense-secondary-options {
+    align-items: end;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .fixed-expense-secondary-options label {
     margin: 0;
   }
 
-  .fixed-expense-form.is-permanent {
-    grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(160px, 1.25fr) minmax(150px, 1.1fr) auto;
+  .fixed-expense-secondary-options .simple-expense-permanent-toggle {
+    box-sizing: border-box;
+    height: 52px;
+    min-height: 52px;
+  }
+
+  .fixed-expense-secondary-options > label:not(.simple-expense-permanent-toggle) :is(input, select) {
+    box-sizing: border-box;
+    height: 52px;
+    min-height: 52px;
+  }
+
+  .extraordinarios-form {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 0.35fr) auto;
   }
 
   .fixed-expense-form button[type="submit"] {
@@ -29,6 +80,27 @@
     min-height: 42px;
     margin-bottom: 0;
   }
+}
+
+.fixed-expense-secondary-options :is(input, select):disabled {
+  background: rgba(12, 21, 28, 0.72);
+  border-color: rgba(73, 104, 116, 0.22);
+  box-shadow: none;
+  color: transparent;
+  cursor: not-allowed;
+  opacity: 0.52;
+  text-shadow: none;
+  -webkit-text-fill-color: transparent;
+}
+
+.fixed-expense-secondary-options select:disabled {
+  appearance: none;
+  background-image: none;
+}
+
+.fixed-expense-secondary-options input:disabled::-webkit-inner-spin-button,
+.fixed-expense-secondary-options input:disabled::-webkit-outer-spin-button {
+  display: none;
 }
 
 /* Total Strip card style */
@@ -53,6 +125,20 @@
   letter-spacing: 0.03em;
 }
 
+.expense-total-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.expense-total-copy small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .total-strip strong {
   color: var(--mint);
   font-size: 1.38rem;
@@ -65,6 +151,45 @@
   font-size: 0.82rem;
   margin: -8px 0 16px 4px;
   line-height: 1.4;
+}
+
+.simple-expense-list-toolbar {
+  align-items: end;
+  display: flex;
+  gap: 12px;
+  margin: 18px 0 10px;
+}
+
+.simple-expense-search,
+.simple-expense-sort {
+  min-width: 0;
+}
+
+.simple-expense-search {
+  flex: 1 1 340px;
+}
+
+.simple-expense-sort {
+  flex: 0 1 220px;
+}
+
+.simple-expense-result-count {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 750;
+  padding-bottom: 11px;
+}
+
+.simple-expense-no-results {
+  margin-top: 12px;
+}
+
+.simple-expense-no-results button {
+  background: transparent;
+  border: 0;
+  color: var(--primary-strong);
+  font-weight: 800;
 }
 
 /* Card List Layout Redesign (Replacing Tables) */
@@ -158,6 +283,38 @@
   opacity: 0.35;
 }
 
+.simple-expense-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.simple-expense-meta > span {
+  align-items: center;
+  background: rgba(113, 135, 143, 0.1);
+  border: 1px solid rgba(113, 135, 143, 0.19);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 750;
+  gap: 5px;
+  line-height: 1.2;
+  padding: 4px 8px;
+}
+
+.simple-expense-meta .expense-meta-source {
+  background: rgba(93, 182, 198, 0.11);
+  border-color: rgba(93, 182, 198, 0.25);
+  color: var(--primary-strong);
+}
+
+.simple-expense-meta .expense-meta-source svg {
+  flex: 0 0 auto;
+}
+
 .expense-card-right {
   display: flex;
   align-items: center;
@@ -239,6 +396,83 @@
   .fixed-expense-form {
     padding: 16px;
     gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fixed-expense-primary-fields,
+  .fixed-expense-secondary-fields {
+    grid-column: 1 / -1;
+  }
+
+  .fixed-expense-primary-fields {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fixed-expense-primary-fields .fixed-expense-name,
+  .fixed-expense-form button[type="submit"] {
+    grid-column: 1 / -1;
+  }
+
+  .fixed-expense-primary-fields > label {
+    min-width: 0;
+  }
+
+  .fixed-expense-primary-fields button[type="submit"] {
+    width: 100%;
+  }
+
+  .fixed-expense-secondary-fields {
+    background: rgba(16, 26, 34, 0.2);
+    border: 1px solid rgba(73, 104, 116, 0.32);
+    border-radius: 10px;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .fixed-expense-secondary-heading {
+    display: grid;
+    gap: 3px;
+  }
+
+  .fixed-expense-secondary-heading strong {
+    color: var(--ink-strong);
+    font-size: 0.82rem;
+  }
+
+  .fixed-expense-secondary-heading small {
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+
+  .fixed-expense-secondary-options {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fixed-expense-secondary-options .simple-expense-permanent-toggle {
+    grid-column: 1 / -1;
+  }
+
+  .simple-expense-list-toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .simple-expense-search {
+    flex-basis: 100%;
+  }
+
+  .simple-expense-sort {
+    flex: 1 1 180px;
+  }
+
+  .simple-expense-result-count {
+    align-self: center;
+    padding: 0;
   }
   .expense-card {
     flex-direction: column;
@@ -251,6 +485,24 @@
     justify-content: space-between;
     border-top: 1px solid rgba(73, 104, 116, 0.15);
     padding-top: 12px;
+  }
+}
+
+@media (max-width: 460px) {
+  .total-strip {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .total-strip strong {
+    align-self: flex-end;
+    font-size: 1.2rem;
+  }
+
+  .expense-total-copy small {
+    font-size: 0.74rem;
   }
 }
 

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { History, ReceiptText } from "lucide-react";
+import SectionTabs from "../../components/SectionTabs.jsx";
 import { currency } from "../../utils/formatters.js";
 import "./history.css";
 
@@ -18,7 +19,7 @@ const MONTHS = [
   { label: "Diciembre", value: "12" },
 ];
 
-export default function HistoryModule({ history }) {
+export default function HistoryModule({ history, tabs, activeTab, onSelectTab }) {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const filteredHistory = useMemo(
@@ -36,6 +37,10 @@ export default function HistoryModule({ history }) {
           </div>
           <History size={34} strokeWidth={1.7} />
         </div>
+
+        {tabs?.length ? (
+          <SectionTabs activeId={activeTab} ariaLabel="Vistas de pagos" onSelect={onSelectTab} tabs={tabs} />
+        ) : null}
 
         <div className="history-filters" aria-label="Filtros de historial">
           <label>

@@ -5,16 +5,15 @@ import {
   Banknote,
   CreditCard,
   Dumbbell,
-  History,
   Home,
   LayoutDashboard,
   ListChecks,
   LogOut,
   PiggyBank,
+  ReceiptText,
   Repeat,
   Settings,
   Sparkles,
-  Star,
   Menu,
   ShoppingBasket,
   X,
@@ -62,28 +61,63 @@ const MODULE_ROUTES = {
   "/": "dashboard",
   "/finanzas": "dashboard",
   "/finanzas/dashboard": "dashboard",
-  "/finanzas/registro": "registry",
+  "/finanzas/gastos": "expenses",
+  "/finanzas/pagos": "payments",
+  "/finanzas/registro": "payments",
   "/finanzas/compras-mensuales": "monthlyPurchases",
   "/finanzas/metas-ahorro": "savingsGoals",
-  "/finanzas/departamento": "department",
-  "/finanzas/suscripciones": "subscriptions",
-  "/finanzas/actividades": "activities",
-  "/finanzas/extras": "extras",
+  "/finanzas/departamento": "expenses",
+  "/finanzas/suscripciones": "expenses",
+  "/finanzas/actividades": "expenses",
+  "/finanzas/extras": "expenses",
   "/finanzas/tarjetas": "cards",
   "/finanzas/deuda-cuotas": "projection",
-  "/finanzas/extraordinarios": "extraordinary",
+  "/finanzas/extraordinarios": "expenses",
   "/finanzas/dolares": "dollars",
   "/finanzas/aguinaldo": "aguinaldo",
-  "/finanzas/historial": "history",
+  "/finanzas/historial": "payments",
   "/finanzas/configuración": "settings",
 };
 
 const MODULE_PATHS = Object.fromEntries(
   Object.entries(MODULE_ROUTES).map(([path, module]) => [module, path === "/" ? "/finanzas" : path]),
 );
+MODULE_PATHS.expenses = "/finanzas/gastos";
+MODULE_PATHS.payments = "/finanzas/pagos";
+
+const EXPENSE_TABS = [
+  { id: "department", label: "Departamento" },
+  { id: "subscriptions", label: "Suscripciones" },
+  { id: "activities", label: "Actividades" },
+  { id: "extras", label: "Extras" },
+  { id: "extraordinary", label: "Extraordinarios" },
+];
+
+const PAYMENT_TABS = [
+  { id: "registry", label: "Registro mensual" },
+  { id: "history", label: "Historial" },
+];
 
 function getModuleFromPath(pathname) {
   return MODULE_ROUTES[pathname] ?? "dashboard";
+}
+
+function getExpenseCategoryFromPath(pathname, search = window.location.search) {
+  const legacyCategory = {
+    "/finanzas/suscripciones": "subscriptions",
+    "/finanzas/actividades": "activities",
+    "/finanzas/extras": "extras",
+    "/finanzas/extraordinarios": "extraordinary",
+  }[pathname];
+
+  const requestedCategory = new URLSearchParams(search).get("categoria");
+  const validCategories = EXPENSE_TABS.map((tab) => tab.id);
+  return legacyCategory ?? (validCategories.includes(requestedCategory) ? requestedCategory : "department");
+}
+
+function getPaymentTabFromPath(pathname, search = window.location.search) {
+  if (pathname === "/finanzas/historial") return "history";
+  return new URLSearchParams(search).get("vista") === "historial" ? "history" : "registry";
 }
 
 const DEMO_PROFILE = {
@@ -195,6 +229,8 @@ const DEMO_PROFILE = {
 export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, onToggleTheme, theme }) {
   const [data, setData] = useState(INITIAL_DATA);
   const [activeModule, setActiveModule] = useState(() => getModuleFromPath(window.location.pathname));
+  const [activeExpenseCategory, setActiveExpenseCategory] = useState(() => getExpenseCategoryFromPath(window.location.pathname));
+  const [activePaymentTab, setActivePaymentTab] = useState(() => getPaymentTabFromPath(window.location.pathname));
   const [selectedBankId, setSelectedBankId] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(!isDemoMode);
@@ -218,7 +254,15 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
 
   useEffect(() => {
     function handleRouteChange() {
-      setActiveModule(getModuleFromPath(window.location.pathname));
+      const pathname = window.location.pathname;
+      const nextModule = getModuleFromPath(pathname);
+      setActiveModule(nextModule);
+      if (nextModule === "expenses") {
+        setActiveExpenseCategory(getExpenseCategoryFromPath(pathname, window.location.search));
+      }
+      if (nextModule === "payments") {
+        setActivePaymentTab(getPaymentTabFromPath(pathname, window.location.search));
+      }
       setIsSidebarOpen(false);
     }
 
@@ -231,12 +275,26 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   function openModule(module) {
     const nextPath = MODULE_PATHS[module] ?? "/finanzas";
 
-    if (window.location.pathname !== nextPath) {
+    if (`${window.location.pathname}${window.location.search}` !== nextPath) {
       window.history.pushState({}, "", nextPath);
     }
 
     setActiveModule(module);
+    if (module === "expenses") setActiveExpenseCategory("department");
+    if (module === "payments") setActivePaymentTab("registry");
     setIsSidebarOpen(false);
+  }
+
+  function selectExpenseCategory(category) {
+    setActiveExpenseCategory(category);
+    const nextUrl = category === "department" ? "/finanzas/gastos" : `/finanzas/gastos?categoria=${category}`;
+    window.history.replaceState({}, "", nextUrl);
+  }
+
+  function selectPaymentTab(tab) {
+    setActivePaymentTab(tab);
+    const nextUrl = tab === "history" ? "/finanzas/pagos?vista=historial" : "/finanzas/pagos";
+    window.history.replaceState({}, "", nextUrl);
   }
 
   useEffect(() => {
@@ -504,6 +562,20 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       totalLabel: "Total mensual de extras",
     },
   };
+  const expenseTabs = EXPENSE_TABS.map((tab) => {
+    if (tab.id === "extraordinary") {
+      const total = data.extraordinaryExpenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+      return { ...tab, count: data.extraordinaryExpenses.length, summary: currency.format(total) };
+    }
+
+    const module = simpleModules[tab.id];
+    const cardTotal = module.cardExpenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+    return {
+      ...tab,
+      count: module.expenses.length + module.cardExpenses.length,
+      summary: currency.format(module.total + cardTotal),
+    };
+  });
 
   useEffect(() => {
     if (!selectedBank && banksWithTotals[0]) {
@@ -1379,20 +1451,15 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   }
 
   const moduleTitles = {
-    activities: "Actividades",
     aguinaldo: "Calculo Aguinaldo",
     cards: "Tarjetas de Crédito",
     dashboard: "Dashboard",
-    department: "Departamento",
     dollars: "Compra de Dolares",
-    extraordinary: "Gastos Extraordinarios",
-    extras: "Extras",
-    history: "Historial de Pagos",
+    expenses: "Gastos",
     monthlyPurchases: "Compras Mensuales",
+    payments: "Pagos",
     savingsGoals: "Metas de Ahorro",
-    registry: "Registro de Pagos",
     settings: "Configuración",
-    subscriptions: "Suscripciones",
   };
 
   const navGroups = [
@@ -1400,26 +1467,22 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       title: "Principal",
       items: [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { id: "registry", label: "Registro de Pagos", icon: ListChecks },
-        { id: "monthlyPurchases", label: "Compras Mensuales", icon: ShoppingBasket },
-        { id: "savingsGoals", label: "Metas de Ahorro", icon: PiggyBank },
+        { id: "expenses", label: "Gastos", icon: ReceiptText },
+        { id: "payments", label: "Pagos", icon: ListChecks },
       ],
     },
     {
-      title: "Gastos fijos",
-      items: [
-        { id: "department", label: "Departamento", icon: Home },
-        { id: "subscriptions", label: "Suscripciones", icon: Repeat },
-        { id: "activities", label: "Actividades", icon: Dumbbell },
-        { id: "extras", label: "Extras", icon: Sparkles },
-      ],
-    },
-    {
-      title: "Tarjetas y extraordinarios",
+      title: "Tarjetas",
       items: [
         { id: "cards", label: "Tarjetas de Crédito", icon: CreditCard },
         { id: "projection", label: "Deuda y Cuotas", icon: BarChart3 },
-        { id: "extraordinary", label: "Gastos Extraordinarios", icon: Star },
+      ],
+    },
+    {
+      title: "Planificación",
+      items: [
+        { id: "savingsGoals", label: "Metas de Ahorro", icon: PiggyBank },
+        { id: "monthlyPurchases", label: "Compras Mensuales", icon: ShoppingBasket },
       ],
     },
     {
@@ -1427,7 +1490,6 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       items: [
         { id: "dollars", label: "Compra de Dolares", icon: Banknote },
         { id: "aguinaldo", label: "Calculo Aguinaldo", icon: PiggyBank },
-        { id: "history", label: "Historial de Pagos", icon: History },
         { id: "settings", label: "Configuración", icon: Settings },
       ],
     },
@@ -1609,7 +1671,14 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           onUpdateAmount={updateAguinaldoAmount}
           onUpdateSavings={updateAguinaldoSavings}
         />
-      ) : activeModule === "registry" ? (
+      ) : activeModule === "payments" && activePaymentTab === "history" ? (
+        <HistoryModule
+          activeTab={activePaymentTab}
+          history={data.paymentHistory}
+          onSelectTab={selectPaymentTab}
+          tabs={PAYMENT_TABS}
+        />
+      ) : activeModule === "payments" ? (
         <RegistryModule
           paymentDetails={data.paymentDetails}
           paymentHistory={data.paymentHistory}
@@ -1618,6 +1687,28 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           services={registryServices}
           onSetPaymentStatus={setPaymentStatus}
           onMarkHistoricalCardPaid={markHistoricalCardPaid}
+          activeTab={activePaymentTab}
+          onSelectTab={selectPaymentTab}
+          tabs={PAYMENT_TABS}
+        />
+      ) : activeModule === "expenses" && activeExpenseCategory === "extraordinary" ? (
+        <ExtraordinariosModule
+          activeTab={activeExpenseCategory}
+          expenses={data.extraordinaryExpenses}
+          onAdd={addExtraordinaryExpense}
+          onMarkPaid={markExtraordinaryExpensePaid}
+          onSelectTab={selectExpenseCategory}
+          tabs={expenseTabs}
+        />
+      ) : activeModule === "expenses" ? (
+        <SimpleExpenseModule
+          activeTab={activeExpenseCategory}
+          module={simpleModules[activeExpenseCategory]}
+          onAdd={addSimpleExpense}
+          onRemove={removeSimpleExpense}
+          onUpdate={updateSimpleExpense}
+          onSelectTab={selectExpenseCategory}
+          tabs={expenseTabs}
         />
       ) : activeModule === "monthlyPurchases" ? (
         <MonthlyPurchasesModule
@@ -1633,14 +1724,6 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           onAdd={addSavingsGoal}
           onRemove={removeSavingsGoal}
           onUpdate={updateSavingsGoal}
-        />
-      ) : activeModule === "history" ? (
-        <HistoryModule history={data.paymentHistory} />
-      ) : activeModule === "extraordinary" ? (
-        <ExtraordinariosModule
-          expenses={data.extraordinaryExpenses}
-          onAdd={addExtraordinaryExpense}
-          onMarkPaid={markExtraordinaryExpensePaid}
         />
       ) : (
         <SimpleExpenseModule

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CreditCard, Database, ListChecks, ReceiptText, ChevronDown, CheckCircle2, Clock, Calendar, FileText, Search } from "lucide-react";
 import { getPaymentKey, getSimpleExpenseAmountForMonth, isSimpleExpenseActiveForMonth } from "../../domain/financeCalculations.js";
+import SectionTabs from "../../components/SectionTabs.jsx";
 import { currency } from "../../utils/formatters.js";
 import "./registry.css";
 
@@ -36,6 +37,9 @@ export default function RegistryModule({
   paymentHistory = [],
   paymentRegistry,
   services,
+  tabs,
+  activeTab,
+  onSelectTab,
 }) {
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -96,6 +100,10 @@ export default function RegistryModule({
           </div>
           <ListChecks size={34} strokeWidth={1.7} />
         </div>
+
+        {tabs?.length ? (
+          <SectionTabs activeId={activeTab} ariaLabel="Vistas de pagos" onSelect={onSelectTab} tabs={tabs} />
+        ) : null}
 
         <div className="registry-header-row">
           <div className="registry-period-picker" aria-label="Seleccionar mes del registro">

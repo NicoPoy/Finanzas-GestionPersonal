@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Pencil, Plus, ReceiptText, Trash2, CreditCard } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
+import SectionTabs from "../../components/SectionTabs.jsx";
 import { currency } from "../../utils/formatters.js";
 import "./simpleExpenses.css";
 
@@ -66,7 +67,7 @@ function formatAmountHistory(expense) {
 }
 // Módulo genérico para Departamento, Suscripciones, Actividades y Extras.
 // Recibe la configuración de la sección desde FinanceApp para evitar duplicar pantallas casi iguales.
-export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate }) {
+export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate, tabs, activeTab, onSelectTab }) {
   const Icon = module.icon;
 
   return (
@@ -80,6 +81,10 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
           <Icon size={34} strokeWidth={1.7} />
         </div>
 
+        {tabs?.length ? (
+          <SectionTabs activeId={activeTab} ariaLabel="Categorías de gastos" onSelect={onSelectTab} tabs={tabs} variant="category" />
+        ) : null}
+
         <FixedExpenseForm
           debitCards={module.debitCards}
           namePlaceholder={module.namePlaceholder}
@@ -87,12 +92,21 @@ export default function SimpleExpenseModule({ module, onAdd, onRemove, onUpdate 
         />
 
         <div className="total-strip">
-          <span>{module.totalLabel}</span>
-          <strong>{currency.format(module.total)}</strong>
+          <div className="expense-total-copy">
+            <span>Total de la categoría</span>
+            <small>
+              En cuentas y otros medios: {currency.format(module.total)}
+              {module.cardExpenses?.length
+                ? ` · Ya incluido en Tarjetas: ${currency.format(module.cardExpenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0))}`
+                : " · Sin gastos asociados a tarjetas"}
+            </small>
+          </div>
+          <strong>
+            {currency.format(
+              module.total + (module.cardExpenses ?? []).reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0),
+            )}
+          </strong>
         </div>
-        {module.cardExpenses?.length ? (
-          <p className="total-note">Los gastos pagados con tarjeta se muestran abajo, pero ya están incluidos en Tarjetas.</p>
-        ) : null}
 
         <FixedExpenseList
           cardExpenses={module.cardExpenses}
@@ -149,60 +163,69 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
 
   return (
     <form className={`expense-form fixed-expense-form ${isPermanent ? "is-permanent" : ""}`} onSubmit={handleSubmit}>
-      <label>
-        Nombre
-        <input
-          autoComplete="off"
-          placeholder={namePlaceholder}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
-      </label>
+      <div className="fixed-expense-primary-fields">
+        <label className="fixed-expense-name">
+          Nombre del gasto
+          <input
+            autoComplete="off"
+            placeholder={namePlaceholder}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </label>
 
-      <label>
-        Monto
-        <MoneyInput
-          value={amount}
-          onValueChange={setAmount}
-        />
-      </label>
+        <label className="fixed-expense-amount">
+          Monto mensual
+          <MoneyInput value={amount} onValueChange={setAmount} />
+        </label>
 
-      <label>
-        Vence día
-        <input
-          min="1"
-          max="31"
-          placeholder="10"
-          type="number"
-          value={dueDay}
-          onChange={(event) => setDueDay(event.target.value)}
-        />
-      </label>
+        <label className="fixed-expense-payment">
+          Medio de débito
+          <select value={paymentCard} onChange={(event) => setPaymentCard(event.target.value)}>
+            <option value="">Sin asociar</option>
+            {debitCards.map((card) => (
+              <option key={card} value={card}>{card}</option>
+            ))}
+          </select>
+        </label>
 
-      <label className="simple-expense-permanent-toggle">
-        <input checked={isPermanent} onChange={(event) => setIsPermanent(event.target.checked)} type="checkbox" />
-        <span>
-          <strong>Permanente</strong>
-          <small>Se incluye en todos los meses, sin fecha de inicio.</small>
-        </span>
-      </label>
+        <button type="submit">
+          <Plus size={18} />
+          Agregar gasto
+        </button>
+      </div>
 
-      {!isPermanent ? (
-        <>
+      <div className={`fixed-expense-secondary-fields ${isPermanent ? "is-permanent" : ""}`}>
+        <div className="fixed-expense-secondary-heading">
+          <strong>Vencimiento y vigencia</strong>
+          <small>Definí cuándo vence y desde cuándo se repite.</small>
+        </div>
+        <div className="fixed-expense-secondary-options">
           <label>
-            Desde mes
-            <select value={startMonth} onChange={(event) => setStartMonth(event.target.value)}>
+            Vence el día
+            <input
+              min="1"
+              max="31"
+              placeholder="10"
+              type="number"
+              value={dueDay}
+              onChange={(event) => setDueDay(event.target.value)}
+            />
+          </label>
+
+          <label>
+            Desde el mes
+            <select disabled={isPermanent} value={startMonth} onChange={(event) => setStartMonth(event.target.value)}>
               {MONTH_OPTIONS.map((month, index) => (
-                <option key={month} value={index}>
-                  {month}
-                </option>
+                <option key={month} value={index}>{month}</option>
               ))}
             </select>
           </label>
 
           <label>
-            Año
+            Año de inicio
             <input
+              disabled={isPermanent}
               min="2000"
               max="2100"
               type="number"
@@ -210,25 +233,16 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
               onChange={(event) => setStartYear(event.target.value)}
             />
           </label>
-        </>
-      ) : null}
 
-      <label>
-        Debita de
-        <select value={paymentCard} onChange={(event) => setPaymentCard(event.target.value)}>
-          <option value="">Sin asociar</option>
-          {debitCards.map((card) => (
-            <option key={card} value={card}>
-              {card}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <button type="submit">
-        <Plus size={18} />
-        Agregar
-      </button>
+          <label className="simple-expense-permanent-toggle">
+            <input checked={isPermanent} onChange={(event) => setIsPermanent(event.target.checked)} type="checkbox" />
+            <span>
+              <strong>Permanente</strong>
+              <small>Se repite todos los meses, sin fecha de inicio.</small>
+            </span>
+          </label>
+        </div>
+      </div>
     </form>
   );
 }
@@ -244,10 +258,26 @@ function FixedExpenseList({
   onUpdate,
 }) {
   const [editingId, setEditingId] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("amount");
   const [draft, setDraft] = useState({ amount: "", dueDay: "", isPermanent: false, name: "", paymentCard: "", startMonth: "", startYear: "" });
   const editingExpense = expenses.find((expense) => expense.id === editingId);
   const parsedDraftAmount = Number(draft.amount);
   const canSaveEdit = Boolean(editingExpense) && draft.name.trim() && parsedDraftAmount > 0;
+  const searchValue = searchTerm.trim().toLocaleLowerCase("es-AR");
+  const visibleRows = [
+    ...expenses.map((expense) => ({ expense, type: "fixed" })),
+    ...cardExpenses.map((expense) => ({ expense, type: "card" })),
+  ]
+    .filter(({ expense }) => `${expense.name ?? ""} ${expense.source ?? ""} ${expense.paymentCard ?? ""}`
+      .toLocaleLowerCase("es-AR")
+      .includes(searchValue))
+    .sort((first, second) => {
+      if (sortBy === "amount") return (Number(second.expense.amount) || 0) - (Number(first.expense.amount) || 0);
+      if (sortBy === "name") return String(first.expense.name ?? "").localeCompare(String(second.expense.name ?? ""), "es");
+      return (Number(first.expense.dueDay) || 10) - (Number(second.expense.dueDay) || 10) ||
+        String(first.expense.name ?? "").localeCompare(String(second.expense.name ?? ""), "es");
+    });
 
   function closeEditModal() {
     setEditingId("");
@@ -297,39 +327,64 @@ function FixedExpenseList({
 
   return (
     <>
-      <div className="expense-card-list">
-        {expenses.map((expense) => (
-          <SimpleExpenseRow
-            expense={expense}
-            icon={Icon}
-            key={expense.id}
-            onDelete={() => onRemove(expense.id)}
-            onEdit={() => startEdit(expense)}
+      <div className="simple-expense-list-toolbar">
+        <label className="simple-expense-search">
+          <span>Buscar gasto</span>
+          <input
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Nombre o tarjeta"
+            type="search"
+            value={searchTerm}
           />
-        ))}
-
-        {cardExpenses.map((expense) => (
-          <article className="expense-card item-card-paid" key={`card-${expense.id}`}>
-            <div className="expense-card-left">
-              <div className="expense-card-icon card-icon-secondary">
-                <CreditCard size={18} />
-              </div>
-              <div className="expense-card-info">
-                <h4>{expense.name}</h4>
-                <p>
-                  <span>Vence: Día {expense.dueDay ?? 10}</span>
-                  <span className="bullet">-</span>
-                  <span>Tarjeta: {expense.source}</span>
-                </p>
-              </div>
-            </div>
-            <div className="expense-card-right">
-              <span className="expense-card-amount">{currency.format(expense.amount)}</span>
-              <span className="card-paid-badge">Incluido en Tarjetas</span>
-            </div>
-          </article>
-        ))}
+        </label>
+        <label className="simple-expense-sort">
+          <span>Ordenar por</span>
+          <select onChange={(event) => setSortBy(event.target.value)} value={sortBy}>
+            <option value="dueDay">Vencimiento</option>
+            <option value="amount">Monto más alto</option>
+            <option value="name">Nombre</option>
+          </select>
+        </label>
+        <small className="simple-expense-result-count">{visibleRows.length} de {expenses.length + cardExpenses.length} gastos</small>
       </div>
+
+      {visibleRows.length ? (
+        <div className="expense-card-list">
+          {visibleRows.map(({ expense, type }) => type === "fixed" ? (
+            <SimpleExpenseRow
+              expense={expense}
+              icon={Icon}
+              key={expense.id}
+              onDelete={() => onRemove(expense.id)}
+              onEdit={() => startEdit(expense)}
+            />
+          ) : (
+            <article className="expense-card item-card-paid" key={`card-${expense.id}`}>
+              <div className="expense-card-left">
+                <div className="expense-card-icon card-icon-secondary">
+                  <CreditCard size={18} />
+                </div>
+                <div className="expense-card-info">
+                  <h4>{expense.name}</h4>
+                  <div className="simple-expense-meta">
+                    <span>Vence día {expense.dueDay ?? 10}</span>
+                    <span className="expense-meta-source"><CreditCard size={13} /> {expense.source}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="expense-card-right">
+                <span className="expense-card-amount">{currency.format(expense.amount)}</span>
+                <span className="card-paid-badge">Incluido en Tarjetas</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state simple-expense-no-results">
+          <p>No hay gastos que coincidan con la búsqueda.</p>
+          <button onClick={() => setSearchTerm("")} type="button">Limpiar búsqueda</button>
+        </div>
+      )}
 
       {editingExpense ? (
         <div className="confirm-backdrop" role="presentation">
@@ -449,13 +504,11 @@ function SimpleExpenseRow({ expense, icon: Icon, onDelete, onEdit }) {
         </div>
         <div className="expense-card-info">
           <h4>{expense.name}</h4>
-          <p>
-            <span>Vence: Día {expense.dueDay ?? 10}</span>
-            <span className="bullet">-</span>
+          <div className="simple-expense-meta">
+            <span>Vence día {expense.dueDay ?? 10}</span>
             <span>{formatStartPeriod(expense)}</span>
-            <span className="bullet">-</span>
-            <span>Debita de: {expense.paymentCard || "Sin asociar"}</span>
-          </p>
+            <span className="expense-meta-source"><CreditCard size={13} /> {expense.paymentCard || "Sin asociar"}</span>
+          </div>
         </div>
       </div>
       <div className="expense-card-right">
