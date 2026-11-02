@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Database, ListChecks, ReceiptText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Calendar, FileText } from "lucide-react";
-import { getPaymentKey } from "../../domain/financeCalculations.js";
+import { CreditCard, Database, ListChecks, ReceiptText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Calendar, FileText } from "lucide-react";
+import { getPaymentKey, getSimpleExpenseAmountForMonth, isSimpleExpenseActiveForMonth } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 import "./registry.css";
 
@@ -28,7 +28,15 @@ const MONTHS = [
 ];
 
 // Registro mensual basado en paymentRegistry/paymentDetails guardados en el perfil.
-export default function RegistryModule({ paymentDetails, paymentRegistry, services, onSetPaymentStatus }) {
+export default function RegistryModule({
+  historicalCardPayments = {},
+  onMarkHistoricalCardPaid,
+  onSetPaymentStatus,
+  paymentDetails,
+  paymentHistory = [],
+  paymentRegistry,
+  services,
+}) {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonthIndex = today.getMonth();
@@ -38,16 +46,21 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
   const selectedMonth = MONTHS[selectedMonthIndex];
   const monthStates = MONTHS.map((_, monthIndex) => buildMonthState({
     monthIndex,
+    historicalCardPayments,
     paymentDetails,
+    paymentHistory,
     paymentRegistry,
     selectedYear,
     services,
     today,
   }));
   const selectedState = monthStates[selectedMonthIndex] ?? { completedCount: 0, savedCount: 0 };
-  const registryRows = services.map((service) => buildRegistryRow({
+  const selectedServices = getServicesForMonth(services, selectedYear, selectedMonthIndex);
+  const registryRows = selectedServices.map((service) => buildRegistryRow({
     monthIndex: selectedMonthIndex,
+    historicalCardPayments,
     paymentDetails,
+    paymentHistory,
     paymentRegistry,
     selectedYear,
     service,
@@ -100,13 +113,13 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
           <div className="registry-summary-grid" aria-label="Resumen del registro">
             <RegistryStat
               label={`${selectedMonth.label}: completados`}
-              value={`${selectedState.completedCount} de ${services.length}`}
+              value={`${selectedState.completedCount} de ${selectedState.serviceCount}`}
               icon={<CheckCircle2 size={18} />}
               tone="success"
             />
             <RegistryStat
               label={`${selectedMonth.label}: registrados`}
-              value={`${selectedState.savedCount} de ${services.length}`}
+              value={`${selectedState.savedCount} de ${selectedState.serviceCount}`}
               icon={<Database size={18} />}
               tone="info"
             />
@@ -119,7 +132,7 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
             <div className="registry-month-strip" aria-label="Meses del anio">
               {MONTHS.map((month, monthIndex) => {
                 const state = monthStates[monthIndex];
-                const pct = services.length > 0 ? (state.completedCount / services.length) * 100 : 0;
+                const pct = state.serviceCount > 0 ? (state.completedCount / state.serviceCount) * 100 : 0;
 
                 return (
                   <button
@@ -140,7 +153,7 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
                       {state.isComplete && <CheckCircle2 size={13} className="month-complete-check" />}
                     </div>
                     <strong>
-                      {state.completedCount} / {services.length}
+                      {state.completedCount} / {state.serviceCount}
                     </strong>
                     <div className="month-progress-bar">
                       <div className="progress-fill" style={{ width: `${pct}%` }} />
@@ -171,13 +184,22 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
                   key={row.service.id}
                   month={selectedMonth.label}
                   monthIndex={selectedMonthIndex}
+                  historicalCardPayments={historicalCardPayments}
+                  onMarkHistoricalCardPaid={onMarkHistoricalCardPaid}
                   onSetPaymentStatus={onSetPaymentStatus}
                   paymentDetails={paymentDetails}
+                  paymentHistory={paymentHistory}
                   paymentRegistry={paymentRegistry}
                   selectedYear={selectedYear}
                   service={row.service}
                 />
               ))}
+              {!selectedServices.length ? (
+                <div className="empty-state registry-period-empty">
+                  <ReceiptText size={24} />
+                  <p>No hay gastos activos para {selectedMonth.label} de {selectedYear}.</p>
+                </div>
+              ) : null}
             </div>
           </>
         ) : (
@@ -191,10 +213,10 @@ export default function RegistryModule({ paymentDetails, paymentRegistry, servic
   );
 }
 
-function buildRegistryRow({ monthIndex, paymentDetails, paymentRegistry, selectedYear, service }) {
+function buildRegistryRow({ historicalCardPayments, monthIndex, paymentDetails, paymentHistory, paymentRegistry, selectedYear, service }) {
   const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
   const detail = paymentDetails[paymentKey] ?? {};
-  const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+  const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service, paymentHistory, historicalCardPayments, selectedYear, monthIndex);
   const dueDate = new Date(selectedYear, monthIndex, Math.min(service.dueDay ?? 10, new Date(selectedYear, monthIndex + 1, 0).getDate()));
   const today = new Date();
   const diffInDays = Math.ceil((startOfRegistryDay(dueDate) - startOfRegistryDay(today)) / 86400000);
@@ -202,12 +224,16 @@ function buildRegistryRow({ monthIndex, paymentDetails, paymentRegistry, selecte
   return {
     detail,
     diffInDays,
-    isCard: service.category === "Tarjetas" || String(service.id).startsWith("card:"),
+    isCard: isCardService(service),
     isDebit: Boolean(service.paymentCard),
     key: paymentKey,
     service,
     status,
   };
+}
+
+function isCardService(service) {
+  return service.category === "Tarjetas" || String(service.id).startsWith("card:");
 }
 
 function buildRegistryFilters(rows) {
@@ -238,18 +264,24 @@ function startOfRegistryDay(date) {
 function RegistryServiceCard({
   month,
   monthIndex,
+  historicalCardPayments,
+  onMarkHistoricalCardPaid,
   onSetPaymentStatus,
   paymentDetails,
+  paymentHistory,
   paymentRegistry,
   selectedYear,
   service,
 }) {
   const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
   const detail = paymentDetails[paymentKey] ?? {};
-  const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+  const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service, paymentHistory, historicalCardPayments, selectedYear, monthIndex);
   const amount = Number(detail.expectedAmount) || Number(detail.paidAmount) || service.amount;
   const method = detail.method || service.paymentCard || "";
   const isSaved = hasSavedRegistryInfo(paymentRegistry, paymentDetails, paymentKey);
+  const isHistoricalCardPayment = Boolean(historicalCardPayments[paymentKey]) && isCardService(service);
+  const isPastMonth = selectedYear * 12 + monthIndex < new Date().getFullYear() * 12 + new Date().getMonth();
+  const canMarkHistoricalCardPaid = isPastMonth && isCardService(service) && status === PAYMENT_STATUS.NONE;
 
   return (
     <article className={`registry-service-card registry-service-${status}`}>
@@ -262,13 +294,31 @@ function RegistryServiceCard({
             {method ? ` - Método: ${method}` : ""}
           </p>
         </div>
-        <RegistrySavedBadge detail={detail} isSaved={isSaved} registryValue={paymentRegistry[paymentKey]} status={status} />
+        <div className="registry-service-status-tools">
+          <RegistrySavedBadge
+            detail={detail}
+            historicalOnly={isHistoricalCardPayment}
+            isSaved={isSaved || isHistoricalCardPayment}
+            registryValue={paymentRegistry[paymentKey]}
+            status={status}
+          />
+          {canMarkHistoricalCardPaid ? (
+            <button
+              className="registry-historical-card-paid"
+              onClick={() => onMarkHistoricalCardPaid?.(selectedYear, monthIndex, service.id)}
+              title="Marca solo el estado de este mes; no modifica la tarjeta ni sus cuotas."
+              type="button"
+            >
+              Marcar pagada
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="registry-service-meta">
         <span>
-          {isSaved ? <Database size={13} /> : <Clock size={13} />}
-          {isSaved ? "Registrado en perfil" : "Sin registrar este mes"}
+          {isSaved || isHistoricalCardPayment ? <Database size={13} /> : <Clock size={13} />}
+          {isSaved || isHistoricalCardPayment ? "Registrado en perfil" : "Sin registrar este mes"}
         </span>
         {detail.paidAt ? (
           <span>
@@ -282,7 +332,14 @@ function RegistryServiceCard({
         ) : null}
       </div>
 
-      {service.paymentCard ? (
+      {isCardService(service) ? (
+        !isPastMonth ? (
+          <p className="registry-card-payment-note">
+            <CreditCard size={15} />
+            <span>Registrá el pago desde “Tarjetas de Crédito”.</span>
+          </p>
+        ) : null
+      ) : service.paymentCard ? (
         <DebitStatusControl
           month={month}
           service={service}
@@ -315,7 +372,7 @@ function RegistryStat({ label, value, icon, tone }) {
   );
 }
 
-function RegistrySavedBadge({ detail, isSaved, registryValue, status }) {
+function RegistrySavedBadge({ detail, historicalOnly = false, isSaved, registryValue, status }) {
   const badgeMeta = {
     debited: { label: "Debitado", icon: <CheckCircle2 size={14} />, tone: "success" },
     transferred: { label: "Transferido", icon: <CheckCircle2 size={14} />, tone: "warning" },
@@ -332,7 +389,9 @@ function RegistrySavedBadge({ detail, isSaved, registryValue, status }) {
         <strong>{meta.label}</strong>
       </span>
       <span className="badge-subtitle">
-        {isSaved
+        {historicalOnly
+          ? "Pago histórico"
+          : isSaved
           ? `Registrado${registryValue === false ? " como pendiente" : ""}`
           : detail?.status
             ? "Detalle parcial"
@@ -387,29 +446,57 @@ function StatusButton({ isActive, label, mobileLabel, tone, onClick }) {
   );
 }
 
-function buildMonthState({ monthIndex, paymentDetails, paymentRegistry, selectedYear, services, today }) {
-  const completedCount = services.filter((service) => {
+function buildMonthState({ historicalCardPayments, monthIndex, paymentDetails, paymentHistory, paymentRegistry, selectedYear, services, today }) {
+  const activeServices = getServicesForMonth(services, selectedYear, monthIndex);
+  const completedCount = activeServices.filter((service) => {
     const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
-    const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service);
+    const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service, paymentHistory, historicalCardPayments, selectedYear, monthIndex);
 
     return status === PAYMENT_STATUS.PAID || status === PAYMENT_STATUS.DEBITED;
   }).length;
-  const savedCount = services.filter((service) => {
+  const savedCount = activeServices.filter((service) => {
     const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
 
-    return hasSavedRegistryInfo(paymentRegistry, paymentDetails, paymentKey);
+    return hasSavedRegistryInfo(paymentRegistry, paymentDetails, paymentKey) || Boolean(historicalCardPayments[paymentKey]);
   }).length;
 
   return {
     completedCount,
-    isComplete: services.length > 0 && completedCount === services.length,
+    isComplete: activeServices.length > 0 && completedCount === activeServices.length,
     isCurrent: selectedYear === today.getFullYear() && monthIndex === today.getMonth(),
     savedCount,
+    serviceCount: activeServices.length,
   };
 }
 
-function getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service) {
+function getServicesForMonth(services, year, monthIndex) {
+  return services
+    .filter((service) => {
+      const prefix = String(service.id).split(":", 1)[0];
+      const isSimpleService = ["department", "subscriptions", "activities", "extras"].includes(prefix);
+
+      return !isSimpleService || isSimpleExpenseActiveForMonth(service, year, monthIndex);
+    })
+    .map((service) => {
+      const prefix = String(service.id).split(":", 1)[0];
+      const isSimpleService = ["department", "subscriptions", "activities", "extras"].includes(prefix);
+
+      return isSimpleService ? { ...service, amount: getSimpleExpenseAmountForMonth(service, year, monthIndex) } : service;
+    });
+}
+
+function getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service, paymentHistory = [], historicalCardPayments = {}, year, monthIndex) {
   const detail = paymentDetails[paymentKey];
+  if (isCardService(service)) {
+    const registeredFromCard = paymentHistory.some(
+      (item) => item.type === "card_payment" && item.serviceId === service.id && item.period === `${year}-${String(monthIndex + 1).padStart(2, "0")}`,
+    );
+
+    return registeredFromCard || historicalCardPayments[paymentKey]
+      ? PAYMENT_STATUS.PAID
+      : PAYMENT_STATUS.NONE;
+  }
+
   const isPaid = Boolean(paymentRegistry[paymentKey] || detail?.paid);
 
   if (service.paymentCard) {

@@ -16,6 +16,7 @@ export function normalizeData(data) {
     paymentDetails: normalizePaymentDetails(data.paymentDetails ?? INITIAL_DATA.paymentDetails),
     paymentHistory: normalizePaymentHistory(data.paymentHistory ?? INITIAL_DATA.paymentHistory),
     paymentRegistry: data.paymentRegistry ?? INITIAL_DATA.paymentRegistry,
+    historicalCardPayments: data.historicalCardPayments ?? INITIAL_DATA.historicalCardPayments,
     banks: (data.banks ?? INITIAL_DATA.banks).map((bank) => ({
       ...bank,
       cards: (bank.cards ?? []).map((card) => ({
@@ -197,14 +198,24 @@ function normalizeCardFixedCategories(categories) {
 }
 
 function normalizeSimpleExpenses(expenses) {
-  return expenses.map((expense) => ({
-    ...expense,
-    dueDay: clampDay(expense.dueDay),
-    paymentCard: expense.paymentCard ?? "",
-    startMonth: expense.startMonth == null ? null : clampMonth(expense.startMonth),
-    startYear: expense.startYear == null ? null : Number(expense.startYear) || null,
-    amountHistory: normalizeAmountHistory(expense),
-  }));
+  return expenses.map((expense) => {
+    const isPermanent = expense.isPermanent == null
+      ? expense.startMonth == null || expense.startYear == null
+      : Boolean(expense.isPermanent);
+
+    return {
+      ...expense,
+      dueDay: clampDay(expense.dueDay),
+      isPermanent,
+      permanentBaseAmount: isPermanent
+        ? Number(expense.permanentBaseAmount) || Number(expense.amount) || 0
+        : null,
+      paymentCard: expense.paymentCard ?? "",
+      startMonth: isPermanent || expense.startMonth == null ? null : clampMonth(expense.startMonth),
+      startYear: isPermanent || expense.startYear == null ? null : Number(expense.startYear) || null,
+      amountHistory: normalizeAmountHistory(expense),
+    };
+  });
 }
 
 function normalizeAmountHistory(expense) {

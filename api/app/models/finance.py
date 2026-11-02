@@ -188,6 +188,7 @@ class FrontendFinanceProfile(BaseModel):
     paymentDetails: dict[str, PaymentDetail] = Field(default_factory=dict)
     paymentHistory: list[PaymentHistoryItem] = Field(default_factory=list)
     paymentRegistry: dict[str, bool] = Field(default_factory=dict)
+    historicalCardPayments: dict[str, bool] = Field(default_factory=dict)
     banks: list[Bank] = Field(default_factory=list)
     expenses: list[dict] = Field(default_factory=list)
     departmentExpenses: list[SimpleExpense] = Field(default_factory=list)

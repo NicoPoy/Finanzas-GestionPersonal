@@ -4,7 +4,7 @@
 @media (min-width: 761px) {
   .fixed-expense-form {
     display: grid;
-    grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(130px, 1fr) minmax(95px, 0.8fr) minmax(150px, 1.1fr) auto;
+    grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(160px, 1.25fr) minmax(130px, 1fr) minmax(95px, 0.8fr) minmax(150px, 1.1fr) auto;
     gap: 16px;
     align-items: end;
     background: rgba(34, 51, 61, 0.25);
@@ -17,6 +17,10 @@
 
   .fixed-expense-form label {
     margin: 0;
+  }
+
+  .fixed-expense-form.is-permanent {
+    grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(160px, 1.25fr) minmax(150px, 1.1fr) auto;
   }
 
   .fixed-expense-form button[type="submit"] {

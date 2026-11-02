@@ -335,7 +335,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     title: getCalendarMonth(offset).title,
   }));
   const registryServices = useMemo(
-    () => buildRegistryServices(data, banksWithTotals, 0),
+    () => buildRegistryServices(data, banksWithTotals, 0, true),
     [banksWithTotals, data],
   );
   const dashboardServices = useMemo(
@@ -792,17 +792,20 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   }
 
   function addSimpleExpense(storageKey, expense) {
+    const currentStartPeriod = getCalendarMonth(0);
+    const newExpense = {
+      id: crypto.randomUUID(),
+      dueDay: expense.dueDay ?? 10,
+      ...expense,
+      startMonth: expense.isPermanent ? null : expense.startMonth ?? currentStartPeriod.monthIndex,
+      startYear: expense.isPermanent ? null : expense.startYear ?? currentStartPeriod.year,
+      permanentBaseAmount: expense.isPermanent ? Number(expense.amount) || 0 : null,
+    };
+    const savedExpense = { ...newExpense, amountHistory: buildSimpleExpenseHistoryEntry(newExpense) };
+
     setData((current) => ({
       ...current,
-      [storageKey]: [
-        {
-          id: crypto.randomUUID(),
-          dueDay: expense.dueDay ?? 10,
-          ...expense,
-          amountHistory: buildSimpleExpenseHistoryEntry(expense),
-        },
-        ...current[storageKey],
-      ],
+      [storageKey]: [savedExpense, ...current[storageKey]],
     }));
   }
 
@@ -1209,6 +1212,10 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   }
 
   function setPaymentStatus(year, monthIndex, serviceId, status) {
+    if (String(serviceId).startsWith("card:")) {
+      return;
+    }
+
     const key = getPaymentKey(year, monthIndex, serviceId);
     const service = registryServices.find((item) => item.id === serviceId);
     const period = getPaymentPeriod(year, monthIndex);
@@ -1286,6 +1293,26 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         }),
       title: "Modificar registro",
     });
+  }
+
+  function markHistoricalCardPaid(year, monthIndex, serviceId) {
+    if (!String(serviceId).startsWith("card:")) {
+      return;
+    }
+
+    const currentMonth = getCalendarMonth(0);
+    if (year * 12 + monthIndex >= currentMonth.year * 12 + currentMonth.monthIndex) {
+      return;
+    }
+
+    const paymentKey = getPaymentKey(year, monthIndex, serviceId);
+    setData((current) => ({
+      ...current,
+      historicalCardPayments: {
+        ...current.historicalCardPayments,
+        [paymentKey]: true,
+      },
+    }));
   }
 
   function updatePaymentDetail(paymentKey, updates) {
@@ -1577,9 +1604,12 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       ) : activeModule === "registry" ? (
         <RegistryModule
           paymentDetails={data.paymentDetails}
+          paymentHistory={data.paymentHistory}
           paymentRegistry={data.paymentRegistry}
+          historicalCardPayments={data.historicalCardPayments}
           services={registryServices}
           onSetPaymentStatus={setPaymentStatus}
+          onMarkHistoricalCardPaid={markHistoricalCardPaid}
         />
       ) : activeModule === "monthlyPurchases" ? (
         <MonthlyPurchasesModule
@@ -1658,27 +1688,39 @@ function ConfirmModal({ confirmation, onCancel, onConfirm }) {
 }
 
 function buildSimpleExpenseHistoryEntry(expense) {
-  if (expense.startMonth == null || expense.startYear == null || !(Number(expense.amount) > 0)) {
+  if (!(Number(expense.amount) > 0)) {
     return [];
   }
+
+  const permanentStart = expense.isPermanent ? getCalendarMonth(0) : null;
+  const startMonth = permanentStart?.monthIndex ?? expense.startMonth;
+  const startYear = permanentStart?.year ?? expense.startYear;
+
+  if (startMonth == null || startYear == null) return [];
 
   return [
     {
       amount: Number(expense.amount) || 0,
-      startMonth: Number(expense.startMonth),
-      startYear: Number(expense.startYear),
+      startMonth: Number(startMonth),
+      startYear: Number(startYear),
     },
   ];
 }
 
 function applySimpleExpenseUpdates(expense, updates) {
   const nextExpense = { ...expense, ...updates };
+  if (updates.isPermanent === true && !expense.isPermanent) {
+    nextExpense.permanentBaseAmount = Number(expense.amount) || 0;
+  } else if (updates.isPermanent === false) {
+    nextExpense.permanentBaseAmount = null;
+  }
   const amountChanged = Object.hasOwn(updates, "amount") && Number(updates.amount) !== Number(expense.amount);
+  const permanenceChanged = Object.hasOwn(updates, "isPermanent") && Boolean(updates.isPermanent) !== Boolean(expense.isPermanent);
   const startChanged =
     Object.hasOwn(updates, "startMonth") && Number(updates.startMonth) !== Number(expense.startMonth) ||
     Object.hasOwn(updates, "startYear") && Number(updates.startYear) !== Number(expense.startYear);
 
-  if (!amountChanged && !startChanged) {
+  if (!amountChanged && !startChanged && !permanenceChanged) {
     return nextExpense;
   }
 

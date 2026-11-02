@@ -190,7 +190,7 @@ function getCardMonthlyAmountForPayment(card, paymentMonthOffset = 0) {
 }
 
 // Construye las filas del registro anual: tarjetas + gastos simples cargados en cada seccion.
-export function buildRegistryServices(data, banks, paymentMonthOffset = 0) {
+export function buildRegistryServices(data, banks, paymentMonthOffset = 0, includeInactiveSimpleExpenses = false) {
   const { monthIndex, year } = getCalendarMonth(paymentMonthOffset);
   const cardServices = banks.flatMap((bank) =>
     bank.cards.map((card) => ({
@@ -204,10 +204,10 @@ export function buildRegistryServices(data, banks, paymentMonthOffset = 0) {
 
   return [
     ...cardServices,
-    ...mapSimpleServices(data.departmentExpenses, "Departamento", "department", year, monthIndex),
-    ...mapSimpleServices(data.subscriptionExpenses, "Suscripciones", "subscriptions", year, monthIndex),
-    ...mapSimpleServices(data.activityExpenses, "Actividades", "activities", year, monthIndex),
-    ...mapSimpleServices(data.extraExpenses, "Extras", "extras", year, monthIndex),
+    ...mapSimpleServices(data.departmentExpenses, "Departamento", "department", year, monthIndex, includeInactiveSimpleExpenses),
+    ...mapSimpleServices(data.subscriptionExpenses, "Suscripciones", "subscriptions", year, monthIndex, includeInactiveSimpleExpenses),
+    ...mapSimpleServices(data.activityExpenses, "Actividades", "activities", year, monthIndex, includeInactiveSimpleExpenses),
+    ...mapSimpleServices(data.extraExpenses, "Extras", "extras", year, monthIndex, includeInactiveSimpleExpenses),
   ];
 }
 
@@ -282,6 +282,10 @@ export function buildDashboardSummary({
 }
 
 export function isSimpleExpenseActiveForMonth(expense, year, monthIndex) {
+  if (expense.isPermanent) {
+    return true;
+  }
+
   const startYear = Number(expense.startYear);
   const startMonth = Number(expense.startMonth);
 
@@ -306,7 +310,9 @@ export function getSimpleExpenseAmountForMonth(expense, year, monthIndex) {
     .filter((item) => item.amount > 0 && item.period <= targetPeriod)
     .sort((a, b) => b.period - a.period);
 
-  return history[0]?.amount ?? (Number(expense.amount) || 0);
+  return history[0]?.amount ?? (expense.isPermanent
+    ? Number(expense.permanentBaseAmount) || Number(expense.amount) || 0
+    : Number(expense.amount) || 0);
 }
 
 export function buildSimpleExpensesTotalForMonth(data, year, monthIndex) {
@@ -331,15 +337,20 @@ export function buildFixedExpensesTotalForMonth(data, year, monthIndex) {
   return buildSimpleExpensesTotalForMonth(data, year, monthIndex) + monthlyPurchasesTotal;
 }
 
-function mapSimpleServices(expenses, category, prefix, year, monthIndex) {
-  return expenses.filter((expense) => isSimpleExpenseActiveForMonth(expense, year, monthIndex)).map((expense) => ({
-    id: `${prefix}:${expense.id}`,
-    amount: getSimpleExpenseAmountForMonth(expense, year, monthIndex),
-    category,
-    dueDay: expense.dueDay ?? 10,
-    paymentCard: expense.paymentCard ?? "",
-    name: expense.name,
-  }));
+function mapSimpleServices(expenses, category, prefix, year, monthIndex, includeInactive) {
+  return expenses
+    .filter((expense) => includeInactive || isSimpleExpenseActiveForMonth(expense, year, monthIndex))
+    .map((expense) => ({
+      id: `${prefix}:${expense.id}`,
+      amount: getSimpleExpenseAmountForMonth(expense, year, monthIndex),
+      category,
+      dueDay: expense.dueDay ?? 10,
+      paymentCard: expense.paymentCard ?? "",
+      name: expense.name,
+      startMonth: expense.startMonth,
+      startYear: expense.startYear,
+      amountHistory: expense.amountHistory ?? [],
+    }));
 }
 
 // Clave estable para guardar el estado pagado/no pagado por anio, mes y servicio.

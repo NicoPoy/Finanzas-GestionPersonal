@@ -396,6 +396,31 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.registry-service-status-tools {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.registry-historical-card-paid {
+  background: transparent;
+  border: 1px solid rgba(117, 199, 154, 0.3);
+  border-radius: 8px;
+  color: var(--mint);
+  font-size: 0.76rem;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.registry-historical-card-paid:hover,
+.registry-historical-card-paid:focus-visible {
+  background: rgba(117, 199, 154, 0.1);
+  border-color: rgba(117, 199, 154, 0.55);
+  outline: none;
+}
+
 /* Category Badge */
 .registry-category {
   color: var(--primary-strong);
@@ -531,6 +556,22 @@
   flex: 1;
 }
 
+.registry-card-payment-note {
+  align-items: center;
+  background: rgba(93, 182, 198, 0.08);
+  border: 1px solid rgba(93, 182, 198, 0.2);
+  border-radius: 8px;
+  color: var(--primary-strong);
+  display: flex;
+  font-size: 0.86rem;
+  font-weight: 750;
+  gap: 8px;
+  justify-content: center;
+  margin: 0;
+  min-height: 46px;
+  padding: 10px 14px;
+}
+
 .registry-status-button {
   background: transparent;
   border: 0;
@@ -601,6 +642,10 @@
   .registry-service-main {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+
+  .registry-service-status-tools {
+    flex-wrap: wrap;
   }
 
   .registry-saved-badge {

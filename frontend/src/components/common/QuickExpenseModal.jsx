@@ -23,6 +23,7 @@ export default function QuickExpenseModal({
   const [origin, setOrigin] = useState("");
   const [amount, setAmount] = useState("");
   const [installments, setInstallments] = useState("1");
+  const [isPermanent, setIsPermanent] = useState(false);
   const [error, setError] = useState("");
 
   // Gather all cards
@@ -75,6 +76,7 @@ export default function QuickExpenseModal({
         name: origin.trim(),
         amount: parsedAmount,
         dueDay: 10,
+        isPermanent,
         paymentCard: selectedDebitCard,
       });
     }
@@ -83,6 +85,7 @@ export default function QuickExpenseModal({
     setOrigin("");
     setAmount("");
     setInstallments("1");
+    setIsPermanent(false);
     onClose();
   }
 
@@ -112,7 +115,7 @@ export default function QuickExpenseModal({
         <form onSubmit={handleSubmit} className="expense-form quick-expense-form-body">
           <label>
             Destino del gasto
-            <select value={type} onChange={(e) => setType(e.target.value)}>
+            <select value={type} onChange={(e) => { setType(e.target.value); setIsPermanent(false); }}>
               <option value="tarjeta">💳 Tarjeta de Crédito</option>
               <option value="department">🏠 Gasto Fijo: Departamento</option>
               <option value="subscriptions">🔁 Gasto Fijo: Suscripciones</option>
@@ -155,6 +158,16 @@ export default function QuickExpenseModal({
               </select>
             </label>
           )}
+
+          {type !== "tarjeta" && type !== "extraordinary" ? (
+            <label className="quick-expense-permanent-toggle">
+              <input checked={isPermanent} onChange={(event) => setIsPermanent(event.target.checked)} type="checkbox" />
+              <span>
+                <strong>Permanente</strong>
+                <small>Incluir en todos los meses, sin fecha de inicio.</small>
+              </span>
+            </label>
+          ) : null}
 
           <label>
             Concepto / Detalle

@@ -41,6 +41,10 @@ function normalizeStartYear(value) {
 }
 
 function formatStartPeriod(expense) {
+  if (expense.isPermanent) {
+    return "Permanente · todos los meses";
+  }
+
   if (expense.startMonth == null || expense.startYear == null) {
     return "Desde: siempre";
   }
@@ -112,6 +116,7 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
   const [dueDay, setDueDay] = useState("10");
   const [startMonth, setStartMonth] = useState(String(defaultStart.startMonth));
   const [startYear, setStartYear] = useState(String(defaultStart.startYear));
+  const [isPermanent, setIsPermanent] = useState(false);
   const [paymentCard, setPaymentCard] = useState("");
 
   function handleSubmit(event) {
@@ -126,8 +131,9 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
       name: name.trim(),
       amount: parsedAmount,
       dueDay: Math.min(Math.max(Number(dueDay) || 10, 1), 31),
-      startMonth: normalizeStartMonth(startMonth),
-      startYear: normalizeStartYear(startYear),
+      isPermanent,
+      startMonth: isPermanent ? null : normalizeStartMonth(startMonth),
+      startYear: isPermanent ? null : normalizeStartYear(startYear),
       paymentCard,
     });
 
@@ -137,11 +143,12 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
     setDueDay("10");
     setStartMonth(String(nextDefaultStart.startMonth));
     setStartYear(String(nextDefaultStart.startYear));
+    setIsPermanent(false);
     setPaymentCard("");
   }
 
   return (
-    <form className="expense-form fixed-expense-form" onSubmit={handleSubmit}>
+    <form className={`expense-form fixed-expense-form ${isPermanent ? "is-permanent" : ""}`} onSubmit={handleSubmit}>
       <label>
         Nombre
         <input
@@ -172,27 +179,39 @@ function FixedExpenseForm({ debitCards = [], namePlaceholder = "Ej: luz", onSubm
         />
       </label>
 
-      <label>
-        Desde mes
-        <select value={startMonth} onChange={(event) => setStartMonth(event.target.value)}>
-          {MONTH_OPTIONS.map((month, index) => (
-            <option key={month} value={index}>
-              {month}
-            </option>
-          ))}
-        </select>
+      <label className="simple-expense-permanent-toggle">
+        <input checked={isPermanent} onChange={(event) => setIsPermanent(event.target.checked)} type="checkbox" />
+        <span>
+          <strong>Permanente</strong>
+          <small>Se incluye en todos los meses, sin fecha de inicio.</small>
+        </span>
       </label>
 
-      <label>
-        Año
-        <input
-          min="2000"
-          max="2100"
-          type="number"
-          value={startYear}
-          onChange={(event) => setStartYear(event.target.value)}
-        />
-      </label>
+      {!isPermanent ? (
+        <>
+          <label>
+            Desde mes
+            <select value={startMonth} onChange={(event) => setStartMonth(event.target.value)}>
+              {MONTH_OPTIONS.map((month, index) => (
+                <option key={month} value={index}>
+                  {month}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Año
+            <input
+              min="2000"
+              max="2100"
+              type="number"
+              value={startYear}
+              onChange={(event) => setStartYear(event.target.value)}
+            />
+          </label>
+        </>
+      ) : null}
 
       <label>
         Debita de
@@ -225,14 +244,14 @@ function FixedExpenseList({
   onUpdate,
 }) {
   const [editingId, setEditingId] = useState("");
-  const [draft, setDraft] = useState({ amount: "", dueDay: "", name: "", paymentCard: "", startMonth: "", startYear: "" });
+  const [draft, setDraft] = useState({ amount: "", dueDay: "", isPermanent: false, name: "", paymentCard: "", startMonth: "", startYear: "" });
   const editingExpense = expenses.find((expense) => expense.id === editingId);
   const parsedDraftAmount = Number(draft.amount);
   const canSaveEdit = Boolean(editingExpense) && draft.name.trim() && parsedDraftAmount > 0;
 
   function closeEditModal() {
     setEditingId("");
-    setDraft({ amount: "", dueDay: "", name: "", paymentCard: "", startMonth: "", startYear: "" });
+    setDraft({ amount: "", dueDay: "", isPermanent: false, name: "", paymentCard: "", startMonth: "", startYear: "" });
   }
 
   function startEdit(expense) {
@@ -242,6 +261,7 @@ function FixedExpenseList({
     setDraft({
       amount: String(expense.amount),
       dueDay: String(expense.dueDay ?? 10),
+      isPermanent: Boolean(expense.isPermanent),
       name: expense.name,
       paymentCard: expense.paymentCard ?? "",
       startMonth: String(expense.startMonth ?? defaultStart.startMonth),
@@ -259,8 +279,9 @@ function FixedExpenseList({
       dueDay: Math.min(Math.max(Number(draft.dueDay) || 10, 1), 31),
       name: draft.name.trim(),
       paymentCard: draft.paymentCard,
-      startMonth: normalizeStartMonth(draft.startMonth),
-      startYear: normalizeStartYear(draft.startYear),
+      isPermanent: draft.isPermanent,
+      startMonth: draft.isPermanent ? null : normalizeStartMonth(draft.startMonth),
+      startYear: draft.isPermanent ? null : normalizeStartYear(draft.startYear),
     });
     closeEditModal();
   }
@@ -351,29 +372,44 @@ function FixedExpenseList({
                   onChange={(event) => setDraft((current) => ({ ...current, dueDay: event.target.value }))}
                 />
               </label>
-              <label>
-                Desde mes
-                <select
-                  value={draft.startMonth}
-                  onChange={(event) => setDraft((current) => ({ ...current, startMonth: event.target.value }))}
-                >
-                  {MONTH_OPTIONS.map((month, index) => (
-                    <option key={month} value={index}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Año
+              <label className="simple-expense-permanent-toggle">
                 <input
-                  min="2000"
-                  max="2100"
-                  type="number"
-                  value={draft.startYear}
-                  onChange={(event) => setDraft((current) => ({ ...current, startYear: event.target.value }))}
+                  checked={draft.isPermanent}
+                  onChange={(event) => setDraft((current) => ({ ...current, isPermanent: event.target.checked }))}
+                  type="checkbox"
                 />
+                <span>
+                  <strong>Permanente</strong>
+                  <small>Se incluye en todos los meses.</small>
+                </span>
               </label>
+              {!draft.isPermanent ? (
+                <>
+                  <label>
+                    Desde mes
+                    <select
+                      value={draft.startMonth}
+                      onChange={(event) => setDraft((current) => ({ ...current, startMonth: event.target.value }))}
+                    >
+                      {MONTH_OPTIONS.map((month, index) => (
+                        <option key={month} value={index}>
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Año
+                    <input
+                      min="2000"
+                      max="2100"
+                      type="number"
+                      value={draft.startYear}
+                      onChange={(event) => setDraft((current) => ({ ...current, startYear: event.target.value }))}
+                    />
+                  </label>
+                </>
+              ) : null}
               <label>
                 Debita de
                 <select

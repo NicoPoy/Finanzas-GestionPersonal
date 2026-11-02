@@ -11,6 +11,7 @@ export const INITIAL_DATA = {
   paymentDetails: {},
   paymentHistory: [],
   paymentRegistry: {},
+  historicalCardPayments: {},
   banks: [],
   expenses: [],
   departmentExpenses: [],
