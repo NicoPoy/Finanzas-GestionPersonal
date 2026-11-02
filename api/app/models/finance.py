@@ -50,12 +50,23 @@ class DollarPurchaseMetadata(BaseModel):
     usdAmount: float = 0
 
 
+class SimpleExpenseAmountHistory(BaseModel):
+    amount: float
+    startMonth: int
+    startYear: int
+
+
 class SimpleExpense(BaseModel):
     id: str
     name: str
     amount: float
     dueDay: int = 10
     paymentCard: str = ""
+    isPermanent: bool | None = None
+    permanentBaseAmount: float | None = None
+    startMonth: int | None = None
+    startYear: int | None = None
+    amountHistory: list[SimpleExpenseAmountHistory] = Field(default_factory=list)
     dollarPurchase: DollarPurchaseMetadata | None = None
 
 
