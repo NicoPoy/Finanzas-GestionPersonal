@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CreditCard, Database, ListChecks, ReceiptText, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, Clock, Calendar, FileText, Search } from "lucide-react";
+import { CreditCard, Database, ListChecks, ReceiptText, ChevronDown, CheckCircle2, Clock, Calendar, FileText, Search } from "lucide-react";
 import { getPaymentKey, getSimpleExpenseAmountForMonth, isSimpleExpenseActiveForMonth } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 import "./registry.css";
@@ -45,18 +45,23 @@ export default function RegistryModule({
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [collapsedCategories, setCollapsedCategories] = useState({});
+  const previousPeriod = shiftMonth(currentYear, currentMonthIndex, -1);
+  const historyMonths = buildMonthHistory(currentYear, currentMonthIndex);
   const selectedMonth = MONTHS[selectedMonthIndex];
-  const monthStates = MONTHS.map((_, monthIndex) => buildMonthState({
+  const monthStateFor = (year, monthIndex) => buildMonthState({
     monthIndex,
     historicalCardPayments,
     paymentDetails,
     paymentHistory,
     paymentRegistry,
-    selectedYear,
+    selectedYear: year,
     services,
     today,
-  }));
-  const selectedState = monthStates[selectedMonthIndex] ?? { completedCount: 0, savedCount: 0 };
+  });
+  const currentMonthState = monthStateFor(currentYear, currentMonthIndex);
+  const previousMonthState = monthStateFor(previousPeriod.year, previousPeriod.monthIndex);
+  const selectedState = monthStateFor(selectedYear, selectedMonthIndex);
+  const isHistorySelected = selectedYear * 12 + selectedMonthIndex < previousPeriod.year * 12 + previousPeriod.monthIndex;
   const selectedServices = getServicesForMonth(services, selectedYear, selectedMonthIndex);
   const registryRows = selectedServices.map((service) => buildRegistryRow({
     monthIndex: selectedMonthIndex,
@@ -93,29 +98,65 @@ export default function RegistryModule({
         </div>
 
         <div className="registry-header-row">
-          <div className="registry-year-selector">
-            <button
-              className="year-nav-btn"
-              disabled={selectedYear <= FIRST_REGISTRY_YEAR}
-              onClick={() => setSelectedYear((year) => Math.max(FIRST_REGISTRY_YEAR, year - 1))}
-              type="button"
-              aria-label="Año anterior"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <div className="year-display">
-              <span className="year-subtitle">Período</span>
-              <span className="year-value">{selectedYear}</span>
-            </div>
-            <button
-              className="year-nav-btn"
-              disabled={selectedYear >= currentYear}
-              onClick={() => setSelectedYear((year) => Math.min(currentYear, year + 1))}
-              type="button"
-              aria-label="Año siguiente"
-            >
-              <ChevronRight size={18} />
-            </button>
+          <div className="registry-period-picker" aria-label="Seleccionar mes del registro">
+            {[{
+              label: "Anterior",
+              year: previousPeriod.year,
+              monthIndex: previousPeriod.monthIndex,
+              state: previousMonthState,
+            }, {
+              label: "Mes actual",
+              year: currentYear,
+              monthIndex: currentMonthIndex,
+              state: currentMonthState,
+            }].map((period) => {
+              const isSelected = selectedYear === period.year && selectedMonthIndex === period.monthIndex;
+              const monthName = MONTHS[period.monthIndex].label;
+              const progress = period.state.serviceCount
+                ? Math.round((period.state.completedCount / period.state.serviceCount) * 100)
+                : 0;
+
+              return (
+                <button
+                  aria-pressed={isSelected}
+                  className={`registry-period-shortcut ${isSelected ? "selected" : ""}`}
+                  key={period.label}
+                  onClick={() => {
+                    setSelectedYear(period.year);
+                    setSelectedMonthIndex(period.monthIndex);
+                  }}
+                  type="button"
+                >
+                  <span>{period.label}</span>
+                  <strong>{monthName} <small>{period.year}</small></strong>
+                  <span className="registry-period-progress-label">
+                    {period.state.completedCount}/{period.state.serviceCount} pagos
+                  </span>
+                  <span aria-hidden="true" className="registry-period-progress"><i style={{ width: `${progress}%` }} /></span>
+                </button>
+              );
+            })}
+            <label className={`registry-history-picker ${isHistorySelected ? "selected" : ""}`}>
+              <span>Historial</span>
+              <select
+                aria-label="Consultar un mes anterior"
+                disabled={!historyMonths.length}
+                onChange={(event) => {
+                  if (!event.target.value) return;
+                  const [year, monthIndex] = event.target.value.split("-").map(Number);
+                  setSelectedYear(year);
+                  setSelectedMonthIndex(monthIndex);
+                }}
+                value={isHistorySelected ? `${selectedYear}-${selectedMonthIndex}` : ""}
+              >
+                <option value="">{historyMonths.length ? "Meses anteriores" : "Sin meses anteriores"}</option>
+                {historyMonths.map((period) => (
+                  <option key={`${period.year}-${period.monthIndex}`} value={`${period.year}-${period.monthIndex}`}>
+                    {period.label} {period.year}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <div className="registry-summary-grid" aria-label="Resumen del registro">
@@ -152,41 +193,6 @@ export default function RegistryModule({
 
         {services.length ? (
           <>
-            <div className="registry-month-strip" aria-label="Meses del anio">
-              {MONTHS.map((month, monthIndex) => {
-                const state = monthStates[monthIndex];
-                const pct = state.serviceCount > 0 ? (state.completedCount / state.serviceCount) * 100 : 0;
-
-                return (
-                  <button
-                    className={[
-                      "registry-month-card",
-                      selectedMonthIndex === monthIndex ? "selected" : "",
-                      state.isComplete ? "complete" : "",
-                      state.isCurrent ? "current" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    key={month.label}
-                    onClick={() => setSelectedMonthIndex(monthIndex)}
-                    type="button"
-                  >
-                    <div className="month-card-header">
-                      <span>{month.label}</span>
-                      {state.isComplete && <CheckCircle2 size={13} className="month-complete-check" />}
-                    </div>
-                    <strong>
-                      {state.completedCount} / {state.serviceCount}
-                    </strong>
-                    <div className="month-progress-bar">
-                      <div className="progress-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <small>{state.serviceCount} {state.serviceCount === 1 ? "pago" : "pagos"}</small>
-                  </button>
-                );
-              })}
-            </div>
-
             <div className="registry-list-toolbar">
               <label className="registry-search">
                 <Search size={17} aria-hidden="true" />
@@ -225,7 +231,11 @@ export default function RegistryModule({
             <div className="registry-service-list">
               {groupedRows.map(([category, rows]) => {
                 const collapsed = Boolean(collapsedCategories[category]);
-                const groupTotal = rows.reduce((sum, row) => sum + row.amount, 0);
+                const categoryRows = searchedRows.filter((row) => row.service.category === category);
+                const groupTotal = categoryRows.reduce((sum, row) => sum + row.amount, 0);
+                const amountToPay = categoryRows
+                  .filter((row) => row.status === PAYMENT_STATUS.NONE || row.status === PAYMENT_STATUS.TRANSFERRED)
+                  .reduce((sum, row) => sum + row.amount, 0);
 
                 return (
                   <section className="registry-category-group" key={category}>
@@ -240,7 +250,12 @@ export default function RegistryModule({
                         <strong>{category}</strong>
                         <small>{rows.length} {rows.length === 1 ? "pago" : "pagos"}</small>
                       </span>
-                      <span className="registry-category-total">{currency.format(groupTotal)}</span>
+                      <span className="registry-category-totals">
+                        <span><small>Total</small><strong>{currency.format(groupTotal)}</strong></span>
+                        <span className={amountToPay ? "to-pay" : "settled"}>
+                          <small>Por pagar</small><strong>{currency.format(amountToPay)}</strong>
+                        </span>
+                      </span>
                     </button>
                     {!collapsed ? (
                       <div className="registry-category-items">
@@ -392,6 +407,29 @@ function buildPeriodSummary(rows) {
 function startOfRegistryDay(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
+
+function shiftMonth(year, monthIndex, offset) {
+  const date = new Date(year, monthIndex + offset, 1);
+  return { year: date.getFullYear(), monthIndex: date.getMonth() };
+}
+
+function buildMonthHistory(currentYear, currentMonthIndex) {
+  const currentKey = currentYear * 12 + currentMonthIndex;
+  const earliestKey = FIRST_REGISTRY_YEAR * 12;
+
+  return Array.from({ length: Math.max(currentKey - earliestKey - 1, 0) }, (_, index) => {
+    const monthKey = currentKey - index - 2;
+    const year = Math.floor(monthKey / 12);
+    const monthIndex = monthKey % 12;
+    return { year, monthIndex, label: MONTHS[monthIndex].label };
+  });
+}
+
+function isFutureMonth(year, monthIndex) {
+  const now = new Date();
+  return year * 12 + monthIndex > now.getFullYear() * 12 + now.getMonth();
+}
+
 function RegistryServiceCard({
   month,
   monthIndex,
@@ -416,6 +454,7 @@ function RegistryServiceCard({
   );
   const isPastMonth = selectedYear * 12 + monthIndex < new Date().getFullYear() * 12 + new Date().getMonth();
   const canMarkHistoricalCardPaid = isPastMonth && isCardService(service) && status === PAYMENT_STATUS.NONE;
+  const canEditMonth = !isFutureMonth(selectedYear, monthIndex);
 
   return (
     <article className={`registry-service-card registry-service-${status}`}>
@@ -424,7 +463,13 @@ function RegistryServiceCard({
           <h3>{service.name}</h3>
           <p>
             <b>{currency.format(amount)}</b>
-            {method ? ` - Método: ${method}` : ""}
+            {service.paymentCard ? (
+              <span className="registry-payment-source" title={`Este gasto se debita desde ${service.paymentCard}`}>
+                <CreditCard size={14} aria-hidden="true" />
+                <span>Débito desde</span>
+                <strong>{service.paymentCard}</strong>
+              </span>
+            ) : method ? <span className="registry-payment-method">Método: {method}</span> : null}
           </p>
         </div>
         <div className="registry-service-status-tools">
@@ -470,7 +515,7 @@ function RegistryServiceCard({
         </div>
       ) : null}
 
-      {isCardService(service) ? null : service.paymentCard ? (
+      {!canEditMonth || isCardService(service) ? null : service.paymentCard ? (
         <DebitStatusControl
           month={month}
           service={service}
