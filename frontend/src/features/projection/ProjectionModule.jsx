@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { BarChart3, CalendarDays, Info, ReceiptText } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { BarChart3, ChevronDown, Info, ReceiptText } from "lucide-react";
 import {
   buildCardMonthlyTotalForPaymentMonth,
   getCalendarMonth,
@@ -9,42 +9,54 @@ import {
 import { currency } from "../../utils/formatters.js";
 import "./projection.css";
 
-// Pantalla de proyección: calcula cuánto se pagará en tarjetas por mes de sueldo.
+// Proyecta los pagos de tarjeta organizados por sueldo y resumen.
 export default function ProjectionModule({ banks }) {
-  const months = useMemo(() => getProjectionMonths(7), []);
+  const [horizon, setHorizon] = useState(6);
+  const [selectedCardId, setSelectedCardId] = useState("all");
+  const months = useMemo(() => getProjectionMonths(horizon), [horizon]);
+  const cardOptions = useMemo(
+    () => banks.flatMap((bank) => bank.cards
+      .filter((card) => card.expenses.length)
+      .map((card) => ({ id: `${bank.id}-${card.id}`, label: `${card.name} · ${bank.name}` }))),
+    [banks],
+  );
+  const visibleBanks = useMemo(
+    () => selectedCardId === "all"
+      ? banks
+      : banks.map((bank) => ({
+        ...bank,
+        cards: bank.cards.filter((card) => `${bank.id}-${card.id}` === selectedCardId),
+      })),
+    [banks, selectedCardId],
+  );
   const projectionRows = useMemo(
-    () =>
-      banks.flatMap((bank) =>
-        bank.cards
-          .filter((card) => card.expenses.length)
-          .map((card) => ({
-            id: `${bank.id}-${card.id}`,
-            bankName: bank.name,
-            cardName: card.name,
-            months: months.map((month) => {
-              const statementOffset = getStatementOffsetForPaymentMonth(month.paymentMonthOffset);
-
-              return card.expenses.reduce(
-                (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
-                0,
-              );
-            }),
-          })),
-      ),
-    [banks, months],
+    () => visibleBanks.flatMap((bank) =>
+      bank.cards
+        .filter((card) => card.expenses.length)
+        .map((card) => ({
+          id: `${bank.id}-${card.id}`,
+          bankName: bank.name,
+          cardName: card.name,
+          months: months.map((month) => {
+            const statementOffset = getStatementOffsetForPaymentMonth(month.paymentMonthOffset);
+            return card.expenses.reduce(
+              (sum, expense) => sum + getExpenseAmountForStatementOffset(expense, statementOffset),
+              0,
+            );
+          }),
+        }))),
+    [visibleBanks, months],
   );
-
   const monthlyTotals = useMemo(
-    () => months.map((month) => buildCardMonthlyTotalForPaymentMonth(banks, month.paymentMonthOffset)),
-    [banks, months],
+    () => months.map((month) => buildCardMonthlyTotalForPaymentMonth(visibleBanks, month.paymentMonthOffset)),
+    [visibleBanks, months],
   );
-  const projectionStats = useMemo(() => buildProjectionStats(months, monthlyTotals), [monthlyTotals, months]);
-  const debtStats = useMemo(() => buildDebtStats(banks, months, monthlyTotals), [banks, monthlyTotals, months]);
-  const currentSalaryTotal = monthlyTotals[0] ?? 0;
-  const nextSalaryTotal = monthlyTotals[1] ?? 0;
-  const currentMonth = months[0];
-  const nextMonth = months[1];
-  const visibleMonthCount = projectionStats.activeMonths || months.length;
+  const debtStats = useMemo(
+    () => buildDebtStats(visibleBanks, months, monthlyTotals),
+    [visibleBanks, monthlyTotals, months],
+  );
+  const maxMonthlyTotal = Math.max(0, ...monthlyTotals);
+  const upcomingMonth = months[0];
 
   return (
     <section className="workspace single-column projection-workspace">
@@ -59,92 +71,100 @@ export default function ProjectionModule({ banks }) {
 
         <div className="projection-intro">
           <div>
-            <span>Cómo leer esta vista</span>
-            <p>
-              La tabla proyecta cuánto vas a pagar de tarjetas con cada sueldo. Cada columna representa el sueldo que
-              usás para pagar el resumen cerrado el mes anterior.
-            </p>
+            <span>Proyección de pagos</span>
+            <p>El próximo sueldo cubre el resumen cerrado el mes anterior. Los importes estiman tus cuotas y gastos de tarjeta cargados.</p>
           </div>
-          <CalendarDays size={24} strokeWidth={1.8} />
+          <BarChart3 size={24} strokeWidth={1.8} />
         </div>
 
-        <div className="projection-summary-grid">
+        <div className="projection-summary-grid projection-summary-grid-primary">
           <ProjectionSummaryCard
-            label={`Sueldo ${currentMonth.salaryLabel}`}
-            note={`Paga resumen ${currentMonth.statementLabel}`}
-            detail="Total de tarjetas calculado para ese sueldo puntual."
-            value={currency.format(currentSalaryTotal)}
+            label={`Próximo sueldo · ${upcomingMonth.salaryLabel}`}
+            note={`Paga resumen ${upcomingMonth.statementLabel}`}
+            value={currency.format(monthlyTotals[0] ?? 0)}
           />
           <ProjectionSummaryCard
-            label={`Sueldo ${nextMonth.salaryLabel}`}
-            note={`Paga resumen ${nextMonth.statementLabel}`}
-            detail="Total comprometido para ese sueldo si no cargás nuevos gastos."
-            tone="next"
-            value={currency.format(nextSalaryTotal)}
-          />
-          <ProjectionSummaryCard
-            label="Mayor pago proyectado"
-            note={projectionStats.peakPaymentLabel}
-            detail={projectionStats.peakDetail}
-            tone="peak"
-            value={currency.format(projectionStats.peakAmount)}
-          />
-          <ProjectionSummaryCard
-            label="Promedio mensual"
-            note={projectionStats.averageLabel}
-            detail="Promedio de los totales mensuales con saldo, sin contar meses en cero."
-            value={currency.format(projectionStats.averageAmount)}
-          />
-        </div>
-
-        <section className="projection-explainer" aria-label="Qué se está calculando">
-          <Info size={20} strokeWidth={1.9} />
-          <div>
-            <strong>Qué entra en estos números</strong>
-            <p>
-              Cada monto mensual sale de sumar las tarjetas para ese sueldo. En compras en cuotas se toma la cuota que
-              sigue vigente ese mes; en gastos fijos de tarjeta se repite el importe mensual; y si marcaste ahorro,
-              mitad compartida o pagado por otra persona, se descuenta según esa configuración.
-            </p>
-          </div>
-        </section>
-
-        <section className="debt-mode-grid" aria-label="Resumen de deuda y cuotas">
-          <DebtStat
-            label="Deuda total"
-            note="Suma de cuotas pendientes que todavía tenés que pagar. No incluye gastos fijos de tarjeta."
+            label="Deuda total en cuotas"
+            note={`${debtStats.activeInstallmentExpenses} compras activas · no incluye gastos fijos`}
+            tone="debt"
             value={currency.format(debtStats.totalDebt)}
           />
-          <DebtStat
-            label="Cuotas activas"
-            note="Cantidad de compras con cuotas pendientes cargadas en tus tarjetas."
-            value={debtStats.activeInstallmentExpenses}
-          />
-          <DebtStat
-            label="Próximo alivio"
-            note={`${debtStats.nextReliefLabel}. Es la primera baja detectada contra el sueldo anterior.`}
+          <ProjectionSummaryCard
+            label="Primera baja"
+            note={debtStats.nextReliefLabel}
+            tone="relief"
             value={currency.format(debtStats.nextReliefAmount)}
           />
-          <DebtStat
-            label="Mayor baja"
-            note={`${debtStats.biggestDropLabel}. Es la caída más grande dentro de ${visibleMonthCount} meses.`}
-            value={currency.format(debtStats.biggestDropAmount)}
-          />
+        </div>
+
+        <section className="projection-chart-block" aria-label="Evolución de pagos proyectados">
+          <div className="projection-chart-heading">
+            <div>
+              <span>Mes a mes</span>
+              <h3>Total por sueldo</h3>
+            </div>
+            <label className="projection-control">
+              Ver próximos
+              <select value={horizon} onChange={(event) => setHorizon(Number(event.target.value))}>
+                <option value={3}>3 meses</option>
+                <option value={6}>6 meses</option>
+                <option value={12}>12 meses</option>
+              </select>
+            </label>
+          </div>
+          <div className="projection-chart-scroll">
+            <div
+              className="projection-chart"
+              role="img"
+              aria-label={`Proyección de ${months.length} sueldos`}
+              style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))`, minWidth: `${months.length * 125}px` }}
+            >
+              {months.map((month, index) => {
+                const amount = monthlyTotals[index] ?? 0;
+                const ratio = maxMonthlyTotal ? Math.max((amount / maxMonthlyTotal) * 100, amount > 0 ? 3 : 0) : 0;
+                return (
+                  <div className={`projection-chart-column ${index === 0 ? "is-next" : ""}`} key={month.key}>
+                    <strong>{currency.format(amount)}</strong>
+                    <div className="projection-chart-track">
+                      <span className={amount > 0 ? "" : "is-zero"} style={{ "--bar-ratio": ratio }} />
+                    </div>
+                    <span className="projection-chart-salary">{month.shortSalaryLabel}</span>
+                    <small>Resumen {month.shortStatementLabel}</small>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </section>
 
-        {projectionRows.length ? (
-          <section className="projection-detail-block">
-            <div className="projection-detail-heading">
-              <div>
-                <span>Detalle mensual</span>
-                <h3>Cuánto paga cada tarjeta por sueldo</h3>
-              </div>
-              <p>
-                El total inferior es la suma de todas las tarjetas para ese sueldo. Los guiones indican que esa tarjeta
-                no tiene saldo proyectado en ese mes.
-              </p>
-            </div>
+        <details className="projection-explainer">
+          <summary>
+            <Info size={18} strokeWidth={1.9} />
+            Cómo se calcula
+            <ChevronDown className="projection-explainer-chevron" size={17} />
+          </summary>
+          <p>
+            Se suman las cuotas vigentes y los gastos fijos de cada tarjeta. Se descuentan los ahorros, los gastos compartidos y los pagos asignados a otra persona.
+          </p>
+        </details>
 
+        <section className="projection-detail-block">
+          <div className="projection-detail-heading">
+            <div>
+              <span>Detalle</span>
+              <h3>Pagos por tarjeta y sueldo</h3>
+            </div>
+            <label className="projection-control projection-card-filter">
+              Tarjeta
+              <select value={selectedCardId} onChange={(event) => setSelectedCardId(event.target.value)}>
+                <option value="all">Todas las tarjetas</option>
+                {cardOptions.map((card) => <option key={card.id} value={card.id}>{card.label}</option>)}
+              </select>
+            </label>
+          </div>
+          <p className="projection-table-help">Cada columna indica el sueldo y el resumen que cubre. El total suma las tarjetas visibles.</p>
+
+          {projectionRows.length ? (
             <div className="registry-table-wrap projection-table-wrap">
               <table className="registry-table projection-table">
                 <thead>
@@ -185,29 +205,24 @@ export default function ProjectionModule({ banks }) {
                 </tbody>
               </table>
             </div>
-          </section>
-        ) : (
-          <div className="empty-state">
-            <ReceiptText size={28} />
-            <p>Cargá consumos con cuotas pendientes para ver la proyección.</p>
-          </div>
-        )}
+          ) : (
+            <div className="empty-state">
+              <ReceiptText size={28} />
+              <p>{selectedCardId === "all" ? "Cargá consumos con cuotas pendientes para ver la proyección." : "Esta tarjeta no tiene consumos proyectados."}</p>
+            </div>
+          )}
+        </section>
       </section>
     </section>
   );
 }
 
 function getProjectionColumnClass(index) {
-  if (index === 0) {
-    return "projection-priority-month";
-  }
-
-  if (index === 1) {
-    return "projection-secondary-month";
-  }
-
+  if (index === 0) return "projection-priority-month";
+  if (index === 1) return "projection-secondary-month";
   return "";
 }
+
 function buildDebtStats(banks, months, monthlyTotals) {
   const installmentExpenses = banks.flatMap((bank) =>
     bank.cards.flatMap((card) =>
@@ -223,76 +238,26 @@ function buildDebtStats(banks, months, monthlyTotals) {
     ),
   );
   const totalDebt = installmentExpenses.reduce((sum, expense) => {
-    if (expense.isPaidByOther || expense.isSaved) {
-      return sum;
-    }
-
+    if (expense.isPaidByOther || expense.isSaved) return sum;
     const ownAmount = expense.isSharedHalf ? expense.amount / 2 : expense.amount;
     return sum + ownAmount * expense.installments;
   }, 0);
-  const nextReliefIndex = monthlyTotals.findIndex((amount, index) => amount > 0 && (monthlyTotals[index + 1] ?? 0) < amount);
-  const drops = monthlyTotals.slice(0, -1).map((amount, index) => ({
-    amount: Math.max(amount - (monthlyTotals[index + 1] ?? 0), 0),
-    label: months[index + 1]?.salaryLabel ?? "Sin baja proyectada",
-  }));
-  const biggestDrop = drops.sort((a, b) => b.amount - a.amount)[0] ?? { amount: 0, label: "Sin baja proyectada" };
+  const reliefIndex = monthlyTotals.findIndex((amount, index) => amount > 0 && (monthlyTotals[index + 1] ?? 0) < amount);
 
   return {
     activeInstallmentExpenses: installmentExpenses.length,
-    biggestDropAmount: biggestDrop.amount,
-    biggestDropLabel: biggestDrop.amount ? `Desde sueldo ${biggestDrop.label}` : "Sin baja proyectada",
-    nextReliefAmount: nextReliefIndex >= 0 ? monthlyTotals[nextReliefIndex] - (monthlyTotals[nextReliefIndex + 1] ?? 0) : 0,
-    nextReliefLabel: nextReliefIndex >= 0 ? `Sueldo ${months[nextReliefIndex + 1]?.salaryLabel}` : "Sin alivio en la ventana",
+    nextReliefAmount: reliefIndex >= 0 ? monthlyTotals[reliefIndex] - (monthlyTotals[reliefIndex + 1] ?? 0) : 0,
+    nextReliefLabel: reliefIndex >= 0 ? `Desde sueldo ${months[reliefIndex + 1]?.salaryLabel}` : "Sin baja proyectada en este período",
     totalDebt,
   };
 }
 
-function DebtStat({ label, note, value }) {
-  return (
-    <article className="debt-stat-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{note}</small>
-    </article>
-  );
-}
-
-function buildProjectionStats(months, monthlyTotals) {
-  const activeTotals = monthlyTotals.filter((amount) => amount > 0);
-  const peakAmount = Math.max(0, ...monthlyTotals);
-  const peakIndex = monthlyTotals.findIndex((amount) => amount === peakAmount);
-  const firstActiveIndex = monthlyTotals.findIndex((amount) => amount > 0);
-  const lastActiveIndex = monthlyTotals.findLastIndex((amount) => amount > 0);
-
-  return {
-    activeMonths: activeTotals.length,
-    averageAmount: activeTotals.length
-      ? activeTotals.reduce((sum, amount) => sum + amount, 0) / activeTotals.length
-      : 0,
-    averageLabel:
-      firstActiveIndex >= 0 && lastActiveIndex >= 0
-        ? `${months[firstActiveIndex].salaryLabel} a ${months[lastActiveIndex].salaryLabel}`
-        : "Sin consumos proyectados",
-    peakAmount,
-    peakDetail:
-      peakIndex >= 0
-        ? `Es el monto más alto de la fila Total. Usás el sueldo ${months[peakIndex].salaryLabel} para pagar el resumen ${months[peakIndex].statementLabel}.`
-        : "Todavía no hay meses con consumos para comparar.",
-    peakLabel: peakIndex >= 0 ? `Sueldo ${months[peakIndex].salaryLabel}` : "Sin consumos proyectados",
-    peakPaymentLabel:
-      peakIndex >= 0
-        ? `Usás sueldo ${months[peakIndex].salaryLabel} · Pagás resumen ${months[peakIndex].statementLabel}`
-        : "Sin consumos proyectados",
-  };
-}
-
-function ProjectionSummaryCard({ detail, label, note, tone = "", value }) {
+function ProjectionSummaryCard({ label, note, tone = "", value }) {
   return (
     <article className={`projection-summary-card ${tone ? `projection-summary-card-${tone}` : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{note}</small>
-      <p>{detail}</p>
     </article>
   );
 }
@@ -301,21 +266,18 @@ function getProjectionMonths(amount) {
   return Array.from({ length: amount }, (_, index) => {
     const paymentMonth = getCalendarMonth(index);
     const salaryMonth = getCalendarMonth(index + 1);
-    const label = new Date(paymentMonth.year, paymentMonth.monthIndex, 1)
-      .toLocaleDateString("es-AR", { month: "short" })
-      .replace(".", "");
-    const salaryLabel = new Date(salaryMonth.year, salaryMonth.monthIndex, 1)
-      .toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-    const statementLabel = new Date(paymentMonth.year, paymentMonth.monthIndex, 1)
-      .toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    const salaryDate = new Date(salaryMonth.year, salaryMonth.monthIndex, 1);
+    const statementDate = new Date(paymentMonth.year, paymentMonth.monthIndex, 1);
+    const salaryLabel = salaryDate.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+    const statementLabel = statementDate.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
 
     return {
       key: `${paymentMonth.year}-${paymentMonth.monthIndex}`,
-      label,
       paymentMonthOffset: index,
       salaryLabel: capitalizeDateLabel(salaryLabel),
       statementLabel: capitalizeDateLabel(statementLabel),
-      year: paymentMonth.year,
+      shortSalaryLabel: capitalizeDateLabel(salaryDate.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }).replace(".", "")),
+      shortStatementLabel: capitalizeDateLabel(statementDate.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }).replace(".", "")),
     };
   });
 }

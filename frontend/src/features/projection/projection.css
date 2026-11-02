@@ -354,9 +354,252 @@
 .projection-total-row td.projection-secondary-month strong {
   color: var(--ink-strong);
 }
+
+/* Resumen corto y comparativo visual de la proyección. */
+.projection-summary-grid-primary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.projection-summary-grid-primary .projection-summary-card {
+  background: rgba(29, 44, 53, 0.78);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  gap: 10px;
+  min-height: 0;
+}
+
+.projection-summary-grid-primary .projection-summary-card:first-child {
+  border-color: rgba(93, 182, 198, 0.46);
+}
+
+.projection-summary-grid-primary .projection-summary-card:first-child strong,
+.projection-summary-card-debt strong {
+  color: var(--primary-strong);
+}
+
+.projection-summary-card-relief {
+  border-color: rgba(117, 199, 154, 0.38) !important;
+}
+
+.projection-summary-card-relief strong {
+  color: var(--mint);
+}
+
+.projection-summary-grid-primary .projection-summary-card small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.projection-chart-block {
+  background: rgba(24, 37, 45, 0.62);
+  border: 1px solid rgba(73, 104, 116, 0.72);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.projection-chart-heading,
+.projection-detail-heading {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.projection-chart-heading > div > span,
+.projection-detail-heading > div > span {
+  color: var(--primary-strong);
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.projection-chart-heading h3,
+.projection-detail-heading h3 {
+  color: var(--ink-strong);
+  font-size: 1.05rem;
+  margin: 5px 0 0;
+}
+
+.projection-control {
+  color: var(--muted);
+  display: grid;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 850;
+  gap: 5px;
+  min-width: 150px;
+  text-transform: uppercase;
+}
+
+.projection-control select {
+  color: var(--ink-strong);
+  font-size: 0.85rem;
+  min-height: 40px;
+  text-transform: none;
+}
+
+.projection-chart-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.projection-chart {
+  display: grid;
+  gap: 10px;
+  min-width: 100%;
+}
+
+.projection-chart-column {
+  align-items: stretch;
+  display: grid;
+  grid-template-rows: auto 118px auto auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.projection-chart-column > strong {
+  color: var(--ink-strong);
+  font-size: 0.77rem;
+  line-height: 1.2;
+  min-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.projection-chart-track {
+  align-items: end;
+  border-bottom: 1px solid rgba(73, 104, 116, 0.65);
+  display: flex;
+  justify-content: center;
+  margin: 0 10px 7px;
+  min-height: 0;
+}
+
+.projection-chart-track span {
+  background: linear-gradient(180deg, var(--primary-strong), rgba(93, 182, 198, 0.35));
+  border-radius: 6px 6px 0 0;
+  height: calc(var(--bar-ratio, 0) * 1%);
+  max-height: 100%;
+  min-height: 2px;
+  transition: height 180ms ease;
+  width: min(42px, 70%);
+}
+
+.projection-chart-track span.is-zero {
+  min-height: 0;
+}
+
+.projection-chart-column.is-next .projection-chart-track span {
+  background: linear-gradient(180deg, var(--mint), rgba(117, 199, 154, 0.36));
+}
+
+.projection-chart-salary {
+  color: var(--ink-strong);
+  font-size: 0.8rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: capitalize;
+}
+
+.projection-chart-column small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.25;
+  margin-top: 3px;
+}
+
+.projection-explainer {
+  display: block;
+  padding: 12px 14px;
+}
+
+.projection-explainer summary {
+  align-items: center;
+  color: var(--ink-strong);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.88rem;
+  font-weight: 850;
+  gap: 8px;
+  list-style: none;
+}
+
+.projection-explainer summary::-webkit-details-marker {
+  display: none;
+}
+
+.projection-explainer summary svg {
+  color: var(--primary-strong);
+}
+
+.projection-explainer .projection-explainer-chevron {
+  margin-left: auto;
+  transition: transform 160ms ease;
+}
+
+.projection-explainer[open] .projection-explainer-chevron {
+  transform: rotate(180deg);
+}
+
+.projection-explainer p {
+  margin: 10px 0 0 26px;
+}
+
+.projection-detail-block {
+  gap: 10px;
+}
+
+.projection-table-help {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: -4px 0 0;
+}
+
+.projection-card-filter {
+  min-width: min(320px, 36vw);
+}
+
+@media (max-width: 900px) {
+  .projection-summary-grid-primary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .projection-summary-grid-primary .projection-summary-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .projection-summary-grid-primary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .projection-summary-grid-primary .projection-summary-card:last-child {
+    grid-column: auto;
+  }
+
+  .projection-chart-heading,
+  .projection-detail-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .projection-control,
+  .projection-card-filter {
+    min-width: 0;
+    width: 100%;
+  }
+
+}
+
 @media (max-width: 1280px) {
-  .projection-summary-grid,
-  .debt-mode-grid {
+  .projection-summary-grid:not(.projection-summary-grid-primary) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
