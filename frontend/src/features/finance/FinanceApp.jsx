@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
-  BarChart3,
   Banknote,
   CreditCard,
   Dumbbell,
@@ -43,6 +42,7 @@ import {
 import { normalizeData } from "../../domain/storage.js";
 import { apiUrl } from "../../services/platform.js";
 import { currency } from "../../utils/formatters.js";
+import SectionTabs from "../../components/SectionTabs.jsx";
 import AguinaldoModule from "../aguinaldo/AguinaldoModule.jsx";
 import CardsModule from "../cards/CardsModule.jsx";
 import DashboardModule from "../dashboard/DashboardModule.jsx";
@@ -71,7 +71,7 @@ const MODULE_ROUTES = {
   "/finanzas/actividades": "expenses",
   "/finanzas/extras": "expenses",
   "/finanzas/tarjetas": "cards",
-  "/finanzas/deuda-cuotas": "projection",
+  "/finanzas/deuda-cuotas": "cards",
   "/finanzas/extraordinarios": "expenses",
   "/finanzas/dolares": "dollars",
   "/finanzas/aguinaldo": "aguinaldo",
@@ -84,6 +84,7 @@ const MODULE_PATHS = Object.fromEntries(
 );
 MODULE_PATHS.expenses = "/finanzas/gastos";
 MODULE_PATHS.payments = "/finanzas/pagos";
+MODULE_PATHS.cards = "/finanzas/tarjetas";
 
 const EXPENSE_TABS = [
   { id: "department", label: "Departamento" },
@@ -96,6 +97,11 @@ const EXPENSE_TABS = [
 const PAYMENT_TABS = [
   { id: "registry", label: "Registro mensual" },
   { id: "history", label: "Historial" },
+];
+
+const CARD_TABS = [
+  { id: "cards", label: "Tarjetas" },
+  { id: "projection", label: "Proyección" },
 ];
 
 function getModuleFromPath(pathname) {
@@ -118,6 +124,11 @@ function getExpenseCategoryFromPath(pathname, search = window.location.search) {
 function getPaymentTabFromPath(pathname, search = window.location.search) {
   if (pathname === "/finanzas/historial") return "history";
   return new URLSearchParams(search).get("vista") === "historial" ? "history" : "registry";
+}
+
+function getCardTabFromPath(pathname, search = window.location.search) {
+  if (pathname === "/finanzas/deuda-cuotas") return "projection";
+  return new URLSearchParams(search).get("vista") === "proyeccion" ? "projection" : "cards";
 }
 
 const DEMO_PROFILE = {
@@ -231,6 +242,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const [activeModule, setActiveModule] = useState(() => getModuleFromPath(window.location.pathname));
   const [activeExpenseCategory, setActiveExpenseCategory] = useState(() => getExpenseCategoryFromPath(window.location.pathname));
   const [activePaymentTab, setActivePaymentTab] = useState(() => getPaymentTabFromPath(window.location.pathname));
+  const [activeCardTab, setActiveCardTab] = useState(() => getCardTabFromPath(window.location.pathname));
   const [selectedBankId, setSelectedBankId] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(!isDemoMode);
@@ -239,7 +251,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [dashboardMonthOffset, setDashboardMonthOffset] = useState(1);
+  const dashboardMonthOffset = 1;
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(() => {
     return localStorage.getItem("header-collapsed") === "true";
   });
@@ -263,6 +275,9 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       if (nextModule === "payments") {
         setActivePaymentTab(getPaymentTabFromPath(pathname, window.location.search));
       }
+      if (nextModule === "cards") {
+        setActiveCardTab(getCardTabFromPath(pathname, window.location.search));
+      }
       setIsSidebarOpen(false);
     }
 
@@ -273,6 +288,11 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   }, []);
 
   function openModule(module) {
+    if (module === "projection") {
+      selectCardTab("projection");
+      setIsSidebarOpen(false);
+      return;
+    }
     const nextPath = MODULE_PATHS[module] ?? "/finanzas";
 
     if (`${window.location.pathname}${window.location.search}` !== nextPath) {
@@ -280,6 +300,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     }
 
     setActiveModule(module);
+    if (module === "cards") setActiveCardTab("cards");
     if (module === "expenses") setActiveExpenseCategory("department");
     if (module === "payments") setActivePaymentTab("registry");
     setIsSidebarOpen(false);
@@ -294,6 +315,13 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   function selectPaymentTab(tab) {
     setActivePaymentTab(tab);
     const nextUrl = tab === "history" ? "/finanzas/pagos?vista=historial" : "/finanzas/pagos";
+    window.history.replaceState({}, "", nextUrl);
+  }
+
+  function selectCardTab(tab) {
+    setActiveCardTab(tab);
+    setActiveModule("cards");
+    const nextUrl = tab === "projection" ? "/finanzas/tarjetas?vista=proyeccion" : "/finanzas/tarjetas";
     window.history.replaceState({}, "", nextUrl);
   }
 
@@ -395,11 +423,6 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const currentStatementMonth = getCalendarMonth(0);
   const dashboardPaymentMonth = getCalendarMonth(dashboardMonthOffset);
   const dashboardPreviousPaymentMonth = getCalendarMonth(dashboardMonthOffset - 1);
-  const dashboardMonthOptions = [0, 1].map((offset) => ({
-    label: offset === 0 ? "Mes actual" : "Mes siguiente",
-    offset,
-    title: getCalendarMonth(offset).title,
-  }));
   const registryServices = useMemo(
     () => buildRegistryServices(data, banksWithTotals, 0, true),
     [banksWithTotals, data],
@@ -407,6 +430,11 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const dashboardServices = useMemo(
     () => buildRegistryServices(data, banksWithTotals, dashboardMonthOffset),
     [banksWithTotals, dashboardMonthOffset, data],
+  );
+  const transferMonth = getCalendarMonth(0);
+  const transferServices = useMemo(
+    () => buildRegistryServices(data, banksWithTotals, 0),
+    [banksWithTotals, data],
   );
   const currentCardPaymentKey = selectedCard
     ? getPaymentKey(upcomingCardPaymentMonth.year, upcomingCardPaymentMonth.monthIndex, `card:${selectedCard.id}`)
@@ -424,7 +452,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       }),
     [banksWithTotals, data],
   );
-  const currentDashboardSummary = useMemo(
+  const previousDashboardSummary = useMemo(
     () =>
       buildDashboardSummary({
         banks: banksWithTotals,
@@ -472,6 +500,17 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
         year: dashboardPaymentMonth.year,
       }),
     [dashboardPaymentMonth, dashboardServices, data.paymentDetails, data.paymentRegistry],
+  );
+  const transferMonthAccounts = useMemo(
+    () =>
+      buildDebitTransferSummary({
+        monthIndex: transferMonth.monthIndex,
+        paymentDetails: data.paymentDetails,
+        paymentRegistry: data.paymentRegistry,
+        services: transferServices,
+        year: transferMonth.year,
+      }),
+    [data.paymentDetails, data.paymentRegistry, transferMonth, transferServices],
   );
   const dashboardPreviousPaymentPeriod = getPaymentPeriod(
     dashboardPreviousPaymentMonth.year,
@@ -1291,13 +1330,13 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
     });
   }
 
-  function setPaymentStatus(year, monthIndex, serviceId, status) {
+  function setPaymentStatus(year, monthIndex, serviceId, status, services = registryServices) {
     if (String(serviceId).startsWith("card:")) {
       return;
     }
 
     const key = getPaymentKey(year, monthIndex, serviceId);
-    const service = registryServices.find((item) => item.id === serviceId);
+    const service = services.find((item) => item.id === serviceId);
     const period = getPaymentPeriod(year, monthIndex);
     const isFinalStatus = status === "paid" || status === "debited";
     const isTransferredStatus = status === "transferred";
@@ -1323,7 +1362,11 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
             delete nextDetails[key];
           } else {
             const expectedAmount = Number(previousDetail.expectedAmount) || service?.amount || 0;
-            const movementAt = previousDetail.paidAt || new Date().toISOString();
+            const movementAt = isTransferredStatus
+              ? previousDetail.paidAt || new Date().toISOString()
+              : status === "debited"
+                ? new Date().toISOString()
+                : previousDetail.paidAt || new Date().toISOString();
             const paidAt = isFinalStatus || isTransferredStatus ? movementAt : "";
             const paidAmount =
               isFinalStatus || isTransferredStatus ? Number(previousDetail.paidAmount) || expectedAmount : 0;
@@ -1348,7 +1391,11 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
                   id: crypto.randomUUID(),
                   items: [],
                   method: service?.paymentCard ?? previousDetail.method ?? "",
-                  notes: isTransferredStatus ? "Transferido, pendiente de débito." : previousDetail.notes ?? "",
+              notes: isTransferredStatus
+                ? "Transferido, pendiente de débito."
+                : status === "debited"
+                  ? "Débito confirmado."
+                  : previousDetail.notes ?? "",
                   paidAmount,
                   paidAt: paidAt || new Date().toISOString(),
                   period,
@@ -1372,6 +1419,82 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           };
         }),
       title: "Modificar registro",
+    });
+  }
+
+  function markAccountTransferred(year, monthIndex, accountName, serviceIds, services = dashboardServices) {
+    const serviceIdSet = new Set(serviceIds.filter(Boolean));
+    const servicesToTransfer = services.filter(
+      (service) => serviceIdSet.has(service.id) && service.paymentCard === accountName,
+    );
+    if (!servicesToTransfer.length) return;
+
+    const period = getPaymentPeriod(year, monthIndex);
+    const movementAt = new Date().toISOString();
+    const monthTitle = new Date(year, monthIndex, 1).toLocaleDateString("es-AR", {
+      month: "long",
+      year: "numeric",
+    });
+
+    requestConfirmation({
+      confirmLabel: "Marcar transferido",
+      message: `Se marcarán ${servicesToTransfer.length} gastos de ${accountName} como transferidos para ${monthTitle}. Luego podrás confirmar cada débito por separado.`,
+      onConfirm: () =>
+        setData((current) => {
+          const nextDetails = { ...current.paymentDetails };
+          const nextRegistry = { ...current.paymentRegistry };
+          let nextHistory = [...current.paymentHistory];
+
+          servicesToTransfer.forEach((service) => {
+            const key = getPaymentKey(year, monthIndex, service.id);
+            const previousDetail = current.paymentDetails[key] ?? {};
+            const isAlreadyMoved = Boolean(current.paymentRegistry[key] || previousDetail.paid)
+              || Boolean(previousDetail.transferred)
+              || previousDetail.status === "transferred"
+              || previousDetail.status === "debited"
+              || previousDetail.status === "paid";
+            if (isAlreadyMoved) return;
+
+            const expectedAmount = Number(previousDetail.expectedAmount) || Number(service.amount) || 0;
+            nextDetails[key] = {
+              ...previousDetail,
+              expectedAmount,
+              method: service.paymentCard ?? previousDetail.method ?? "",
+              notes: "Transferido, pendiente de débito.",
+              paid: false,
+              paidAmount: expectedAmount,
+              paidAt: movementAt,
+              status: "transferred",
+              transferred: true,
+            };
+            nextRegistry[key] = false;
+            nextHistory = [
+              {
+                category: service.category ?? "",
+                expectedAmount,
+                id: crypto.randomUUID(),
+                items: [],
+                method: service.paymentCard ?? "",
+                notes: "Transferido, pendiente de débito.",
+                paidAmount: expectedAmount,
+                paidAt: movementAt,
+                period,
+                serviceId: service.id,
+                serviceName: service.name,
+                type: "manual_transfer",
+              },
+              ...nextHistory.filter((item) => !(item.serviceId === service.id && item.period === period)),
+            ];
+          });
+
+          return {
+            ...current,
+            paymentDetails: nextDetails,
+            paymentHistory: nextHistory,
+            paymentRegistry: nextRegistry,
+          };
+        }),
+      title: "Registrar transferencia",
     });
   }
 
@@ -1475,7 +1598,6 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       title: "Tarjetas",
       items: [
         { id: "cards", label: "Tarjetas de Crédito", icon: CreditCard },
-        { id: "projection", label: "Deuda y Cuotas", icon: BarChart3 },
       ],
     },
     {
@@ -1602,43 +1724,54 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           {activeModule === "dashboard" ? (
         <DashboardModule
           accountFlow={accountFlow}
-          currentMonthSummary={currentDashboardSummary}
-          debitTransfers={dashboardDebitTransfers}
+          previousMonthSummary={previousDashboardSummary}
+          transferAccounts={transferMonthAccounts}
+          transferMonth={transferMonth}
+          transferServices={transferServices}
           disappearingExpenses={disappearingCardExpenses}
           dueItems={dashboardDueItems}
-          history={data.paymentHistory}
-          monthOptions={dashboardMonthOptions}
-          monthZeroDate={data.monthZeroDate}
-          nextMonthSummary={dashboardSummary}
-          onSelectMonth={setDashboardMonthOffset}
-          selectedMonthOffset={dashboardMonthOffset}
+          onMarkAccountTransferred={markAccountTransferred}
+          monthSummary={dashboardSummary}
+          onSetPaymentStatus={setPaymentStatus}
           topExpenses={topDashboardExpenses}
           upcomingCardExpenses={upcomingCardExpenses}
         />
       ) : activeModule === "cards" ? (
-        <CardsModule
-          addBank={addBank}
-          addCard={addCard}
-          addExpense={addExpense}
-          banks={banksWithTotals}
-          fixedCategories={data.cardFixedCategories}
-          removeBank={removeBank}
-          removeCard={removeCard}
-          removeExpense={removeExpense}
-          selectBank={selectBank}
-          selectedBank={selectedBank}
-          selectedBankId={selectedBankId}
-          selectedCard={selectedCard}
-          selectedCardId={selectedCardId}
-          setSelectedCardId={setSelectedCardId}
-          isSelectedCardPaidForPaymentMonth={isSelectedCardPaidForPaymentMonth}
-          onRegisterCardPayment={registerCardPayment}
-          paymentMonthTitle={upcomingCardPaymentMonth.title}
-          statementMonthTitle={currentStatementMonth.title}
-          updateBank={updateBank}
-          updateCard={updateCard}
-          updateExpense={updateExpense}
-        />
+        <div className="cards-section-shell">
+          <SectionTabs
+            activeId={activeCardTab}
+            ariaLabel="Vistas de tarjetas"
+            onSelect={selectCardTab}
+            tabs={CARD_TABS}
+          />
+          {activeCardTab === "projection" ? (
+            <ProjectionModule banks={banksWithTotals} />
+          ) : (
+            <CardsModule
+              addBank={addBank}
+              addCard={addCard}
+              addExpense={addExpense}
+              banks={banksWithTotals}
+              fixedCategories={data.cardFixedCategories}
+              removeBank={removeBank}
+              removeCard={removeCard}
+              removeExpense={removeExpense}
+              selectBank={selectBank}
+              selectedBank={selectedBank}
+              selectedBankId={selectedBankId}
+              selectedCard={selectedCard}
+              selectedCardId={selectedCardId}
+              setSelectedCardId={setSelectedCardId}
+              isSelectedCardPaidForPaymentMonth={isSelectedCardPaidForPaymentMonth}
+              onRegisterCardPayment={registerCardPayment}
+              paymentMonthTitle={upcomingCardPaymentMonth.title}
+              statementMonthTitle={currentStatementMonth.title}
+              updateBank={updateBank}
+              updateCard={updateCard}
+              updateExpense={updateExpense}
+            />
+          )}
+        </div>
       ) : activeModule === "settings" ? (
         <SettingsModule
           expensesTotal={nextMonthSummary.totalExpenses}
@@ -1656,8 +1789,6 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           onUpdateDebitCard={updateDebitCard}
           onUpdateOtherIncome={updateOtherIncome}
         />
-      ) : activeModule === "projection" ? (
-        <ProjectionModule banks={banksWithTotals} />
       ) : activeModule === "dollars" ? (
         <DollarPurchaseModule onAddPurchase={addDollarPurchase} />
       ) : activeModule === "aguinaldo" ? (
@@ -1879,7 +2010,9 @@ function buildDebitTransferSummary({ monthIndex, paymentDetails, paymentRegistry
       account.items.push({
         amount,
         category: service.category,
+        dueDay: service.dueDay,
         name: service.name,
+        serviceId: service.id,
         status: isDebitedOrPaid ? "debited" : isTransferred ? "transferred" : "pending",
       });
 

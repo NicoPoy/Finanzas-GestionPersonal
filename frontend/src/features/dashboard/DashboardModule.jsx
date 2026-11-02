@@ -1,6 +1,6 @@
-import React, { useState } from "react";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   Banknote,
   CalendarClock,
   CheckCircle2,
@@ -17,132 +17,80 @@ import "./dashboard.css";
 
 export default function DashboardModule({
   accountFlow,
-  currentMonthSummary,
-  debitTransfers = [],
+  previousMonthSummary,
   disappearingExpenses = [],
   dueItems,
-  history,
-  monthOptions = [],
-  monthZeroDate,
-  nextMonthSummary,
-  onSelectMonth,
-  selectedMonthOffset,
+  monthSummary,
+  onMarkAccountTransferred,
+  onSetPaymentStatus,
+  transferAccounts = [],
+  transferMonth,
+  transferServices = [],
   topExpenses = [],
   upcomingCardExpenses = [],
 }) {
-  const currentMonthPeriod = getSummaryPeriod(currentMonthSummary);
-  const currentMonthEntries = history.filter((item) => item.period === currentMonthPeriod && item.type !== "other_income");
-  const cardPayments = buildCardPaymentSummaries(currentMonthEntries.filter(isCardPayment));
-  const currentMonthHistory = currentMonthEntries.filter((item) => !isCardPayment(item)).slice(0, 6);
-  const cardPaymentsTotal = cardPayments.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
-  const isMonthZero = isSummaryMonthZero(currentMonthSummary, monthZeroDate);
-  const totalIncome = nextMonthSummary.salary || 0;
-  const cardsPercent = getPercent(nextMonthSummary.cardExpenses, totalIncome);
-  const fixedPercent = getPercent(nextMonthSummary.fixedExpenses, totalIncome);
-  const totalPercent = getPercent(nextMonthSummary.totalExpenses, totalIncome);
-  const health = getFinancialHealth(nextMonthSummary, totalPercent);
-  const dueStats = getDueStats(dueItems);
-  const paidThisMonth = currentMonthEntries.reduce((sum, item) => sum + (Number(item.paidAmount) || 0), 0);
-  const transferTotal = debitTransfers.reduce((sum, account) => sum + account.pendingTransfer, 0);
-  const pendingDebitTotal = debitTransfers.reduce((sum, account) => sum + account.pendingDebit, 0);
+  const totalIncome = monthSummary.salary || 0;
+  const cardsPercent = getPercent(monthSummary.cardExpenses, totalIncome);
+  const fixedPercent = getPercent(monthSummary.fixedExpenses, totalIncome);
+  const totalPercent = getPercent(monthSummary.totalExpenses, totalIncome);
+  const health = getFinancialHealth(monthSummary, totalPercent);
   const topExpensesTotal = topExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const disappearingTotal = disappearingExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const visibleTopExpenses = topExpenses.slice(0, 5);
   const topExpenseGroups = buildExpenseGroups(topExpenses);
-  const currentActions = buildCurrentActions({ debitTransfers, dueItems });
   const planningActions = buildPlanningActions({
     cardsPercent,
     disappearingTotal,
     dueItems,
     health,
-    nextMonthSummary,
+    nextMonthSummary: monthSummary,
     totalPercent,
     upcomingCardExpenses,
   });
-  const trendComparison = buildTrendComparison(currentMonthSummary, nextMonthSummary);
-  const riskRanking = buildRiskRanking({ cardsPercent, dueItems, nextMonthSummary, topExpenseGroups, totalPercent, upcomingCardExpenses });
-  const closeChecklist = buildCloseChecklist({ cardPaymentsTotal, currentMonthSummary, dueStats, pendingDebitTotal, transferTotal });
-  const isCurrentMonthView = selectedMonthOffset === 0;
-  const [activeTab, setActiveTab] = useState("actions");
-  const tabs = isCurrentMonthView
-    ? [
-        { id: "actions", label: "Qué hacer" },
-        { id: "payments", label: "Pagos" },
-        { id: "accounts", label: "Cuentas" },
-      ]
-    : [
-        { id: "actions", label: "Qué hacer" },
-        { id: "expenses", label: "Gastos" },
-        { id: "accounts", label: "Cuentas" },
-        { id: "analysis", label: "Análisis" },
-      ];
+  const trendComparison = buildTrendComparison(previousMonthSummary, monthSummary);
+  const riskRanking = buildRiskRanking({ cardsPercent, dueItems, nextMonthSummary: monthSummary, topExpenseGroups, totalPercent, upcomingCardExpenses });
+  const activeTab = "actions";
 
   return (
     <section className="dashboard-view">
-      <section className={`dashboard-hero ${isCurrentMonthView ? "dashboard-hero-menu-only" : ""}`}>
+      <section className="dashboard-hero">
         <div className="dashboard-hero-copy">
           <span className="dashboard-kicker">
             <LayoutDashboard size={18} />
             Centro de control
           </span>
-          <h2>{isCurrentMonthView ? "Seguimiento del mes actual" : "Así está parado tu próximo sueldo"}</h2>
-          {!isCurrentMonthView ? (
-            <p>
-              {nextMonthSummary.monthTitle}: cuánto entra, cuánto está comprometido y cuánto queda disponible.
-            </p>
-          ) : null}
-          <DashboardMonthMenu
-            monthOptions={monthOptions}
-            onSelectMonth={(offset) => {
-              setActiveTab("actions");
-              onSelectMonth?.(offset);
-            }}
-            selectedMonthOffset={selectedMonthOffset}
-          />
+          <span className="dashboard-period-badge"><CalendarClock size={15} /> Proyección para {monthSummary.monthTitle}</span>
+          <h2>Así está parado tu próximo sueldo</h2>
+          <p>{monthSummary.monthTitle}: cuánto entra, cuánto está comprometido y cuánto queda disponible.</p>
         </div>
 
-        {!isCurrentMonthView ? (
-          <article className={`dashboard-health dashboard-health-${health.tone}`}>
-            <span>{health.label}</span>
-            <strong>{currency.format(nextMonthSummary.remaining)}</strong>
-            <small>{health.description}</small>
-          </article>
-        ) : null}
+        <article className={`dashboard-health dashboard-health-${health.tone}`}>
+          <span>{health.label}</span>
+          <strong>{currency.format(monthSummary.remaining)}</strong>
+          <small>{health.description}</small>
+        </article>
       </section>
 
-      {!isCurrentMonthView ? (
-        <section className="dashboard-main-grid dashboard-main-grid-compact" aria-label="Resumen del próximo sueldo">
-          <DashboardMetric detail="Sueldo configurado más otros ingresos." icon={<Banknote size={21} />} label="Ingresos disponibles" tone="income" value={currency.format(nextMonthSummary.salary)} />
-          <DashboardMetric detail={`${cardsPercent}% de tus ingresos.`} icon={<CreditCard size={21} />} label="Tarjetas" tone="cards" value={currency.format(nextMonthSummary.cardExpenses)} />
-          <DashboardMetric detail={`Fijos y compras mensuales: ${fixedPercent}% del ingreso.`} icon={<Home size={21} />} label="Gastos obligatorios" tone="fixed" value={currency.format(nextMonthSummary.fixedExpenses)} />
-          <DashboardMetric detail={`Tarjetas, fijos y extraordinarios: ${totalPercent}% del ingreso.`} icon={<Wallet size={21} />} label="Gasto proyectado" tone="total" value={currency.format(nextMonthSummary.totalExpenses)} />
-        </section>
-      ) : null}
+      <section className="dashboard-main-grid dashboard-main-grid-compact" aria-label="Resumen del próximo sueldo">
+        <DashboardMetric detail="Sueldo configurado más otros ingresos." icon={<Banknote size={21} />} label="Ingresos disponibles" tone="income" value={currency.format(monthSummary.salary)} />
+        <DashboardMetric detail={`${cardsPercent}% de tus ingresos.`} icon={<CreditCard size={21} />} label="Tarjetas" tone="cards" value={currency.format(monthSummary.cardExpenses)} />
+        <DashboardMetric detail={`Fijos y compras mensuales: ${fixedPercent}% del ingreso.`} icon={<Home size={21} />} label="Gastos obligatorios" tone="fixed" value={currency.format(monthSummary.fixedExpenses)} />
+        <DashboardMetric detail={`Tarjetas, fijos y extraordinarios: ${totalPercent}% del ingreso.`} icon={<Wallet size={21} />} label="Gasto proyectado" tone="total" value={currency.format(monthSummary.totalExpenses)} />
+      </section>
 
-      <DashboardTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
-
-      {isCurrentMonthView ? (
-        <CurrentOperationsSection
-          activeTab={activeTab}
-          cardPayments={cardPayments}
-          cardPaymentsTotal={cardPaymentsTotal}
-          closeChecklist={closeChecklist}
-          currentActions={currentActions}
-          currentMonthHistory={currentMonthHistory}
-          currentMonthSummary={currentMonthSummary}
-          debitTransfers={debitTransfers}
-          dueItems={dueItems}
-          dueStats={dueStats}
-          isMonthZero={isMonthZero}
-          paidThisMonth={paidThisMonth}
-          pendingDebitTotal={pendingDebitTotal}
-          transferTotal={transferTotal}
-        />
-      ) : (
-        <>
+      <>
           {activeTab === "actions" ? (
             <section className="dashboard-tab-content dashboard-action-content" aria-label="Qué hacer ahora">
               <ActionPanel actions={planningActions} title="Qué conviene mirar ahora" />
+              <TransferScheduleSection
+                accounts={transferAccounts}
+                monthIndex={transferMonth.monthIndex}
+                monthTitle={transferMonth.title}
+                onMarkAccountTransferred={onMarkAccountTransferred}
+                onSetPaymentStatus={onSetPaymentStatus}
+                paymentServices={transferServices}
+                year={transferMonth.year}
+              />
             </section>
           ) : null}
 
@@ -167,9 +115,9 @@ export default function DashboardModule({
               </div>
 
               <div className="dashboard-mini-breakdown">
-                <BreakdownRow label="Tarjetas" value={nextMonthSummary.cardExpenses} note="Resumen que se paga con este sueldo" />
-                <BreakdownRow label="Gastos obligatorios" value={nextMonthSummary.fixedExpenses} note="Fijos, compras mensuales y recurrentes" />
-                <BreakdownRow label="Extraordinarios" value={nextMonthSummary.extraordinaryExpenses} note="Gastos puntuales cargados para este periodo" />
+                <BreakdownRow label="Tarjetas" value={monthSummary.cardExpenses} note="Resumen que se paga este mes" />
+                <BreakdownRow label="Gastos obligatorios" value={monthSummary.fixedExpenses} note="Fijos, compras mensuales y recurrentes" />
+                <BreakdownRow label="Extraordinarios" value={monthSummary.extraordinaryExpenses} note="Gastos puntuales cargados para este mes" />
               </div>
             </article>
           <section className="dashboard-insights-grid dashboard-insights-grid-focused">
@@ -315,8 +263,7 @@ export default function DashboardModule({
               <GlossaryPanel />
             </section>
           ) : null}
-        </>
-      )}
+      </>
     </section>
   );
 }
@@ -327,7 +274,7 @@ function TrendComparisonCard({ comparison }) {
       <div className="dashboard-panel-heading">
         <div>
           <span className="dashboard-panel-kicker">Comparación</span>
-          <h3>Contra el mes actual</h3>
+          <h3>Contra el mes anterior</h3>
         </div>
         <TrendingDown size={22} />
       </div>
@@ -627,43 +574,102 @@ function ActionPanel({ actions, title }) {
   );
 }
 
-function DashboardMonthMenu({ monthOptions, onSelectMonth, selectedMonthOffset }) {
-  if (!monthOptions.length) {
-    return null;
-  }
+function TransferScheduleSection({
+  accounts = [],
+  monthIndex,
+  monthTitle,
+  onMarkAccountTransferred,
+  onSetPaymentStatus,
+  paymentServices,
+  year,
+}) {
+  const activeAccounts = accounts.filter((account) => account.pendingTransfer > 0 || account.pendingDebit > 0);
+  const transferTotal = activeAccounts.reduce((sum, account) => sum + account.pendingTransfer, 0);
 
   return (
-    <div className="dashboard-month-menu" aria-label="Elegir mes del dashboard">
-      {monthOptions.map((option) => (
-        <button
-          className={option.offset === selectedMonthOffset ? "active" : ""}
-          key={option.offset}
-          onClick={() => onSelectMonth?.(option.offset)}
-          type="button"
-        >
-          <span>{option.label}</span>
-          <strong>{option.title}</strong>
-        </button>
-      ))}
-    </div>
-  );
-}
+    <article className="dashboard-panel dashboard-transfer-schedule">
+      <div className="dashboard-panel-heading">
+        <div>
+          <span className="dashboard-panel-kicker">Mes actual</span>
+          <h3>Transferencias y débitos por cuenta</h3>
+          <p>Pagos de {monthTitle}. El seguimiento empieza de nuevo el día 1 de cada mes.</p>
+        </div>
+        <div className="dashboard-transfer-total">
+          <span>Total a transferir</span>
+          <strong>{currency.format(transferTotal)}</strong>
+        </div>
+      </div>
 
-function DashboardTabs({ activeTab, onChange, tabs }) {
-  return (
-    <nav className="dashboard-tabs" aria-label="Secciones del dashboard">
-      {tabs.map((tab) => (
-        <button
-          aria-current={activeTab === tab.id ? "page" : undefined}
-          className={activeTab === tab.id ? "active" : ""}
-          key={tab.id}
-          onClick={() => onChange(tab.id)}
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
-    </nav>
+      {activeAccounts.length ? (
+        <div className="dashboard-transfer-schedule-list">
+          {activeAccounts.map((account) => {
+            const pendingItems = account.items.filter((item) => item.status === "pending" && item.amount > 0);
+            const transferredItems = account.items.filter((item) => item.status === "transferred" && item.amount > 0);
+            const nearestDueDay = pendingItems.reduce(
+              (nearest, item) => Math.min(nearest, Number(item.dueDay) || 31),
+              31,
+            );
+
+            return (
+              <article className="dashboard-transfer-account" key={account.account}>
+                <div className="dashboard-transfer-schedule-row">
+                  <div className="dashboard-transfer-account-name">
+                    <strong>{account.account}</strong>
+                    <small>
+                      {account.pendingTransfer > 0
+                        ? `${pendingItems.length} ${pendingItems.length === 1 ? "pago" : "pagos"} pendientes de fondeo`
+                        : "Transferencia realizada"}
+                    </small>
+                  </div>
+                  {account.pendingTransfer > 0 ? (
+                    <>
+                      <span className="dashboard-transfer-due"><CalendarClock size={16} /> Transferir antes del día {nearestDueDay}</span>
+                      <strong className="dashboard-transfer-amount">{currency.format(account.pendingTransfer)}</strong>
+                      <button
+                        className="dashboard-transfer-action"
+                        onClick={() => onMarkAccountTransferred?.(
+                          year,
+                          monthIndex,
+                          account.account,
+                          pendingItems.map((item) => item.serviceId),
+                          paymentServices,
+                        )}
+                        type="button"
+                      >
+                        <ArrowRightLeft size={16} /> Marcar transferido
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+                {transferredItems.length ? (
+                  <div className="dashboard-debit-checklist">
+                    <span className="dashboard-debit-checklist-title">Pendiente de débito</span>
+                    {transferredItems.map((item) => (
+                      <div className="dashboard-debit-checklist-row" key={item.serviceId}>
+                        <span>
+                          <strong>{item.name}</strong>
+                          <small>{item.category}</small>
+                        </span>
+                        <b>{currency.format(item.amount)}</b>
+                        <button
+                          className="dashboard-debit-action"
+                          onClick={() => onSetPaymentStatus?.(year, monthIndex, item.serviceId, "debited", paymentServices)}
+                          type="button"
+                        >
+                          <CreditCard size={15} /> Marcar debitado
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="panel-empty">No hay transferencias ni débitos pendientes para este mes.</p>
+      )}
+    </article>
   );
 }
 
@@ -918,24 +924,23 @@ function buildCloseChecklist({ cardPaymentsTotal, currentMonthSummary, dueStats,
   ];
 }
 
-function buildTrendComparison(currentSummary, nextSummary) {
-  const currentIncome = currentSummary.salary || 0;
-  const nextIncome = nextSummary.salary || 0;
-  const expenseDelta = (nextSummary.totalExpenses || 0) - (currentSummary.totalExpenses || 0);
-  const cardDelta = (nextSummary.cardExpenses || 0) - (currentSummary.cardExpenses || 0);
-  const remainingDelta = (nextSummary.remaining || 0) - (currentSummary.remaining || 0);
-  const currentCardsPercent = getPercent(currentSummary.cardExpenses, currentIncome);
-  const nextCardsPercent = getPercent(nextSummary.cardExpenses, nextIncome);
+function buildTrendComparison(previousSummary, monthSummary) {
+  const previousIncome = previousSummary.salary || 0;
+  const currentIncome = monthSummary.salary || 0;
+  const expenseDelta = (monthSummary.totalExpenses || 0) - (previousSummary.totalExpenses || 0);
+  const remainingDelta = (monthSummary.remaining || 0) - (previousSummary.remaining || 0);
+  const previousCardsPercent = getPercent(previousSummary.cardExpenses, previousIncome);
+  const currentCardsPercent = getPercent(monthSummary.cardExpenses, currentIncome);
 
   return [
-    buildTrendItem("Gasto proyectado", expenseDelta, "Vas a gastar", "menos que el mes actual", "mas que el mes actual", true),
+    buildTrendItem("Gasto del mes", expenseDelta, "Gastaste", "menos que el mes anterior", "más que el mes anterior", true),
     {
-      description: nextCardsPercent === currentCardsPercent
+      description: currentCardsPercent === previousCardsPercent
         ? "El peso de tarjetas se mantiene igual."
-        : `Tarjetas ${nextCardsPercent > currentCardsPercent ? "suben" : "bajan"} ${Math.abs(nextCardsPercent - currentCardsPercent)} puntos contra el mes actual.`,
+        : `Tarjetas ${currentCardsPercent > previousCardsPercent ? "suben" : "bajan"} ${Math.abs(currentCardsPercent - previousCardsPercent)} puntos contra el mes anterior.`,
       label: "Tarjetas",
-      tone: nextCardsPercent > currentCardsPercent ? "warning" : nextCardsPercent < currentCardsPercent ? "success" : "neutral",
-      value: `${nextCardsPercent}%`,
+      tone: currentCardsPercent > previousCardsPercent ? "warning" : currentCardsPercent < previousCardsPercent ? "success" : "neutral",
+      value: `${currentCardsPercent}%`,
     },
     buildTrendItem("Dinero libre", remainingDelta, "Quedaria", "menos libre", "mas libre", false),
   ];
@@ -946,10 +951,10 @@ function buildTrendItem(label, delta, prefix, negativeText, positiveText, lowerI
   const isNeutral = delta === 0;
   const isPositive = delta > 0;
   const tone = isNeutral ? "neutral" : lowerIsBetter ? (isPositive ? "warning" : "success") : (isPositive ? "success" : "warning");
-  const direction = isNeutral ? "igual que el mes actual" : isPositive ? positiveText : negativeText;
+  const direction = isNeutral ? "igual que el mes anterior" : isPositive ? positiveText : negativeText;
 
   return {
-    description: isNeutral ? `${prefix} igual que el mes actual.` : `${prefix} ${amount} ${direction}.`,
+    description: isNeutral ? `${prefix} igual que el mes anterior.` : `${prefix} ${amount} ${direction}.`,
     label,
     tone,
     value: isNeutral ? "Sin cambio" : `${isPositive ? "+" : "-"}${amount}`,

@@ -1,3 +1,9 @@
+.cards-section-shell {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .cards-workspace {
   align-items: start;
   grid-template-columns: minmax(0, 1fr);
