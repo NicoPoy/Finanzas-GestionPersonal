@@ -104,18 +104,10 @@ export default function CardsModule({
         {selectedBank && selectedCard ? (
           <>
             <div className="section-heading card-main-heading" style={{ "--card-accent": selectedCard.accent || "#5db6c6" }}>
-              <div>
+              <div className="card-main-identity">
                 <p>{selectedBank.name}</p>
                 <h2>{selectedCard.name}</h2>
-                <small className="card-statement-note">
-                  Proximo resumen cierra en {statementMonthTitle} (dia {selectedCard.dueDay ?? 10}) · se paga con
-                  sueldo de {paymentMonthTitle}
-                </small>
-                <div className="card-hero-stats" aria-label="Resumen de tarjeta">
-                  <CardHeroStat label="Este mes" value={currency.format(selectedCard.monthlyTotal)} />
-                  <CardHeroStat label="Deuda total" value={currency.format(selectedCard.totalDebt)} />
-                  <CardHeroStat label="Ahorrado" value={currency.format(selectedCard.savingsTotal)} />
-                </div>
+                <small className="card-statement-note">Se paga con sueldo de {paymentMonthTitle}</small>
               </div>
               <div className="section-heading-actions card-heading-actions">
                 <label className="due-control">
@@ -155,6 +147,12 @@ export default function CardsModule({
                 </button>
                 <CreditCard size={34} strokeWidth={1.7} />
               </div>
+              <div className="card-hero-stats" aria-label="Resumen de tarjeta">
+                <CardHeroStat label="Este mes" tone="amount" value={currency.format(selectedCard.monthlyTotal)} />
+                <CardHeroStat label="Deuda pendiente" tone="debt" value={currency.format(selectedCard.totalDebt)} />
+                <CardHeroStat detail={statementMonthTitle} label="Cierre del resumen" tone="closing" value={`${selectedCard.dueDay ?? 10}`} />
+                <CardHeroStat label="Ahorro aplicado" secondary value={currency.format(selectedCard.savingsTotal)} />
+              </div>
             </div>
 
             <div className="expense-entry-panel">
@@ -193,11 +191,12 @@ export default function CardsModule({
   );
 }
 
-function CardHeroStat({ label, value }) {
+function CardHeroStat({ detail, label, secondary = false, tone = "", value }) {
   return (
-    <article className="card-hero-stat">
+    <article className={`card-hero-stat ${tone ? `card-hero-stat-${tone}` : ""} ${secondary ? "card-hero-stat-secondary" : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
+      {detail ? <small>{detail}</small> : null}
     </article>
   );
 }

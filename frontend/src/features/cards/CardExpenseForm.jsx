@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Plus, Split, UserRound } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Plus, Split, UserRound } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 
 // Formulario de consumos de tarjeta. Soporta cuotas, compra unica y gasto fijo recurrente.
@@ -15,6 +15,7 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
   const [fixedCategoryError, setFixedCategoryError] = useState("");
   const [paymentShare, setPaymentShare] = useState("self");
   const [validationErrors, setValidationErrors] = useState({});
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -54,6 +55,7 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
       fixedCategory: "",
       installments: isFixed ? 0 : parsedInstallments,
       isFixed,
+      purchaseType: expenseType,
       isPaidByOther: paymentShare === "other",
       isSharedHalf: paymentShare === "half",
     };
@@ -77,6 +79,17 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
     setExpenseType("installments");
     setPaymentShare("self");
     setValidationErrors({});
+    setShowAdvancedOptions(false);
+  }
+
+  function togglePaymentShare(share) {
+    const nextShare = paymentShare === share ? "self" : share;
+    setPaymentShare(nextShare);
+
+    if (nextShare === "other") {
+      setSavings("");
+      setValidationErrors((current) => ({ ...current, savings: "" }));
+    }
   }
 
   function cancelExpenseConfirmation() {
@@ -100,7 +113,7 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
 
   return (
     <>
-    <form className="expense-form card-expense-form" onSubmit={handleSubmit}>
+    <form className={`expense-form card-expense-form card-expense-form-${expenseType}`} onSubmit={handleSubmit}>
       <label className={`card-origin-field ${validationErrors.origin ? "field-error" : ""}`}>
         Origen
         <input
@@ -142,26 +155,27 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
         </div>
       </div>
 
-      <label className={`card-installments-field ${validationErrors.installments ? "field-error" : ""}`}>
-        Cuotas pendientes
-        <input
-          disabled={expenseType !== "installments"}
-          min="1"
-          placeholder={expenseType === "installments" ? "0" : "No disponible"}
-          type="number"
-          value={expenseType === "installments" ? installments : expenseType === "single" ? "1" : ""}
-          onChange={(event) => {
-            setInstallments(event.target.value);
-            setValidationErrors((current) => ({ ...current, installments: "" }));
-          }}
-        />
-        {validationErrors.installments ? (
-          <small className="field-error-message">{validationErrors.installments}</small>
-        ) : null}
-      </label>
+      {expenseType === "installments" ? (
+        <label className={`card-installments-field ${validationErrors.installments ? "field-error" : ""}`}>
+          Cuotas pendientes
+          <input
+            min="1"
+            placeholder="0"
+            type="number"
+            value={installments}
+            onChange={(event) => {
+              setInstallments(event.target.value);
+              setValidationErrors((current) => ({ ...current, installments: "" }));
+            }}
+          />
+          {validationErrors.installments ? (
+            <small className="field-error-message">{validationErrors.installments}</small>
+          ) : null}
+        </label>
+      ) : null}
 
       <label className={`card-amount-field ${validationErrors.amount ? "field-error" : ""}`}>
-        Monto cuota
+        {expenseType === "installments" ? "Monto de cuota" : expenseType === "fixed" ? "Monto mensual" : "Monto total"}
         <MoneyInput
           value={amount}
           onValueChange={(value) => {
@@ -172,52 +186,71 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
         {validationErrors.amount ? <small className="field-error-message">{validationErrors.amount}</small> : null}
       </label>
 
-      <label className={`card-savings-field ${validationErrors.savings ? "field-error" : ""}`}>
-        Ahorro
-        <MoneyInput
-          value={savings}
-          onValueChange={(value) => {
-            setSavings(value);
-            setValidationErrors((current) => ({ ...current, savings: "" }));
-          }}
-        />
-        {validationErrors.savings ? <small className="field-error-message">{validationErrors.savings}</small> : null}
-      </label>
-
       <button
-        aria-pressed={paymentShare === "other"}
-        className={`paid-by-other-field ${paymentShare === "other" ? "active" : ""}`}
-        onClick={() => setPaymentShare((current) => (current === "other" ? "self" : "other"))}
+        aria-controls="card-expense-extra-options"
+        aria-expanded={showAdvancedOptions}
+        className="card-expense-options-toggle"
+        onClick={() => setShowAdvancedOptions((current) => !current)}
         type="button"
       >
-        <span className="paid-by-other-check">
-          {paymentShare === "other" ? <Check size={14} /> : <UserRound size={15} />}
-        </span>
-        <span>
-          <strong>Otra persona</strong>
-          <small>No lo pago yo</small>
-        </span>
-      </button>
-
-      <button
-        aria-pressed={paymentShare === "half"}
-        className={`paid-by-other-field shared-half-field ${paymentShare === "half" ? "active" : ""}`}
-        onClick={() => setPaymentShare((current) => (current === "half" ? "self" : "half"))}
-        type="button"
-      >
-        <span className="paid-by-other-check">
-          {paymentShare === "half" ? <Check size={14} /> : <Split size={15} />}
-        </span>
-        <span>
-          <strong>A medias</strong>
-          <small>Pago la mitad</small>
-        </span>
+        {showAdvancedOptions ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+        <span>Más opciones <small>(ahorro y quién lo paga)</small></span>
       </button>
 
       <button className="card-submit-button" type="submit">
         <Plus size={18} />
         Agregar
       </button>
+
+      <div
+        className={`card-expense-extra-options ${paymentShare === "other" ? "is-other" : ""}`}
+        hidden={!showAdvancedOptions}
+        id="card-expense-extra-options"
+      >
+          {paymentShare !== "other" ? (
+            <label className={`card-savings-field ${validationErrors.savings ? "field-error" : ""}`}>
+              Ahorro
+              <MoneyInput
+                value={savings}
+                onValueChange={(value) => {
+                  setSavings(value);
+                  setValidationErrors((current) => ({ ...current, savings: "" }));
+                }}
+              />
+              {validationErrors.savings ? <small className="field-error-message">{validationErrors.savings}</small> : null}
+            </label>
+          ) : null}
+
+          <button
+            aria-pressed={paymentShare === "other"}
+            className={`paid-by-other-field ${paymentShare === "other" ? "active" : ""}`}
+            onClick={() => togglePaymentShare("other")}
+            type="button"
+          >
+            <span className="paid-by-other-check">
+              {paymentShare === "other" ? <Check size={14} /> : <UserRound size={15} />}
+            </span>
+            <span>
+              <strong>Otra persona</strong>
+              <small>No lo pago yo</small>
+            </span>
+          </button>
+
+          <button
+            aria-pressed={paymentShare === "half"}
+            className={`paid-by-other-field shared-half-field ${paymentShare === "half" ? "active" : ""}`}
+            onClick={() => togglePaymentShare("half")}
+            type="button"
+          >
+            <span className="paid-by-other-check">
+              {paymentShare === "half" ? <Check size={14} /> : <Split size={15} />}
+            </span>
+            <span>
+              <strong>A medias</strong>
+              <small>Pago la mitad</small>
+            </span>
+          </button>
+      </div>
     </form>
     {pendingFixedExpense ? (
       <div className="confirm-backdrop" role="presentation">
@@ -279,12 +312,18 @@ export default function CardExpenseForm({ fixedCategories = [], onSubmit, cardNa
               <strong>{pendingExpense.origin}</strong>
             </span>
             <span>
-              <small>Monto cuota</small>
+              <small>{pendingExpense.isFixed ? "Monto mensual" : pendingExpense.installments === 1 ? "Monto total" : "Monto de cuota"}</small>
               <strong>${pendingExpense.amount.toLocaleString("es-AR")}</strong>
             </span>
             <span>
               <small>Tipo</small>
-              <strong>{pendingExpense.isFixed ? "Fijo" : pendingExpense.installments === 1 ? "Unica" : `${pendingExpense.installments} cuotas`}</strong>
+              <strong>
+                {pendingExpense.isFixed
+                  ? "Fijo"
+                  : pendingExpense.purchaseType === "single"
+                    ? "Compra única"
+                    : `${pendingExpense.installments} ${pendingExpense.installments === 1 ? "cuota" : "cuotas"}`}
+              </strong>
             </span>
           </div>
           <div className="confirm-actions">

@@ -241,46 +241,62 @@
 }
 
 .card-main-heading {
-  align-items: stretch;
+  align-items: start;
   background:
-    radial-gradient(circle at 0 0, rgba(214, 168, 79, 0.28), transparent 34%),
-    linear-gradient(135deg, rgba(42, 62, 73, 0.98), rgba(24, 37, 45, 0.98));
-  border: 1px solid rgba(214, 168, 79, 0.32);
-  border-radius: var(--radius);
+    radial-gradient(circle at 0 0, rgba(93, 182, 198, 0.18), transparent 38%),
+    linear-gradient(135deg, rgba(39, 59, 70, 0.99), rgba(24, 37, 45, 0.99));
+  border: 1px solid rgba(93, 182, 198, 0.34);
+  border-radius: 12px;
   box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 18px 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, auto);
   margin-bottom: 18px;
-  padding: 20px;
+  padding: 22px;
   --card-accent: var(--card-gold) !important;
 }
 
-.card-main-heading > div:first-child {
+.card-main-identity {
   display: grid;
-  gap: 8px;
-  min-width: min(100%, 520px);
+  gap: 5px;
+  min-width: 0;
+}
+
+.card-main-identity > p {
+  color: var(--primary-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
 }
 
 .card-main-heading h2 {
-  font-size: clamp(1.55rem, 2.5vw, 2.15rem);
+  font-size: clamp(1.75rem, 2.6vw, 2.35rem);
+  line-height: 1.08;
+  margin: 0;
 }
 
 .card-statement-note {
-  max-width: 680px;
+  max-width: 100%;
 }
 
 .card-hero-stats {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(3, minmax(130px, 1fr));
-  margin-top: 8px;
+  gap: 12px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.72fr);
+  min-width: 0;
 }
 
 .card-hero-stat {
-  background: rgba(16, 26, 34, 0.62);
-  border: 1px solid rgba(214, 168, 79, 0.18);
-  border-radius: var(--radius);
+  background: rgba(16, 26, 34, 0.48);
+  border: 1px solid rgba(134, 212, 223, 0.18);
+  border-radius: 10px;
   display: grid;
-  gap: 6px;
-  padding: 12px;
+  gap: 7px;
+  min-height: 96px;
+  padding: 14px 16px;
 }
 
 .card-hero-stat span,
@@ -293,18 +309,73 @@
   text-transform: uppercase;
 }
 
+.card-hero-stat > span {
+  font-size: 0.78rem;
+  letter-spacing: 0.055em;
+}
+
 .card-hero-stat strong {
   color: var(--ink-strong);
-  font-size: 1.08rem;
+  font-size: clamp(1.15rem, 1.5vw, 1.45rem);
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
-.card-hero-stat:first-child strong {
-  color: var(--card-gold-strong);
+.card-hero-stat small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
 }
 
-.card-hero-stat:last-child strong {
+.card-hero-stat-amount {
+  background: linear-gradient(145deg, rgba(82, 184, 126, 0.2), rgba(16, 26, 34, 0.52));
+  border-color: rgba(117, 199, 154, 0.52);
+}
+
+.card-hero-stat-amount strong {
+  color: #a7edbd;
+}
+
+.card-hero-stat-debt {
+  border-color: rgba(134, 212, 223, 0.34);
+}
+
+.card-hero-stat-debt strong {
+  color: #c4edf2;
+}
+
+.card-hero-stat-closing {
+  background: linear-gradient(145deg, rgba(93, 182, 198, 0.14), rgba(16, 26, 34, 0.52));
+  border-color: rgba(93, 182, 198, 0.4);
+}
+
+.card-hero-stat-closing strong {
+  color: var(--primary-strong);
+  font-size: 1.5rem;
+}
+
+.card-hero-stat-secondary {
+  align-content: center;
+  background: rgba(16, 26, 34, 0.22);
+  border-color: rgba(159, 177, 183, 0.12);
+  gap: 4px;
+  opacity: 0.72;
+  padding: 10px 12px;
+}
+
+.card-hero-stat-secondary span {
+  font-size: 0.72rem;
+}
+
+.card-hero-stat-secondary strong {
   color: var(--mint);
+  font-size: 0.98rem;
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .card-hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .card-heading-actions {
@@ -402,6 +473,11 @@
   grid-column: span 2;
 }
 
+.card-expense-form-single .card-amount-field,
+.card-expense-form-fixed .card-amount-field {
+  grid-column: span 4;
+}
+
 .card-expense-form .card-savings-field {
   grid-column: span 3;
 }
@@ -419,6 +495,66 @@
 .card-expense-form .card-submit-button {
   grid-column: span 3;
   align-self: end;
+}
+
+.card-expense-form .card-expense-options-toggle {
+  align-items: center;
+  background: rgba(93, 182, 198, 0.06);
+  border: 1px solid rgba(93, 182, 198, 0.24);
+  border-radius: 8px;
+  color: var(--primary-strong);
+  display: flex;
+  gap: 8px;
+  grid-column: span 9;
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.card-expense-options-toggle:hover,
+.card-expense-options-toggle:focus-visible {
+  background: rgba(93, 182, 198, 0.12);
+  border-color: rgba(93, 182, 198, 0.48);
+}
+
+.card-expense-options-toggle span {
+  font-weight: 800;
+}
+
+.card-expense-options-toggle small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.card-expense-form .card-expense-extra-options {
+  background: rgba(16, 26, 34, 0.24);
+  border: 1px solid rgba(73, 104, 116, 0.24);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 14px;
+}
+
+.card-expense-form .card-expense-extra-options[hidden] {
+  display: none;
+}
+
+.card-expense-extra-options.is-other {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-expense-form .card-expense-extra-options .card-savings-field,
+.card-expense-form .card-expense-extra-options .paid-by-other-field {
+  align-self: end;
+  grid-column: auto;
+}
+
+.card-expense-form .card-expense-extra-options .paid-by-other-field {
+  min-height: 48px;
 }
 
 .card-expense-form .paid-by-other-field > span:last-child,
@@ -660,7 +796,7 @@
 
 .card-summary-breakdown {
   background:
-    radial-gradient(circle at 6% 0%, rgba(214, 168, 79, 0.16), transparent 34%),
+    radial-gradient(circle at 6% 0%, rgba(93, 182, 198, 0.16), transparent 34%),
     linear-gradient(135deg, rgba(35, 54, 64, 0.94), rgba(22, 38, 46, 0.98));
   border: 1px solid rgba(93, 182, 198, 0.28);
   border-radius: 14px;
@@ -705,6 +841,40 @@
   margin: 0;
 }
 
+.summary-period-switch {
+  align-items: center;
+  background: rgba(10, 23, 30, 0.48);
+  border: 1px solid rgba(93, 182, 198, 0.24);
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.summary-period-switch button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+  min-height: 36px;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
+.summary-period-switch button:hover,
+.summary-period-switch button.active {
+  background: rgba(93, 182, 198, 0.18);
+  border-color: rgba(93, 182, 198, 0.38);
+  color: var(--ink-strong);
+}
+
+.summary-period-switch button:focus-visible {
+  outline: 2px solid var(--primary-strong);
+  outline-offset: 2px;
+}
+
 .card-summary-toggle {
   border-color: rgba(93, 182, 198, 0.36) !important;
   box-shadow: none !important;
@@ -733,10 +903,10 @@
 
 .summary-savings-icon {
   align-items: center;
-  background: linear-gradient(135deg, rgba(214, 168, 79, 0.22), rgba(93, 182, 198, 0.14));
-  border: 1px solid rgba(214, 168, 79, 0.34);
+  background: linear-gradient(135deg, rgba(111, 204, 154, 0.2), rgba(93, 182, 198, 0.16));
+  border: 1px solid rgba(111, 204, 154, 0.38);
   border-radius: 12px;
-  color: var(--card-gold-strong);
+  color: #a7edbd;
   display: inline-flex;
   height: 42px;
   justify-content: center;
@@ -778,6 +948,11 @@
   white-space: nowrap;
 }
 
+.summary-savings-form button:disabled {
+  color: var(--muted);
+  opacity: 0.62;
+}
+
 .card-summary-groups {
   display: grid;
   gap: 14px;
@@ -798,7 +973,7 @@
 }
 
 .card-summary-preview-next {
-  border-color: rgba(214, 168, 79, 0.34);
+  border-color: rgba(93, 182, 198, 0.34);
 }
 
 .card-summary-preview-title {
@@ -809,7 +984,7 @@
 .card-summary-mini-grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .card-summary-mini-card {
@@ -835,8 +1010,20 @@
   font-size: 1.12rem;
 }
 
-.card-summary-mini-card-saving strong {
-  color: var(--card-gold-strong);
+.card-summary-mini-card-expense-savings {
+  border-color: rgba(111, 204, 154, 0.28);
+}
+
+.card-summary-mini-card-expense-savings strong {
+  color: #a7edbd;
+}
+
+.card-summary-mini-card-summary-savings {
+  border-color: rgba(93, 182, 198, 0.3);
+}
+
+.card-summary-mini-card-summary-savings strong {
+  color: var(--primary-strong);
 }
 
 .summary-net-row {
@@ -868,11 +1055,16 @@
 
   .card-summary-heading-rich {
     align-items: stretch;
+    flex-direction: column;
   }
 
-  .card-summary-toggle,
+  .summary-period-switch,
   .summary-savings-form button {
     width: 100%;
+  }
+
+  .summary-period-switch button {
+    flex: 1;
   }
 }
 
@@ -914,6 +1106,14 @@
     grid-template-columns: 1fr;
   }
 
+  .card-expense-form .card-expense-extra-options {
+    order: 1;
+  }
+
+  .card-expense-form .card-submit-button {
+    order: 2;
+  }
+
   .card-expense-form .card-origin-field,
   .card-expense-form .expense-kind-field,
   .card-expense-form .card-installments-field,
@@ -921,6 +1121,7 @@
   .card-expense-form .card-savings-field,
   .card-expense-form .paid-by-other-field,
   .card-expense-form .shared-half-field,
+  .card-expense-form .card-expense-options-toggle,
   .card-expense-form .card-submit-button {
     grid-column: auto;
   }
@@ -986,13 +1187,218 @@
     width: auto;
     justify-content: center;
   }
+
+  .card-expense-form .card-expense-extra-options,
+  .card-expense-form .card-expense-extra-options.is-other {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .card-expense-form .card-expense-options-toggle {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .card-expense-form .card-expense-extra-options .paid-by-other-field {
+    width: 100%;
+  }
 }
 
 /* Card List Layout Redesign for credit card expenses */
 .card-expense-card-list {
   display: grid;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 0;
+}
+
+.card-expense-browser {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.card-expense-toolbar {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 0.8fr) auto auto;
+  min-width: 0;
+}
+
+.card-expense-search {
+  align-items: center;
+  background: rgba(16, 26, 34, 0.45);
+  border: 1px solid rgba(73, 104, 116, 0.58);
+  border-radius: 9px;
+  color: var(--muted);
+  display: flex;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.card-expense-search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(93, 182, 198, 0.14);
+}
+
+.card-expense-search input {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--ink-strong);
+  min-width: 0;
+  outline: 0;
+  padding: 8px 0;
+  width: 100%;
+}
+
+.card-expense-search input::placeholder {
+  color: var(--faint);
+}
+
+.card-expense-filters {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+}
+
+.card-expense-filters button {
+  align-items: center;
+  background: rgba(29, 44, 53, 0.58);
+  border: 1px solid rgba(73, 104, 116, 0.5);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+}
+
+.card-expense-filters button:hover,
+.card-expense-filters button.active {
+  background: rgba(93, 182, 198, 0.16);
+  border-color: var(--primary);
+  color: var(--ink-strong);
+}
+
+.card-expense-filters button span {
+  color: var(--primary-strong);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-expense-result-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.card-expense-group-heading {
+  align-items: center;
+  border-bottom: 1px solid rgba(73, 104, 116, 0.42);
+  display: flex;
+  gap: 9px;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 0 2px 8px;
+}
+
+.card-expense-group-heading:first-child {
+  margin-top: 0;
+}
+
+.card-expense-group-heading h3 {
+  color: var(--ink-strong);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.card-expense-group-meta {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.card-expense-group-total {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.card-expense-group-total small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.card-expense-group-total strong {
+  color: var(--mint);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-expense-group-count {
+  align-items: center;
+  background: rgba(73, 104, 116, 0.22);
+  border-radius: 99px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 850;
+  justify-content: center;
+  min-width: 25px;
+  padding: 4px 7px;
+}
+
+.card-expense-reset-filters {
+  background: transparent;
+  border: 0;
+  color: var(--primary-strong);
+  font-weight: 800;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.card-expense-reset-filters:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .card-expense-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-expense-filters {
+    overflow-x: auto;
+    padding-bottom: 3px;
+  }
+
+  .card-expense-result-count {
+    text-align: left;
+  }
+
+  .card-expense-group-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card-expense-group-meta {
+    justify-content: space-between;
+    width: 100%;
+  }
 }
 
 .card-expense-card {
@@ -1109,6 +1515,18 @@
   border: 1px solid rgba(224, 184, 106, 0.22);
 }
 
+.badge-tag.tag-single {
+  background: rgba(93, 182, 198, 0.12);
+  border: 1px solid rgba(93, 182, 198, 0.24);
+  color: var(--primary-strong);
+}
+
+.badge-tag.tag-unknown {
+  background: rgba(224, 184, 106, 0.1);
+  border: 1px solid rgba(224, 184, 106, 0.2);
+  color: var(--amber);
+}
+
 .badge-tag.tag-saved {
   background: rgba(117, 199, 154, 0.12);
   color: var(--mint);
@@ -1214,5 +1632,191 @@
     justify-content: space-between;
     border-top: 1px solid rgba(73, 104, 116, 0.15);
     padding-top: 12px;
+  }
+}
+
+/* Selector compacto en escritorio amplio: conserva espacio para el detalle de la tarjeta. */
+@media (min-width: 1321px) {
+  .cards-panel {
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 14px 18px;
+  }
+
+  .selector-title > span {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .selector-title small {
+    margin: 0;
+  }
+
+  .selector-section .inline-form {
+    margin-bottom: 10px;
+  }
+
+  .bank-tab,
+  .card-tab {
+    padding: 10px 12px;
+  }
+
+  .bank-tab {
+    min-height: 62px;
+    min-width: 210px;
+  }
+
+  .card-tab {
+    min-height: 64px;
+    min-width: 220px;
+  }
+}
+
+.bank-tab.active {
+  background: linear-gradient(135deg, rgba(93, 182, 198, 0.2), rgba(93, 182, 198, 0.08));
+  border-color: var(--primary-strong);
+  box-shadow: 0 0 0 2px rgba(93, 182, 198, 0.18), 0 5px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card-tab.active {
+  background: radial-gradient(circle at 90% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), rgba(214, 168, 79, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent), 0 5px 16px rgba(0, 0, 0, 0.14);
+}
+
+.card-tab.active::after {
+  height: 8px;
+  right: 10px;
+  top: 10px;
+  width: 8px;
+}
+
+/* En cuotas, el importe y la cantidad pendiente comparten el foco visual. */
+.installment-key-facts-row {
+  align-items: center;
+}
+
+.expense-card-right-installments {
+  gap: 14px;
+}
+
+.expense-card-right-installments .expense-card-actions {
+  justify-content: flex-end;
+}
+
+.card-installment-key-facts {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+}
+
+.card-installment-key-facts.single {
+  grid-template-columns: minmax(200px, 1fr);
+  width: min(280px, 100%);
+}
+
+.expense-card-right-key-facts {
+  gap: 14px;
+}
+
+.card-installment-key-fact {
+  background: rgba(16, 26, 34, 0.38);
+  border: 1px solid rgba(117, 199, 154, 0.28);
+  border-radius: 9px;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 12px;
+}
+
+.card-installment-key-fact > span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.card-installment-key-fact > strong {
+  color: #a7edbd;
+  font-size: 1.12rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.card-installment-count-fact {
+  border-color: rgba(134, 212, 223, 0.3);
+}
+
+.card-installment-count-fact > strong {
+  color: var(--primary-strong);
+}
+
+@media (max-width: 980px) {
+  .card-expense-card.installment-key-facts-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .card-expense-card .expense-card-right-installments {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+  }
+
+  .card-expense-card .expense-card-right-key-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .card-expense-card .expense-card-right-installments {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-expense-card .expense-card-right-key-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-installment-key-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .card-installment-key-facts.single {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .card-installment-key-fact {
+    padding: 9px 10px;
+  }
+
+  .card-installment-key-fact > span {
+    font-size: 0.64rem;
+    white-space: normal;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  .card-expense-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .card-expense-filters {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow-x: auto;
+    padding-bottom: 3px;
+  }
+
+  .card-expense-result-count {
+    grid-column: 2;
+    grid-row: 1;
   }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarDays, Check, CreditCard, Pencil, PiggyBank, ReceiptText, Split, Trash2, UserRound } from "lucide-react";
+import { CalendarDays, Check, CreditCard, Pencil, PiggyBank, ReceiptText, Search, Split, Trash2, UserRound } from "lucide-react";
 import MoneyInput from "../../components/forms/MoneyInput.jsx";
 import {
   getExpenseSavings,
@@ -25,6 +25,8 @@ export default function CardExpenseList({
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [draft, setDraft] = useState(null);
   const [showNextMonthSummary, setShowNextMonthSummary] = useState(false);
+  const [expenseSearch, setExpenseSearch] = useState("");
+  const [expenseFilter, setExpenseFilter] = useState("all");
   const summarySavings = getCardSummarySavings(card);
   const [summarySavingsDraft, setSummarySavingsDraft] = useState(summarySavings ? String(summarySavings) : "");
   const previewCard = showNextMonthTable ? buildCardAfterPayment(card) : card;
@@ -47,7 +49,7 @@ export default function CardExpenseList({
     setEditingExpenseId(expense.id);
     setDraft({
       amount: String(expense.amount),
-      expenseType: isFixedCardExpense(expense) ? "fixed" : expense.installments === 1 ? "single" : "installments",
+      expenseType: getCardPurchaseType(expense),
       fixedCategory: expense.fixedCategory || fixedCategories[0]?.id || "subscriptions",
       installments: String(expense.installments || ""),
       isPaidByOther: isPaidByOther(expense),
@@ -87,6 +89,7 @@ export default function CardExpenseList({
       fixedCategory: isFixed ? draft.fixedCategory || fixedCategories[0]?.id || "" : "",
       installments: isFixed ? 0 : parsedInstallments,
       isFixed,
+      purchaseType: draft.expenseType === "unknown" ? expense.purchaseType : draft.expenseType,
       isPaidByOther: draft.isPaidByOther,
       isSharedHalf: !draft.isPaidByOther && draft.isSharedHalf,
       origin: draft.origin.trim(),
@@ -112,15 +115,21 @@ export default function CardExpenseList({
   }
 
   const currentMonthGrossTotal = card.expenses.reduce((sum, expense) => sum + getCurrentMonthGrossAmount(expense), 0);
-  const currentMonthNetTotal = Math.max(
-    card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0) - summarySavings,
+  const currentMonthNetBeforeSummarySavings = card.expenses.reduce(
+    (sum, expense) => sum + getOwnExpenseAmount(expense),
     0,
   );
+  const currentMonthExpenseSavings = Math.max(currentMonthGrossTotal - currentMonthNetBeforeSummarySavings, 0);
+  const currentMonthSummarySavings = Math.min(summarySavings, currentMonthNetBeforeSummarySavings);
+  const currentMonthNetTotal = Math.max(currentMonthNetBeforeSummarySavings - summarySavings, 0);
   const nextMonthGrossTotal = card.expenses.reduce((sum, expense) => sum + getNextMonthGrossAmount(expense), 0);
-  const nextMonthNetTotal = Math.max(
-    card.expenses.reduce((sum, expense) => sum + getNextMonthNetAmount(expense), 0) - summarySavings,
+  const nextMonthNetBeforeSummarySavings = card.expenses.reduce(
+    (sum, expense) => sum + getNextMonthNetAmount(expense),
     0,
   );
+  const nextMonthExpenseSavings = Math.max(nextMonthGrossTotal - nextMonthNetBeforeSummarySavings, 0);
+  const nextMonthSummarySavings = Math.min(summarySavings, nextMonthNetBeforeSummarySavings);
+  const nextMonthNetTotal = Math.max(nextMonthNetBeforeSummarySavings - summarySavings, 0);
   const previewNetTotal = Math.max(
     previewCard.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0) - previewSummarySavings,
     0,
@@ -129,6 +138,49 @@ export default function CardExpenseList({
   const canSaveSummarySavings =
     parsedSummarySavingsDraft >= 0 && parsedSummarySavingsDraft !== summarySavings && Boolean(onUpdateSummarySavings);
   const sortedExpenses = [...previewCard.expenses].sort(compareCardExpenses);
+  const searchTerm = expenseSearch.trim().toLocaleLowerCase("es-AR");
+  const matchesExpenseFilter = (expense) => {
+    if (expenseFilter === "installments") return getCardPurchaseType(expense) === "installments" && Number(expense.installments) > 1;
+    if (expenseFilter === "last") return getCardPurchaseType(expense) === "installments" && Number(expense.installments) === 1;
+    if (expenseFilter === "single") return getCardPurchaseType(expense) === "single";
+    if (expenseFilter === "unknown") return getCardPurchaseType(expense) === "unknown";
+    if (expenseFilter === "saved") return isExpenseSaved(expense) || getExpenseSavings(expense) > 0;
+    return true;
+  };
+  const filteredExpenses = sortedExpenses.filter((expense) => {
+    const categoryName = fixedCategories.find((category) => category.id === expense.fixedCategory)?.name || "";
+    const matchesSearch = !searchTerm || `${expense.origin} ${categoryName}`.toLocaleLowerCase("es-AR").includes(searchTerm);
+    return matchesSearch && matchesExpenseFilter(expense);
+  });
+  const expenseFilterCounts = {
+    all: previewCard.expenses.length,
+    installments: previewCard.expenses.filter((expense) => getCardPurchaseType(expense) === "installments" && Number(expense.installments) > 1).length,
+    last: previewCard.expenses.filter((expense) => getCardPurchaseType(expense) === "installments" && Number(expense.installments) === 1).length,
+    single: previewCard.expenses.filter((expense) => getCardPurchaseType(expense) === "single").length,
+    unknown: previewCard.expenses.filter((expense) => getCardPurchaseType(expense) === "unknown").length,
+    saved: previewCard.expenses.filter((expense) => isExpenseSaved(expense) || getExpenseSavings(expense) > 0).length,
+  };
+  const expenseGroups = [
+    { id: "installments", label: "En cuotas", match: (expense) => getCardPurchaseType(expense) === "installments" && Number(expense.installments) > 1 },
+    { id: "last", label: "Última cuota", match: (expense) => getCardPurchaseType(expense) === "installments" && Number(expense.installments) === 1 },
+    { id: "single", label: "Compras únicas", match: (expense) => getCardPurchaseType(expense) === "single" },
+    { id: "fixed", label: "Gastos fijos", match: (expense) => isFixedCardExpense(expense) },
+    { id: "unknown", label: "Tipo por confirmar", match: (expense) => getCardPurchaseType(expense) === "unknown" },
+  ]
+    .map((group) => {
+      const expenses = filteredExpenses.filter(group.match);
+
+      if (group.id === "installments") {
+        expenses.sort(compareInstallmentExpenses);
+      }
+
+      return {
+        ...group,
+        expenses,
+        total: expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0),
+      };
+    })
+    .filter((group) => group.expenses.length > 0);
   const editingExpense = draft ? card.expenses.find((expense) => expense.id === editingExpenseId) : null;
   const parsedDraftSavings = Number(draft?.savings);
   const draftSavingsLimit = draft
@@ -160,15 +212,65 @@ export default function CardExpenseList({
         </section>
       ) : null}
 
-      <div className="expense-card-list card-expense-card-list" style={{ "--card-accent": card.accent || "#2563eb" }}>
-        {sortedExpenses.length ? sortedExpenses.map((expense) => {
+      <section className="card-expense-browser" aria-label="Buscar y filtrar consumos">
+        <div className="card-expense-toolbar">
+          <label className="card-expense-search">
+            <Search size={18} aria-hidden="true" />
+            <input
+              aria-label="Buscar consumos por nombre o categoría"
+              onChange={(event) => setExpenseSearch(event.target.value)}
+              placeholder="Buscar consumo o categoría"
+              type="search"
+              value={expenseSearch}
+            />
+          </label>
+          <div className="card-expense-filters" role="group" aria-label="Filtrar consumos">
+            {[
+              { id: "all", label: "Todos" },
+              { id: "installments", label: "En cuotas" },
+              { id: "last", label: "Última cuota" },
+              { id: "single", label: "Compra única" },
+              ...(expenseFilterCounts.unknown ? [{ id: "unknown", label: "Por confirmar" }] : []),
+              { id: "saved", label: "Con ahorro" },
+            ].map((filter) => (
+              <button
+                aria-pressed={expenseFilter === filter.id}
+                className={expenseFilter === filter.id ? "active" : ""}
+                key={filter.id}
+                onClick={() => setExpenseFilter(filter.id)}
+                type="button"
+              >
+                {filter.label}<span>{expenseFilterCounts[filter.id]}</span>
+              </button>
+            ))}
+          </div>
+          <p className="card-expense-result-count">
+            {filteredExpenses.length} de {sortedExpenses.length} consumos
+          </p>
+        </div>
+
+        <div className="expense-card-list card-expense-card-list" style={{ "--card-accent": card.accent || "#2563eb" }}>
+        {expenseGroups.length ? expenseGroups.flatMap((group) => [
+          <div className="card-expense-group-heading" key={`${group.id}-heading`}>
+            <h3>{group.label}</h3>
+            <div className="card-expense-group-meta">
+              <span className="card-expense-group-total">
+                <small>Suma de importes</small>
+                <strong>{currency.format(group.total)}</strong>
+              </span>
+              <span className="card-expense-group-count">{group.expenses.length}</span>
+            </div>
+          </div>,
+          ...group.expenses.map((expense) => {
           const savings = getExpenseSavings(expense);
           const ownAmount = getOwnExpenseAmount(expense);
           const isSaved = Boolean(expense.isSaved);
           const isHalfShared = isSharedHalf(expense);
+          const purchaseType = getCardPurchaseType(expense);
+          const isInstallmentGroup = purchaseType === "installments" && Number(expense.installments) > 1;
           const fixedCategoryName =
             fixedCategories.find((category) => category.id === expense.fixedCategory)?.name || "Sin seccion";
-          const isFinalPayment = !isFixedCardExpense(expense) && Number(expense.installments) === 1;
+          const isFinalPayment = purchaseType === "installments" && Number(expense.installments) === 1;
           const visualTag = getExpenseVisualTag({
             isFinalPayment,
             isFixed: isFixedCardExpense(expense),
@@ -193,7 +295,7 @@ export default function CardExpenseList({
 
           return (
             <article
-              className={`expense-card card-expense-card card-row-tag-${visualTag} ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isFixedCardExpense(expense) ? "fixed-card-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
+              className={`expense-card card-expense-card card-row-tag-${visualTag} ${isInstallmentGroup ? "installment-key-facts-row" : ""} ${isPaidByOther(expense) ? "paid-by-other-row" : ""} ${isHalfShared ? "shared-half-row" : ""} ${isFixedCardExpense(expense) ? "fixed-card-row" : ""} ${isSaved ? "saved-expense-row" : ""} ${isFinalPayment ? "final-payment-row" : ""}`}
               key={expense.id}
             >
               <div className="expense-card-left">
@@ -204,6 +306,8 @@ export default function CardExpenseList({
                   <h4 className="expense-title-line">
                     {expense.origin}
                     {isFinalPayment && <span className="badge-tag tag-final">Última</span>}
+                    {purchaseType === "single" && <span className="badge-tag tag-single">Única</span>}
+                    {purchaseType === "unknown" && <span className="badge-tag tag-unknown">Tipo pendiente</span>}
                     {isSaved && <span className="badge-tag tag-saved">Ahorrado</span>}
                     {isFixedCardExpense(expense) && (
                       <span className="badge-tag tag-fixed">Fijo • {fixedCategoryName}</span>
@@ -211,37 +315,34 @@ export default function CardExpenseList({
                     {isHalfShared && <span className="badge-tag tag-shared">A medias</span>}
                     {isPaidByOther(expense) && <span className="badge-tag tag-other">Paga otro</span>}
                   </h4>
-                  <p>
-                    <span>Monto cuotas: {currency.format(expense.amount)}</span>
-                    <span className="bullet">•</span>
-                    <span>
-                      {isFixedCardExpense(expense) ? (
-                        <strong>Fijo</strong>
-                      ) : expense.installments === 1 ? (
-                        <strong>Compra única</strong>
-                      ) : (
-                        <strong>Restan {expense.installments} cuotas</strong>
-                      )}
-                    </span>
-                    {savings > 0 && (
+                  {savings > 0 || (isInstallmentGroup && pendingValue > 0) ? <p>
+                    {savings > 0 ? (
                       <>
-                        <span className="bullet">•</span>
                         <span>Ahorro: -{currency.format(savings)}</span>
                       </>
-                    )}
-                    {!isFixedCardExpense(expense) && pendingValue > 0 && (
+                    ) : null}
+                    {isInstallmentGroup && pendingValue > 0 ? (
                       <>
-                        <span className="bullet">•</span>
+                        {savings > 0 ? <span className="bullet">•</span> : null}
                         <span>Pendiente: {currency.format(pendingValue)}</span>
                       </>
-                    )}
-                  </p>
+                    ) : null}
+                  </p> : null}
                 </div>
               </div>
-              <div className="expense-card-right">
-                <span className="expense-card-amount">
-                  {currency.format(ownAmount)}
-                </span>
+              <div className={`expense-card-right ${isInstallmentGroup ? "expense-card-right-installments" : "expense-card-right-key-facts"}`}>
+                <div className={`card-installment-key-facts ${isInstallmentGroup ? "" : "single"}`} aria-label={isInstallmentGroup ? "Cuotas restantes y monto por cuota" : "Importe"}>
+                  {isInstallmentGroup ? (
+                    <div className="card-installment-key-fact card-installment-count-fact">
+                      <span>Cuotas restantes</span>
+                      <strong>{expense.installments}</strong>
+                    </div>
+                  ) : null}
+                  <div className="card-installment-key-fact card-installment-amount-fact">
+                    <span>{isInstallmentGroup ? "A pagar por cuota" : isFixedCardExpense(expense) ? "Monto mensual" : "Importe a pagar"}</span>
+                    <strong>{currency.format(ownAmount)}</strong>
+                  </div>
+                </div>
                 <div className="expense-card-actions">
                   {showNextMonthTable ? (
                     <span className="preview-only-pill">Vista</span>
@@ -280,13 +381,29 @@ export default function CardExpenseList({
               </div>
             </article>
           );
-        }) : (
+        })
+        ]) : (
           <div className="empty-state">
             <ReceiptText size={28} />
-            <p>No quedarían consumos pendientes para el mes siguiente.</p>
+            <span>
+              <p>{sortedExpenses.length ? "No hay consumos que coincidan con la búsqueda o los filtros." : "No quedarían consumos pendientes para el mes siguiente."}</p>
+              {sortedExpenses.length && (searchTerm || expenseFilter !== "all") ? (
+                <button
+                  className="card-expense-reset-filters"
+                  onClick={() => {
+                    setExpenseSearch("");
+                    setExpenseFilter("all");
+                  }}
+                  type="button"
+                >
+                  Limpiar búsqueda y filtros
+                </button>
+              ) : null}
+            </span>
           </div>
         )}
-      </div>
+        </div>
+      </section>
 
       {!showNextMonthTable && editingExpense && draft ? (
         <div className="confirm-backdrop" role="presentation">
@@ -322,8 +439,9 @@ export default function CardExpenseList({
                   value={draft.expenseType}
                   onChange={(event) => updateDraft("expenseType", event.target.value)}
                 >
+                  {draft.expenseType === "unknown" ? <option value="unknown">Tipo por confirmar</option> : null}
                   <option value="installments">Cuotas</option>
-                  <option value="single">Unica</option>
+                  <option value="single">Compra única</option>
                   <option value="fixed">Fijo</option>
                 </select>
               </label>
@@ -417,15 +535,26 @@ export default function CardExpenseList({
           <div>
             <span>Resumen</span>
             <h3>Balance de la tarjeta</h3>
-            <p>Controla el neto del resumen, el ahorro aplicado y la proyeccion del proximo mes.</p>
+            <p>Consultá cuánto pagar y cómo impactan los ahorros.</p>
           </div>
-          <button
-            className={`summary-toggle-button card-summary-toggle ${showNextMonthSummary ? "active" : ""}`}
-            onClick={() => setShowNextMonthSummary((current) => !current)}
-            type="button"
-          >
-            {showNextMonthSummary ? "Ocultar proximo mes" : "Mostrar proximo mes"}
-          </button>
+          <div className="summary-period-switch" role="group" aria-label="Período del resumen">
+            <button
+              aria-pressed={!showNextMonthSummary}
+              className={!showNextMonthSummary ? "active" : ""}
+              onClick={() => setShowNextMonthSummary(false)}
+              type="button"
+            >
+              Este mes
+            </button>
+            <button
+              aria-pressed={showNextMonthSummary}
+              className={showNextMonthSummary ? "active" : ""}
+              onClick={() => setShowNextMonthSummary(true)}
+              type="button"
+            >
+              Próximo mes
+            </button>
+          </div>
         </div>
 
         {!showNextMonthTable ? (
@@ -435,12 +564,12 @@ export default function CardExpenseList({
                 <PiggyBank size={18} />
               </span>
               <div>
-                <strong>Ahorro aplicado</strong>
-                <small>Se descuenta del neto final de este resumen.</small>
+                <strong>Ahorro adicional del resumen</strong>
+                <small>{showNextMonthSummary ? "Este importe también se considera en la proyección." : "Se descuenta después de los ahorros registrados en consumos."}</small>
               </div>
             </div>
             <label>
-              <span>Monto</span>
+              <span>Monto adicional</span>
               <MoneyInput
                 value={summarySavingsDraft}
                 onValueChange={setSummarySavingsDraft}
@@ -453,26 +582,25 @@ export default function CardExpenseList({
         ) : null}
 
         <div className="card-summary-groups">
-          <SummaryGroup
-            variant="current"
-            title="Resumen de este mes"
-            grossLabel="Neto sin ahorros"
-            grossTotal={currentMonthGrossTotal}
-            savingsTotal={summarySavings}
-            netLabel="Neto con ahorros"
-            netTotal={currentMonthNetTotal}
-          />
           {showNextMonthSummary ? (
             <SummaryGroup
               variant="next"
-              title="Resumen del proximo mes"
-              grossLabel="Neto sin ahorros"
+              title="Proyección del próximo mes"
               grossTotal={nextMonthGrossTotal}
-              savingsTotal={summarySavings}
-              netLabel="Neto con ahorros"
+              expenseSavingsTotal={nextMonthExpenseSavings}
+              summarySavingsTotal={nextMonthSummarySavings}
               netTotal={nextMonthNetTotal}
             />
-          ) : null}
+          ) : (
+            <SummaryGroup
+              variant="current"
+              title="Resumen de este mes"
+              grossTotal={currentMonthGrossTotal}
+              expenseSavingsTotal={currentMonthExpenseSavings}
+              summarySavingsTotal={currentMonthSummarySavings}
+              netTotal={currentMonthNetTotal}
+            />
+          )}
         </div>
       </section>
     </>
@@ -501,7 +629,7 @@ function getPreviewSummarySavingsLimit(card) {
   return card.expenses.reduce((sum, expense) => sum + getOwnExpenseAmount(expense), 0);
 }
 
-function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, savingsTotal = 0, title, variant }) {
+function SummaryGroup({ expenseSavingsTotal, grossTotal, netTotal, summarySavingsTotal, title, variant }) {
   return (
     <article className={`card-summary-preview card-summary-preview-${variant}`}>
       <div className="card-summary-preview-title">
@@ -509,25 +637,49 @@ function SummaryGroup({ grossLabel, grossTotal, netLabel, netTotal, savingsTotal
         <h3>{title}</h3>
       </div>
       <div className="card-summary-mini-grid">
-        <div className="card-summary-mini-card">
-          <span>{grossLabel}</span>
+        <div className="card-summary-mini-card card-summary-mini-card-base">
+          <span>Base antes de ahorros</span>
           <strong>{currency.format(grossTotal)}</strong>
         </div>
-        <div className="card-summary-mini-card card-summary-mini-card-saving">
-          <span>Ahorros aplicados</span>
-          <strong>-{currency.format(savingsTotal)}</strong>
+        <div className="card-summary-mini-card card-summary-mini-card-expense-savings">
+          <span>Ahorros en consumos</span>
+          <strong>{formatSummaryDeduction(expenseSavingsTotal)}</strong>
+        </div>
+        <div className="card-summary-mini-card card-summary-mini-card-summary-savings">
+          <span>Ahorro adicional</span>
+          <strong>{formatSummaryDeduction(summarySavingsTotal)}</strong>
         </div>
       </div>
       <div className="summary-net-row">
-        <span>{netLabel}</span>
+        <span>Total a pagar</span>
         <strong>{currency.format(netTotal)}</strong>
       </div>
     </article>
   );
 }
 
+function formatSummaryDeduction(value) {
+  return value > 0 ? `−${currency.format(value)}` : currency.format(0);
+}
+
 function formatTableAmount(value) {
   return Number(value) === 0 ? "•" : currency.format(value);
+}
+
+function getCardPurchaseType(expense) {
+  if (isFixedCardExpense(expense)) {
+    return "fixed";
+  }
+
+  if (expense.purchaseType === "single" || expense.purchaseType === "installments") {
+    return expense.purchaseType;
+  }
+
+  if (expense.purchaseType === "unknown") {
+    return "unknown";
+  }
+
+  return Number(expense.installments) > 1 ? "installments" : "unknown";
 }
 
 function compareCardExpenses(firstExpense, secondExpense) {
@@ -550,6 +702,22 @@ function compareCardExpenses(firstExpense, secondExpense) {
 
   if (firstNetAmount !== secondNetAmount) {
     return firstNetAmount - secondNetAmount;
+  }
+
+  return String(firstExpense.origin).localeCompare(String(secondExpense.origin), "es");
+}
+
+function compareInstallmentExpenses(firstExpense, secondExpense) {
+  const installmentDifference = Number(firstExpense.installments) - Number(secondExpense.installments);
+
+  if (installmentDifference !== 0) {
+    return installmentDifference;
+  }
+
+  const amountDifference = getOwnExpenseAmount(firstExpense) - getOwnExpenseAmount(secondExpense);
+
+  if (amountDifference !== 0) {
+    return amountDifference;
   }
 
   return String(firstExpense.origin).localeCompare(String(secondExpense.origin), "es");

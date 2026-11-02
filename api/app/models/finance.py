@@ -10,7 +10,8 @@ ExpenseCategory = Literal["department", "subscriptions", "activities", "extras"]
 class CardExpense(BaseModel):
     """Consumo de tarjeta.
 
-    installments=1 representa compra unica; installments=0 con is_fixed=True representa gasto fijo mensual.
+    purchase_type distingue compras unicas de planes en cuotas cuando queda una cuota pendiente.
+    installments=0 con is_fixed=True representa gasto fijo mensual.
     """
 
     id: str
@@ -19,6 +20,7 @@ class CardExpense(BaseModel):
     amount: float
     savings: float = 0
     installments: int = 0
+    purchase_type: Literal["single", "installments", "fixed", "unknown"] | None = None
     is_fixed: bool = False
     fixed_category: ExpenseCategory | None = None
     is_paid_by_other: bool = False

@@ -27,6 +27,7 @@ export function normalizeData(data) {
     expenses: (data.expenses ?? INITIAL_DATA.expenses).map((expense) => ({
       ...expense,
       fixedCategory: expense.fixedCategory ?? (expense.isFixed ? "subscriptions" : ""),
+      purchaseType: normalizeCardPurchaseType(expense),
       isPaidByOther: Boolean(expense.isPaidByOther),
       isSharedHalf: !expense.isPaidByOther && Boolean(expense.isSharedHalf),
       isSaved: Boolean(expense.isSaved),
@@ -41,6 +42,22 @@ export function normalizeData(data) {
     ),
     aguinaldo: normalizeAguinaldo(data.aguinaldo ?? INITIAL_DATA.aguinaldo),
   };
+}
+
+function normalizeCardPurchaseType(expense) {
+  if (expense.isFixed) {
+    return "fixed";
+  }
+
+  if (expense.purchaseType === "single" || expense.purchaseType === "installments") {
+    return expense.purchaseType;
+  }
+
+  if (expense.purchaseType === "unknown") {
+    return "unknown";
+  }
+
+  return Number(expense.installments) > 1 ? "installments" : "unknown";
 }
 
 function normalizeRegistrationDate(registrationDate) {
