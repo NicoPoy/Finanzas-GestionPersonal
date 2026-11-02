@@ -687,10 +687,224 @@
 }
 
 .registry-status-button.active.pending {
-  background: rgba(224, 122, 122, 0.88);
+  background: rgba(93, 182, 198, 0.18);
   border-color: transparent;
-  color: #3d1b1e;
-  box-shadow: 0 4px 12px rgba(224, 122, 122, 0.2);
+  color: var(--primary-strong);
+  box-shadow: none;
+}
+
+/* Lista agrupada y controles más ligeros */
+.registry-month-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 2px 10px;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.registry-month-card {
+  flex: 1 0 92px;
+  scroll-snap-align: start;
+}
+
+.registry-service-list {
+  gap: 16px;
+}
+
+.registry-category-group {
+  background: rgba(16, 26, 34, 0.2);
+  border: 1px solid rgba(73, 104, 116, 0.42);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.registry-category-heading {
+  align-items: center;
+  background: rgba(34, 51, 61, 0.48);
+  border: 0;
+  color: var(--ink-strong);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 54px;
+  padding: 10px 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.registry-category-heading:hover {
+  background: rgba(93, 182, 198, 0.09);
+}
+
+.registry-category-heading-title {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.registry-category-heading-title svg {
+  color: var(--primary-strong);
+  flex: 0 0 auto;
+  transition: transform 0.18s ease;
+}
+
+.registry-category-heading-title svg.collapsed {
+  transform: rotate(-90deg);
+}
+
+.registry-category-heading-title strong {
+  font-size: 0.95rem;
+}
+
+.registry-category-heading-title small {
+  background: rgba(93, 182, 198, 0.13);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 4px 8px;
+}
+
+.registry-category-total {
+  color: var(--mint);
+  flex: 0 0 auto;
+  font-size: 0.96rem;
+  font-weight: 900;
+}
+
+.registry-category-items {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.registry-category-items .registry-service-card {
+  background: rgba(34, 51, 61, 0.56);
+  border-left-width: 3px;
+  box-shadow: none;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.registry-category-items .registry-service-card:hover {
+  transform: none;
+}
+
+.registry-category-items .registry-service-card h3 {
+  font-size: 0.98rem;
+}
+
+.registry-category-items .registry-service-card p {
+  margin-top: 3px;
+}
+
+.registry-category-items .registry-service-card p b {
+  font-size: 1.08rem;
+}
+
+.registry-saved-badge {
+  min-height: 40px;
+  min-width: 130px;
+  padding: 6px 9px;
+}
+
+.registry-status-group {
+  border-radius: 9px;
+  gap: 2px;
+  justify-self: end;
+  max-width: 420px;
+  padding: 3px;
+  width: fit-content;
+}
+
+.registry-status-group-two > button,
+.registry-status-group-three > button {
+  flex: 0 1 auto;
+  min-height: 32px;
+  padding: 0 14px;
+}
+
+.registry-status-button.active.pending {
+  background: rgba(113, 135, 143, 0.2);
+  color: var(--ink-strong);
+}
+
+.registry-summary-grid {
+  max-width: none;
+}
+
+@media (max-width: 1100px) {
+  .registry-month-strip {
+    display: flex;
+  }
+}
+
+@media (max-width: 760px) {
+  .registry-category-items {
+    padding: 8px;
+  }
+
+  .registry-service-main {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .registry-service-status-tools {
+    justify-content: flex-end;
+  }
+
+  .registry-saved-badge {
+    min-width: 0;
+  }
+
+  .registry-status-group {
+    flex-direction: row;
+    justify-self: stretch;
+    max-width: none;
+    width: 100%;
+  }
+
+  .registry-status-group-two > button,
+  .registry-status-group-three > button {
+    flex: 1 1 0;
+    padding: 0 6px;
+  }
+}
+
+@media (max-width: 460px) {
+  .registry-month-card {
+    flex-basis: 86px;
+  }
+
+  .registry-category-heading {
+    min-height: 50px;
+    padding: 8px 10px;
+  }
+
+  .registry-category-heading-title {
+    gap: 6px;
+  }
+
+  .registry-category-total {
+    font-size: 0.84rem;
+  }
+
+  .registry-service-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .registry-service-status-tools {
+    justify-content: space-between;
+  }
+
+  .registry-saved-badge {
+    align-items: flex-start;
+  }
 }
 
 /* Responsive Styles */
