@@ -855,6 +855,23 @@
   gap: 14px;
 }
 
+@media (min-width: 900px) {
+  .dashboard-action-content {
+    max-width: none;
+    width: 100%;
+  }
+
+  .dashboard-action-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-action-row small {
+    color: #c3d2d5;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
 .dashboard-action-list {
   display: grid;
   gap: 10px;
