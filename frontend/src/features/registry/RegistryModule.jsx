@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CreditCard, Database, ListChecks, ReceiptText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Calendar, FileText } from "lucide-react";
+import { CreditCard, Database, ListChecks, ReceiptText, ChevronLeft, ChevronRight, CheckCircle2, Clock, Calendar, FileText, Search } from "lucide-react";
 import { getPaymentKey, getSimpleExpenseAmountForMonth, isSimpleExpenseActiveForMonth } from "../../domain/financeCalculations.js";
 import { currency } from "../../utils/formatters.js";
 import "./registry.css";
@@ -43,6 +43,7 @@ export default function RegistryModule({
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const selectedMonth = MONTHS[selectedMonthIndex];
   const monthStates = MONTHS.map((_, monthIndex) => buildMonthState({
     monthIndex,
@@ -65,8 +66,15 @@ export default function RegistryModule({
     selectedYear,
     service,
   }));
-  const registryFilters = buildRegistryFilters(registryRows);
-  const visibleRows = filterRegistryRows(registryRows, activeFilter);
+  const searchValue = searchTerm.trim().toLocaleLowerCase("es-AR");
+  const searchedRows = registryRows.filter((row) =>
+    `${row.service.name} ${row.service.category}`.toLocaleLowerCase("es-AR").includes(searchValue),
+  );
+  const registryFilters = buildRegistryFilters(searchedRows);
+  const visibleRows = sortRegistryRows(filterRegistryRows(searchedRows, activeFilter));
+  const periodSummary = buildPeriodSummary(registryRows);
+  const isPastMonth = selectedYear * 12 + selectedMonthIndex < currentYear * 12 + currentMonthIndex;
+  const hasCardServices = selectedServices.some(isCardService);
 
   return (
     <section className="workspace single-column registry-workspace">
@@ -112,16 +120,32 @@ export default function RegistryModule({
           {/* Estadísticas Rápidas de Resumen */}
           <div className="registry-summary-grid" aria-label="Resumen del registro">
             <RegistryStat
-              label={`${selectedMonth.label}: completados`}
+              label="Pendiente"
+              detail="Pagos que aún requieren atención"
+              value={currency.format(periodSummary.pendingAmount)}
+              icon={<Clock size={18} />}
+              tone="warning"
+            />
+            <RegistryStat
+              label="Vencidos"
+              detail="Servicios con fecha vencida"
+              value={periodSummary.overdueCount}
+              icon={<Calendar size={18} />}
+              tone={periodSummary.overdueCount ? "warning" : "success"}
+            />
+            <RegistryStat
+              label="Próximos 3 días"
+              detail="Servicios con fecha definida"
+              value={periodSummary.soonCount}
+              icon={<Clock size={18} />}
+              tone="info"
+            />
+            <RegistryStat
+              label="Completados"
+              detail="Pagados o debitados"
               value={`${selectedState.completedCount} de ${selectedState.serviceCount}`}
               icon={<CheckCircle2 size={18} />}
               tone="success"
-            />
-            <RegistryStat
-              label={`${selectedMonth.label}: registrados`}
-              value={`${selectedState.savedCount} de ${selectedState.serviceCount}`}
-              icon={<Database size={18} />}
-              tone="info"
             />
           </div>
         </div>
@@ -158,10 +182,24 @@ export default function RegistryModule({
                     <div className="month-progress-bar">
                       <div className="progress-fill" style={{ width: `${pct}%` }} />
                     </div>
-                    <small>{state.savedCount} registrados</small>
+                    <small aria-label={`${state.savedCount} servicios con datos guardados`}>{state.savedCount} datos</small>
                   </button>
                 );
               })}
+            </div>
+
+            <div className="registry-list-toolbar">
+              <label className="registry-search">
+                <Search size={17} aria-hidden="true" />
+                <input
+                  aria-label="Buscar pagos por nombre o categoría"
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Buscar servicio o categoría"
+                  type="search"
+                  value={searchTerm}
+                />
+              </label>
+              <span className="registry-result-count">{visibleRows.length} visibles · {registryRows.length} pagos del mes</span>
             </div>
 
             <div className="registry-filter-bar" aria-label="Filtros del registro">
@@ -177,6 +215,13 @@ export default function RegistryModule({
                 </button>
               ))}
             </div>
+
+            {hasCardServices && !isPastMonth ? (
+              <p className="registry-card-payment-note registry-card-payment-note-global">
+                <CreditCard size={15} />
+                Los pagos de tarjetas se registran desde “Tarjetas de Crédito”.
+              </p>
+            ) : null}
 
             <div className="registry-service-list">
               {visibleRows.map((row) => (
@@ -200,6 +245,19 @@ export default function RegistryModule({
                   <p>No hay gastos activos para {selectedMonth.label} de {selectedYear}.</p>
                 </div>
               ) : null}
+              {selectedServices.length && !visibleRows.length ? (
+                <div className="empty-state registry-period-empty">
+                  <Search size={24} />
+                  <p>No hay pagos que coincidan con la búsqueda o los filtros.</p>
+                  <button
+                    className="registry-clear-search"
+                    onClick={() => { setSearchTerm(""); setActiveFilter("all"); }}
+                    type="button"
+                  >
+                    Limpiar búsqueda y filtros
+                  </button>
+                </div>
+              ) : null}
             </div>
           </>
         ) : (
@@ -217,16 +275,23 @@ function buildRegistryRow({ historicalCardPayments, monthIndex, paymentDetails, 
   const paymentKey = getPaymentKey(selectedYear, monthIndex, service.id);
   const detail = paymentDetails[paymentKey] ?? {};
   const status = getRegistryStatus(paymentRegistry, paymentDetails, paymentKey, service, paymentHistory, historicalCardPayments, selectedYear, monthIndex);
-  const dueDate = new Date(selectedYear, monthIndex, Math.min(service.dueDay ?? 10, new Date(selectedYear, monthIndex + 1, 0).getDate()));
+  const isCard = isCardService(service);
+  const dueDate = isCard
+    ? null
+    : new Date(selectedYear, monthIndex, Math.min(service.dueDay ?? 10, new Date(selectedYear, monthIndex + 1, 0).getDate()));
   const today = new Date();
-  const diffInDays = Math.ceil((startOfRegistryDay(dueDate) - startOfRegistryDay(today)) / 86400000);
+  const diffInDays = dueDate
+    ? Math.ceil((startOfRegistryDay(dueDate) - startOfRegistryDay(today)) / 86400000)
+    : null;
 
   return {
     detail,
     diffInDays,
-    isCard: isCardService(service),
+    dueDate,
+    isCard,
     isDebit: Boolean(service.paymentCard),
     key: paymentKey,
+    amount: Number(detail.expectedAmount) || Number(detail.paidAmount) || service.amount,
     service,
     status,
   };
@@ -237,11 +302,14 @@ function isCardService(service) {
 }
 
 function buildRegistryFilters(rows) {
+  const isUnresolved = (row) => row.status === PAYMENT_STATUS.NONE || row.status === PAYMENT_STATUS.TRANSFERRED;
+
   return [
     { count: rows.length, id: "all", label: "Todos" },
-    { count: rows.filter((row) => row.status === PAYMENT_STATUS.NONE).length, id: "pending", label: "Pendientes" },
+    { count: rows.filter(isUnresolved).length, id: "pending", label: "Pendientes" },
+    { count: rows.filter((row) => !row.isCard && isUnresolved(row) && row.diffInDays < 0).length, id: "overdue", label: "Vencidos" },
     { count: rows.filter((row) => row.status === PAYMENT_STATUS.PAID || row.status === PAYMENT_STATUS.DEBITED).length, id: "paid", label: "Pagados" },
-    { count: rows.filter((row) => row.status === PAYMENT_STATUS.NONE && row.diffInDays >= 0 && row.diffInDays <= 3).length, id: "soon", label: "Vencen pronto" },
+    { count: rows.filter((row) => !row.isCard && isUnresolved(row) && row.diffInDays >= 0 && row.diffInDays <= 3).length, id: "soon", label: "Vencen pronto" },
     { count: rows.filter((row) => row.isCard).length, id: "cards", label: "Tarjetas" },
     { count: rows.filter((row) => row.isDebit).length, id: "debits", label: "Débitos" },
     { count: rows.filter((row) => row.service.paymentCard).length, id: "account", label: "Cuenta/banco" },
@@ -249,13 +317,41 @@ function buildRegistryFilters(rows) {
 }
 
 function filterRegistryRows(rows, filter) {
-  if (filter === "pending") return rows.filter((row) => row.status === PAYMENT_STATUS.NONE);
+  if (filter === "pending") return rows.filter((row) => row.status === PAYMENT_STATUS.NONE || row.status === PAYMENT_STATUS.TRANSFERRED);
+  if (filter === "overdue") return rows.filter((row) => !row.isCard && (row.status === PAYMENT_STATUS.NONE || row.status === PAYMENT_STATUS.TRANSFERRED) && row.diffInDays < 0);
   if (filter === "paid") return rows.filter((row) => row.status === PAYMENT_STATUS.PAID || row.status === PAYMENT_STATUS.DEBITED);
-  if (filter === "soon") return rows.filter((row) => row.status === PAYMENT_STATUS.NONE && row.diffInDays >= 0 && row.diffInDays <= 3);
+  if (filter === "soon") return rows.filter((row) => !row.isCard && (row.status === PAYMENT_STATUS.NONE || row.status === PAYMENT_STATUS.TRANSFERRED) && row.diffInDays >= 0 && row.diffInDays <= 3);
   if (filter === "cards") return rows.filter((row) => row.isCard);
   if (filter === "debits") return rows.filter((row) => row.isDebit);
   if (filter === "account") return rows.filter((row) => row.service.paymentCard);
   return rows;
+}
+
+function sortRegistryRows(rows) {
+  const statusWeight = {
+    [PAYMENT_STATUS.NONE]: 0,
+    [PAYMENT_STATUS.TRANSFERRED]: 0,
+    [PAYMENT_STATUS.PAID]: 2,
+    [PAYMENT_STATUS.DEBITED]: 2,
+  };
+
+  return [...rows].sort((first, second) =>
+    statusWeight[first.status] - statusWeight[second.status] ||
+    (first.dueDate?.getTime() ?? Number.POSITIVE_INFINITY) - (second.dueDate?.getTime() ?? Number.POSITIVE_INFINITY) ||
+    first.service.name.localeCompare(second.service.name, "es"),
+  );
+}
+
+function buildPeriodSummary(rows) {
+  const pendingRows = rows.filter((row) =>
+    row.status === PAYMENT_STATUS.NONE || row.status === PAYMENT_STATUS.TRANSFERRED,
+  );
+
+  return {
+    pendingAmount: pendingRows.reduce((total, row) => total + row.amount, 0),
+    overdueCount: pendingRows.filter((row) => !row.isCard && row.diffInDays < 0).length,
+    soonCount: pendingRows.filter((row) => !row.isCard && row.diffInDays >= 0 && row.diffInDays <= 3).length,
+  };
 }
 
 function startOfRegistryDay(date) {
@@ -280,6 +376,9 @@ function RegistryServiceCard({
   const method = detail.method || service.paymentCard || "";
   const isSaved = hasSavedRegistryInfo(paymentRegistry, paymentDetails, paymentKey);
   const isHistoricalCardPayment = Boolean(historicalCardPayments[paymentKey]) && isCardService(service);
+  const cardPaymentRecorded = isCardService(service) && paymentHistory.some(
+    (item) => item.type === "card_payment" && item.serviceId === service.id && item.period === `${selectedYear}-${String(monthIndex + 1).padStart(2, "0")}`,
+  );
   const isPastMonth = selectedYear * 12 + monthIndex < new Date().getFullYear() * 12 + new Date().getMonth();
   const canMarkHistoricalCardPaid = isPastMonth && isCardService(service) && status === PAYMENT_STATUS.NONE;
 
@@ -297,6 +396,7 @@ function RegistryServiceCard({
         <div className="registry-service-status-tools">
           <RegistrySavedBadge
             detail={detail}
+            cardPaymentRecorded={cardPaymentRecorded}
             historicalOnly={isHistoricalCardPayment}
             isSaved={isSaved || isHistoricalCardPayment}
             registryValue={paymentRegistry[paymentKey]}
@@ -315,31 +415,28 @@ function RegistryServiceCard({
         </div>
       </div>
 
-      <div className="registry-service-meta">
-        <span>
-          {isSaved || isHistoricalCardPayment ? <Database size={13} /> : <Clock size={13} />}
-          {isSaved || isHistoricalCardPayment ? "Registrado en perfil" : "Sin registrar este mes"}
-        </span>
-        {detail.paidAt ? (
-          <span>
-            <Calendar size={13} /> Movimiento: {formatRegistryDate(detail.paidAt)}
-          </span>
-        ) : null}
-        {detail.notes ? (
-          <span>
-            <FileText size={13} /> Nota: {detail.notes}
-          </span>
-        ) : null}
-      </div>
+      {!isCardService(service) || detail.paidAt || detail.notes ? (
+        <div className="registry-service-meta">
+          {!isCardService(service) ? (
+            <span>
+              {isSaved ? <Database size={13} /> : <Clock size={13} />}
+              {isSaved ? "Datos guardados en perfil" : "Sin datos guardados"}
+            </span>
+          ) : null}
+          {detail.paidAt ? (
+            <span>
+              <Calendar size={13} /> Movimiento: {formatRegistryDate(detail.paidAt)}
+            </span>
+          ) : null}
+          {detail.notes ? (
+            <span>
+              <FileText size={13} /> Nota: {detail.notes}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
-      {isCardService(service) ? (
-        !isPastMonth ? (
-          <p className="registry-card-payment-note">
-            <CreditCard size={15} />
-            <span>Registrá el pago desde “Tarjetas de Crédito”.</span>
-          </p>
-        ) : null
-      ) : service.paymentCard ? (
+      {isCardService(service) ? null : service.paymentCard ? (
         <DebitStatusControl
           month={month}
           service={service}
@@ -360,19 +457,20 @@ function RegistryServiceCard({
   );
 }
 
-function RegistryStat({ label, value, icon, tone }) {
+function RegistryStat({ label, detail, value, icon, tone }) {
   return (
     <article className={`registry-stat-card stat-tone-${tone}`}>
       <div className="stat-content">
         <span>{label}</span>
         <strong>{value}</strong>
+        <small>{detail}</small>
       </div>
       <div className="stat-icon">{icon}</div>
     </article>
   );
 }
 
-function RegistrySavedBadge({ detail, historicalOnly = false, isSaved, registryValue, status }) {
+function RegistrySavedBadge({ cardPaymentRecorded = false, detail, historicalOnly = false, isSaved, registryValue, status }) {
   const badgeMeta = {
     debited: { label: "Debitado", icon: <CheckCircle2 size={14} />, tone: "success" },
     transferred: { label: "Transferido", icon: <CheckCircle2 size={14} />, tone: "warning" },
@@ -390,12 +488,14 @@ function RegistrySavedBadge({ detail, historicalOnly = false, isSaved, registryV
       </span>
       <span className="badge-subtitle">
         {historicalOnly
-          ? "Pago histórico"
+          ? "Marcado solo en registro"
+          : cardPaymentRecorded
+            ? "Pago desde Tarjetas"
           : isSaved
-          ? `Registrado${registryValue === false ? " como pendiente" : ""}`
+          ? `Datos guardados${registryValue === false ? " · pendiente" : ""}`
           : detail?.status
-            ? "Detalle parcial"
-            : "Sin registrar"}
+            ? "Detalle guardado"
+            : "Sin datos"}
       </span>
     </div>
   );
