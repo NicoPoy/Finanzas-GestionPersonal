@@ -20,6 +20,7 @@ export default function DashboardModule({
   previousMonthSummary,
   disappearingExpenses = [],
   dueItems,
+  hideSensitiveAmounts = false,
   monthSummary,
   onMarkAccountTransferred,
   onSetPaymentStatus,
@@ -68,16 +69,18 @@ export default function DashboardModule({
 
         <article className={`dashboard-health dashboard-health-${health.tone}`}>
           <span>{health.label}</span>
-          <strong>{currency.format(monthSummary.remaining)}</strong>
+          <strong aria-label={hideSensitiveAmounts ? "Monto oculto" : currency.format(monthSummary.remaining)}>
+            {hideSensitiveAmounts ? "••••••" : currency.format(monthSummary.remaining)}
+          </strong>
           <small>{health.description}</small>
         </article>
       </section>
 
       <section className="dashboard-main-grid dashboard-main-grid-compact" aria-label="Resumen del próximo sueldo">
-        <DashboardMetric detail="Sueldo configurado más otros ingresos." icon={<Banknote size={21} />} label="Ingresos disponibles" tone="income" value={currency.format(monthSummary.salary)} />
-        <DashboardMetric detail={`${cardsPercent}% de tus ingresos.`} icon={<CreditCard size={21} />} label="Tarjetas" tone="cards" value={currency.format(monthSummary.cardExpenses)} />
-        <DashboardMetric detail={`Fijos y compras mensuales: ${fixedPercent}% del ingreso.`} icon={<Home size={21} />} label="Gastos obligatorios" tone="fixed" value={currency.format(monthSummary.fixedExpenses)} />
-        <DashboardMetric detail={`Tarjetas, fijos y extraordinarios: ${totalPercent}% del ingreso.`} icon={<Wallet size={21} />} label="Gasto proyectado" tone="total" value={currency.format(monthSummary.totalExpenses)} />
+        <DashboardMetric detail="Sueldo configurado más otros ingresos." hideSensitiveAmounts={hideSensitiveAmounts} icon={<Banknote size={21} />} label="Ingresos disponibles" tone="income" value={currency.format(monthSummary.salary)} />
+        <DashboardMetric detail={`${cardsPercent}% de tus ingresos.`} hideSensitiveAmounts={hideSensitiveAmounts} icon={<CreditCard size={21} />} label="Tarjetas" tone="cards" value={currency.format(monthSummary.cardExpenses)} />
+        <DashboardMetric detail={`Fijos y compras mensuales: ${fixedPercent}% del ingreso.`} hideSensitiveAmounts={hideSensitiveAmounts} icon={<Home size={21} />} label="Gastos obligatorios" tone="fixed" value={currency.format(monthSummary.fixedExpenses)} />
+        <DashboardMetric detail={`Tarjetas, fijos y extraordinarios: ${totalPercent}% del ingreso.`} hideSensitiveAmounts={hideSensitiveAmounts} icon={<Wallet size={21} />} label="Gasto proyectado" tone="total" value={currency.format(monthSummary.totalExpenses)} />
       </section>
 
       <>
@@ -772,12 +775,14 @@ function UnassignedExpensePaymentsSection({
   );
 }
 
-function DashboardMetric({ detail, icon, label, tone, value }) {
+function DashboardMetric({ detail, hideSensitiveAmounts, icon, label, tone, value }) {
   return (
     <article className={`dashboard-metric dashboard-metric-${tone}`}>
       <div className="dashboard-metric-icon">{icon}</div>
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong aria-label={hideSensitiveAmounts ? "Monto oculto" : value}>
+        {hideSensitiveAmounts ? "••••••" : value}
+      </strong>
       <small>{detail}</small>
     </article>
   );

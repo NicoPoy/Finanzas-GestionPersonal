@@ -206,6 +206,7 @@ class FrontendFinanceProfile(FinanceModel):
     monthZeroDate: str = ""
     registrationDate: str = ""
     salary: float = 0
+    hideSensitiveAmounts: bool = False
     otherIncomes: list[OtherIncome] = Field(default_factory=list)
     monthlyPurchases: list[MonthlyPurchase] = Field(default_factory=list)
     savingsGoals: list[SavingsGoal] = Field(default_factory=list)

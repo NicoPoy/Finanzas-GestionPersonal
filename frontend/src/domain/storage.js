@@ -8,6 +8,7 @@ export function normalizeData(data) {
     monthZeroDate: normalizeProfileDate(data.monthZeroDate ?? INITIAL_DATA.monthZeroDate),
     registrationDate: normalizeRegistrationDate(data.registrationDate ?? INITIAL_DATA.registrationDate),
     salary: Number(data.salary) || 0,
+    hideSensitiveAmounts: Boolean(data.hideSensitiveAmounts ?? INITIAL_DATA.hideSensitiveAmounts),
     otherIncomes: normalizeOtherIncomes(data.otherIncomes ?? INITIAL_DATA.otherIncomes),
     monthlyPurchases: normalizeMonthlyPurchases(data.monthlyPurchases ?? INITIAL_DATA.monthlyPurchases),
     savingsGoals: normalizeSavingsGoals(data.savingsGoals ?? INITIAL_DATA.savingsGoals),

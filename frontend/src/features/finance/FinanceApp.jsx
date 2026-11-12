@@ -252,16 +252,9 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
   const [confirmation, setConfirmation] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const dashboardMonthOffset = 1;
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(() => {
-    return localStorage.getItem("header-collapsed") === "true";
-  });
-
-  const toggleHeader = () => {
-    setIsHeaderCollapsed((prev) => {
-      const newVal = !prev;
-      localStorage.setItem("header-collapsed", String(newVal));
-      return newVal;
-    });
+  const hideSensitiveAmounts = Boolean(data.hideSensitiveAmounts);
+  const toggleSensitiveAmounts = () => {
+    setData((current) => ({ ...current, hideSensitiveAmounts: !current.hideSensitiveAmounts }));
   };
 
   useEffect(() => {
@@ -1692,7 +1685,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
       </aside>
 
       <main className="dashboard-main">
-        <header className={`dashboard-header ${isHeaderCollapsed ? "collapsed" : ""}`}>
+        <header className="dashboard-header">
           <div className="header-left">
             <button
               aria-label="Abrir menu"
@@ -1703,15 +1696,6 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
               <Menu size={20} />
             </button>
             <h1>{moduleTitles[activeModule] ?? "Finanzas"}</h1>
-            <button
-              aria-label={isHeaderCollapsed ? "Mostrar montos" : "Ocultar montos"}
-              className="header-collapse-toggle"
-              onClick={toggleHeader}
-              title={isHeaderCollapsed ? "Mostrar montos" : "Ocultar montos"}
-              type="button"
-            >
-              {isHeaderCollapsed ? <Eye size={20} /> : <EyeOff size={20} />}
-            </button>
           </div>
 
           <div className="header-right">
@@ -1723,13 +1707,27 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
             ) : null}
 
             <div className="quick-totals" aria-label="Resumen principal">
+              <button
+                aria-label={hideSensitiveAmounts ? "Mostrar montos" : "Ocultar montos"}
+                aria-pressed={hideSensitiveAmounts}
+                className="amount-visibility-toggle"
+                onClick={toggleSensitiveAmounts}
+                title={hideSensitiveAmounts ? "Mostrar montos" : "Ocultar montos"}
+                type="button"
+              >
+                {hideSensitiveAmounts ? <Eye size={20} /> : <EyeOff size={20} />}
+              </button>
               <div className="total-item">
                 <small>Restante</small>
-                <strong>{currency.format(nextMonthSummary.remaining)}</strong>
+                <strong aria-label={hideSensitiveAmounts ? "Monto oculto" : currency.format(nextMonthSummary.remaining)}>
+                  {hideSensitiveAmounts ? "••••••" : currency.format(nextMonthSummary.remaining)}
+                </strong>
               </div>
               <div className="total-item">
                 <small>Ingresos</small>
-                <strong>{currency.format(incomeTotal)}</strong>
+                <strong aria-label={hideSensitiveAmounts ? "Monto oculto" : currency.format(incomeTotal)}>
+                  {hideSensitiveAmounts ? "••••••" : currency.format(incomeTotal)}
+                </strong>
               </div>
             </div>
           </div>
@@ -1739,6 +1737,7 @@ export default function FinanceApp({ accessToken, isDemoMode = false, onLogout, 
           {activeModule === "dashboard" ? (
         <DashboardModule
           accountFlow={accountFlow}
+          hideSensitiveAmounts={hideSensitiveAmounts}
           previousMonthSummary={previousDashboardSummary}
           transferAccounts={transferMonthAccounts}
           transferMonth={transferMonth}

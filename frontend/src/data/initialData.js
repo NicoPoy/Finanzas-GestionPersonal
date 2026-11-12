@@ -3,6 +3,7 @@ export const INITIAL_DATA = {
   monthZeroDate: "2026-06-01T00:00:00.000Z",
   registrationDate: "2026-06-01T00:00:00.000Z",
   salary: 0,
+  hideSensitiveAmounts: false,
   otherIncomes: [],
   monthlyPurchases: [],
   savingsGoals: [],
